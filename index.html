@@ -30,36 +30,41 @@
 
     <section id="about">
         <div class="container">
-                <div class="section-title anim-block" data-animate="true" data-anim-type="fade-up">
+            <div class="section-title anim-block" data-animate="true" data-anim-type="fade-up">
                 <h2 data-i18n="home.about.title">Hakkımızda</h2>
                 <p data-i18n="home.about.tagline">SAP Çözümlerinde Güvenilir İş Ortağınız</p>
             </div>
-            
-            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 60px;">
+
+            <div style="display: flex; flex-wrap: wrap; align-items: stretch; gap: 40px;">
                 <div class="anim-block" style="flex: 1; min-width: 300px;" data-animate="true" data-anim-type="fade-left">
-                    <p style="font-size: 1.1rem; margin-bottom: 20px;" data-i18n="home.about.p1">
-                        Parla Bilgi Teknolojileri olarak, SAP ekosistemindeki derin tecrübemizle işletmelere özel çözümler sunuyoruz. 
-                    </p>
-                    <p style="margin-bottom: 25px; color: #666;" data-i18n="home.about.p2">
-                        Mevcut sisteminizin S/4HANA dönüşümünden, lisans yönetimine ve canlıya geçiş sonrası desteğe kadar tüm süreçlerde yanınızdayız.
-                    </p>
-                    <ul style="list-style: none; padding: 0;">
-                        <li style="margin-bottom: 12px; font-weight: 500;" data-i18n="home.about.bullet1"><i class="fas fa-check-circle" style="color: var(--primary-color); margin-right: 10px;"></i>Yetkili SAP Danışmanlığı</li>
-                        <li style="margin-bottom: 12px; font-weight: 500;" data-i18n="home.about.bullet2"><i class="fas fa-check-circle" style="color: var(--primary-color); margin-right: 10px;"></i>İhtiyaç & Kullanıcı Analizi</li>
-                        <li style="margin-bottom: 12px; font-weight: 500;" data-i18n="home.about.bullet3"><i class="fas fa-check-circle" style="color: var(--primary-color); margin-right: 10px;"></i>Cloud ERP & BTP Hizmetleri</li>
-                    </ul>
+                    <div class="service-card">
+                        <i class="fas fa-briefcase fa-3x"></i>
+                        <h3 style="margin-bottom: 15px;">Parla Bilgi Teknolojileri</h3>
+                        <p style="font-size: 1.05rem; margin-bottom: 18px; line-height: 1.8; color: #333;" data-i18n="home.about.p1">
+                            Parla Bilgi Teknolojileri olarak, SAP ekosistemindeki derin tecrübemizle işletmelere özel çözümler sunuyoruz.
+                        </p>
+                        <p style="margin-bottom: 22px; color: #666; line-height: 1.7; font-size: 0.98rem;" data-i18n="home.about.p2">
+                            Mevcut sisteminizin S/4HANA dönüşümünden, lisans yönetimine ve canlıya geçiş sonrası desteğe kadar tüm süreçlerde yanınızdayız.
+                        </p>
+                        <ul>
+                            <li data-i18n="home.about.bullet1">Yetkili SAP Danışmanlığı</li>
+                            <li data-i18n="home.about.bullet2">İhtiyaç & Kullanıcı Analizi</li>
+                            <li data-i18n="home.about.bullet3">Cloud ERP & BTP Hizmetleri</li>
+                        </ul>
+                    </div>
                 </div>
-                
+
                 <div class="anim-block" style="flex: 1; min-width: 300px;" data-animate="true" data-anim-type="fade-right">
-                    <img src="https://placehold.co/600x400/eee/333?text=Parla+Ofis+Gorseli" alt="Parla Hakkımızda" style="width: 100%; border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.15);">
-                </div>
+                    <img src="assets/img/sap/sap-5.png" alt="Parla Hakkımızda" style="width: 100%; border-radius: 16px; box-shadow: 0 20px 50px rgba(0,0,0,0.15); transition: transform 0.4s ease, box-shadow 0.4s ease;" onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 25px 60px rgba(0,0,0,0.2)'" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 20px 50px rgba(0,0,0,0.15)'"></div>
             </div>
         </div>
     </section>
 
     <section style="padding: 60px 0; background: #fff;" id="references">
         <div class="container">
-            <h3 data-i18n="references.title" style="text-align: center; margin-bottom: 40px; color: #999; font-weight: 600; letter-spacing: 1px;">BİZE GÜVENENLER</h3>
+            <div class="section-title anim-block" data-animate="true" data-anim-type="fade-up">
+                <h2 data-i18n="references.title">REFERANSLARIMIZ</h2>
+            </div>
         </div>
         <!-- İlk Satır - Büyük Görseller -->
         <div class="reference-slider reference-slider-1">
@@ -251,7 +256,7 @@
         </div>
     </section>
 
-    <section style="background: #222; color: #fff;">
+    <!-- <section id="akilli-fatura" style="background: #222; color: #fff;">
         <div class="container">
             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 60px;">
                 
@@ -273,7 +278,9 @@
 
             </div>
         </div>
-    </section>
+    </section> -->
+
+    
 
     <section id="academy" class="bg-light">
         <div class="container">
@@ -310,6 +317,7 @@
             </div>
         </div>
     </section>
+    
 
     
 
@@ -339,6 +347,13 @@
                     <div style="padding: 25px; background: #fff; border-radius: 12px; border-left: 5px solid var(--primary-color); box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
                         <h4 data-i18n="career.title" style="margin-bottom: 10px; font-size: 1.2rem;">Kariyer Fırsatları</h4>
                         <p data-i18n="career.text" style="font-size: 0.95rem; color: #666;">Yetenekli bir SAP danışmanı veya yazılımcı mısın? CV'ni bekliyoruz!</p>
+
+                    </div>
+
+                    <div class="contact-map anim-block" data-animate="true" data-anim-type="fade-up">
+                        <div class="contact-card">
+                            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3756.0050964890056!2d35.53402201464811!3d38.71484177686337!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x152b134352b06bdf%3A0x8f0d6cdfecc47a74!2sParla%20Bilgi%20Teknolojileri%20Dan%C4%B1%C5%9Fmanl%C4%B1k!5e0!3m2!1str!2str!4v1765123100032!5m2!1str!2str" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                        </div>
                     </div>
                 </div>
 
@@ -354,7 +369,7 @@
                         <input type="tel" name="phone" data-i18n-placeholder="contact.form.phone_placeholder" placeholder="0555...">
 
                         <label data-i18n="contact.form.message">Mesajınız</label>
-                        <textarea name="message" rows="4" required data-i18n-placeholder="contact.form.message_placeholder" placeholder="Nasıl yardımcı olabiliriz?"></textarea>
+                        <textarea name="message" rows="23" required data-i18n-placeholder="contact.form.message_placeholder" placeholder="Nasıl yardımcı olabiliriz?"></textarea>
 
                         <button type="submit" class="btn btn-primary" style="width: 100%; border:none;" data-i18n="contact.form.submit">Gönder</button>
                     </form>

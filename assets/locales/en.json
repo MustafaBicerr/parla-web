@@ -73,16 +73,18 @@
       "title": "Contact & Careers",
       "meet": { "title": "Meet Us", "p": "Fill the form to request a quote or join our dynamic team." },
       "email_label": "Email:",
-      "email": "info@parlabt.com",
+      "email": "info@parlabilgiteknolojileri.net",
       "phone_label": "Phone:",
-      "phone": "+90 555 000 00 00"
+      "phone": "0 535 213 07 35"
     }
   },
   "header": {
     "nav": {
       "about": "About",
-      "solutions": "Implementation & Consulting",
+      "organisation": "Implementation & Consulting",
       "academy": "Parla Academy / Live Trainings",
+      "solutions": "Sectoral Solutions",
+      "carier": "Career",
       "references": "References",
       "contact": "Contact"
     },

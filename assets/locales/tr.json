@@ -73,16 +73,18 @@
       "title": "İletişim & Kariyer",
       "meet": { "title": "Bizimle Tanışın", "p": "Projeleriniz için teklif almak veya dinamik ekibimize katılmak için formu doldurun." },
       "email_label": "E-posta:",
-      "email": "info@parlabt.com",
+      "email": "info@parlabilgiteknolojileri.net",
       "phone_label": "Telefon:",
-      "phone": "+90 555 000 00 00"
+      "phone": "0 535 213 07 35"
     }
   },
   "header": {
     "nav": {
       "about": "Hakkımızda",
-      "solutions": "Kurulum & Danışmanlık",
+      "organisation": "Kurulum & Danışmanlık",
       "academy": "Parla Akademi / Canlı Eğitimler",
+      "solutions": "Sektörel Çözümler",
+      "carier": "Kariyer",
       "references": "Referanslar",
       "contact": "İletişim"
     },
@@ -112,7 +114,7 @@
     }
   },
   "references": {
-    "title": "BİZE GÜVENENLER",
+    "title": "REFERANSLARIMIZ",
     "button_see_all": "Tüm Referansları Gör"
   },
   "contact": {
