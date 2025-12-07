@@ -1,0 +1,44 @@
+/* Temel Animasyon Bloğu 
+   Javascript bu bloğa 'visible' class'ı eklediğinde animasyon çalışacak.
+   Varsayılan olarak opacity 0'dır.
+*/
+.anim-block {
+    opacity: 0;
+    transition: all 1s ease-out; /* Animasyon süresi ve yumuşaklığı */
+    will-change: transform, opacity;
+}
+
+/* Visible class'ı eklendiğinde görünür olur (JS ekleyecek) */
+.anim-block.visible {
+    opacity: 1;
+    transform: none; /* Transformu sıfırla */
+}
+
+/* --- Animasyon Türleri --- */
+
+/* 1. Fade Left (Soldan Giriş) */
+[data-anim-type="fade-left"] {
+    transform: translateX(-100px);
+}
+
+/* 2. Fade Right (Sağdan Giriş) */
+[data-anim-type="fade-right"] {
+    transform: translateX(100px);
+}
+
+/* 3. Fade Up (Aşağıdan Yukarı) */
+[data-anim-type="fade-up"] {
+    transform: translateY(100px);
+}
+
+/* 4. Zoom In (Küçükten Büyüme) */
+[data-anim-type="zoom-in"] {
+    transform: scale(0.5);
+}
+
+/* 5. Zoom Out (Büyükten Küçülme) */
+[data-anim-type="zoom-out"] {
+    transform: scale(1.2);
+}
+
+/* Visible olduğunda hepsi kendi orijinal konumuna/boyutuna (transform: none) döner */

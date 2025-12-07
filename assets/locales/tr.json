@@ -1,0 +1,139 @@
+{
+  "site": {
+    "title": "Parla Bilgi Teknolojileri | SAP Çözüm Ortağınız"
+  },
+  "home": {
+    "hero": {
+      "title": "SAP FI/CO & TRM Özel Çözümleriyle\nFinansal Süreçlerinizi\nUçtan Uca\nDijitalleştiriyoruz",
+      "subtitle": "Teknolojiyi estetikle buluşturuyor, iş süreçlerinize değer katıyoruz.",
+      "btn": {
+        "explore": "Çözümlerimizi İnceleyin",
+        "demo": "Teklif / Demo Talep Edin"
+      }
+    },
+    "about": {
+      "title": "Hakkımızda",
+      "tagline": "SAP Çözümlerinde Güvenilir İş Ortağınız",
+      "p1": "Parla Bilgi Teknolojileri olarak, SAP ekosistemindeki derin tecrübemizle işletmelere özel çözümler sunuyoruz.",
+      "p2": "Mevcut sisteminizin S/4HANA dönüşümünden, lisans yönetimine ve canlıya geçiş sonrası desteğe kadar tüm süreçlerde yanınızdayız.",
+      "bullet1": "Yetkili SAP Danışmanlığı",
+      "bullet2": "İhtiyaç & Kullanıcı Analizi",
+      "bullet3": "Cloud ERP & BTP Hizmetleri"
+    },
+    "solutions": {
+      "title": "Kurulum ve Danışmanlık",
+      "install": {
+        "title": "SAP Kurulumu & Geçiş",
+        "desc": "Mevcut sisteminizi S/4HANA’ya taşıma sürecinden, lisans yönetimine kadar uçtan uca destek.",
+        "list": [
+          "SAP R/3 ve S/4HANA Lisanslama",
+          "İhtiyaç & Kullanıcı Tipi Analizi",
+          "Cloud ERP Aboneliği & BTP Paketleri",
+          "Bakım & Yenileme Yönetimi"
+        ]
+      },
+      "consulting": {
+        "title": "SAP Danışmanlık ve Destek",
+        "desc": "Süreçlerinizi iyileştiren, yeni fonksiyonlar ekleyen ve operasyonlarınıza sürekli destek sağlayan hizmetler.",
+        "list": [
+          "İsteğe Özel Geliştirme (ABAP)",
+          "Canlı Destek & Hata Yönetimi",
+          "Farklı Sistemlere Entegrasyon",
+          "Özel Modül Kurulumları (FI/CO/TRM)"
+        ]
+      }
+    },
+    "sector": {
+      "title": "Sektörel Çözümler",
+      "subtitle": "İhtiyaçlarınıza Özel Modüler Çözümler",
+      "e_transformation": { "title": "E-Dönüşüm", "desc": "E-Fatura, E-Defter, E-İrsaliye çözümleri ve yasal uyumluluk süreçleri." },
+      "banking": { "title": "Bankacılık", "desc": "Online DBS, MT940 Entegrasyonu, Sanal POS ve Toplu Ödeme Sistemleri." },
+      "financial_accounting": { "title": "Finansal Muhasebe", "desc": "Enflasyon Muhasebesi, UFRS Raporlama, Defteri Kebir ve Otomatik Denkleştirme." },
+      "assets_realestate": { "title": "Duran Varlık & GM", "desc": "Duran Varlık Sayım, Zimmet Takibi ve Gayrimenkul Yönetimi (RE)." },
+      "budget_tax": { "title": "Bütçe & Vergi", "desc": "Bütçe Yönetimi, Vergi Beyannameleri, Ertelenmiş Vergi ve TMS Reeskont." },
+      "trm": { "title": "Hazine & Risk", "desc": "Kredi Risk Yönetimi, Teminat Süreçleri, Leasing ve Tahvil İşlemleri." },
+      "insurance": { "title": "Sigorta Çözümleri", "desc": "Sigorta modülü (INSURA) entegrasyonu ve poliçe takip süreçleri." }
+    },
+    "mobile": {
+      "title": "Mobil ve Otomasyon",
+      "subtitle": "Akıllı Fatura Girişi",
+      "p": "Kağıt ortamda gelen fiş ve faturaları tarayarak SAP’de fatura girişini otomatik başlatan akıllı çözümümüzle tanışın.",
+      "list": ["OCR ile otomatik veri okuma","SAP tam entegrasyon","Hızlı ve hatasız giriş"],
+      "btn": "Detaylı Bilgi Al"
+    },
+    "academy": {
+      "title": "Parla Akademi",
+      "subtitle": "SAP Yetkinliklerinizi Uzmanlarla Artırın",
+      "workshop": { "title": "Kuruma Özel Atölye", "desc": "Şirketinizin gerçek verileriyle interaktif workshoplar." },
+      "online": { "title": "Online & Sınıf Eğitimi", "desc": "FI, CO, MM, PP ve ABAP modüllerinde yapılandırılmış eğitimler." },
+      "one_on_one": { "title": "Bire Bir Kullanıcı Eğitimi", "desc": "Son kullanıcılar için pratik ve güvenli kullanım eğitimleri." },
+      "consulting": { "title": "Danışmanlık Eğitimi", "desc": "Anahtar kullanıcılar ve danışman adayları için derinlemesine teknik eğitim." }
+    },
+    "contact": {
+      "title": "İletişim & Kariyer",
+      "meet": { "title": "Bizimle Tanışın", "p": "Projeleriniz için teklif almak veya dinamik ekibimize katılmak için formu doldurun." },
+      "email_label": "E-posta:",
+      "email": "info@parlabt.com",
+      "phone_label": "Telefon:",
+      "phone": "+90 555 000 00 00"
+    }
+  },
+  "header": {
+    "nav": {
+      "about": "Hakkımızda",
+      "solutions": "Kurulum & Danışmanlık",
+      "academy": "Parla Akademi / Canlı Eğitimler",
+      "references": "Referanslar",
+      "contact": "İletişim"
+    },
+    "button": {
+      "demo": "Demo Talep Et"
+    },
+    "dropdown": {
+      "solutions": {
+        "install": "SAP Kurulumu & Geçiş",
+        "consulting": "SAP Danışmanlık & Destek"
+      },
+      "sector": {
+        "e_transformation": "E-Dönüşüm Çözümleri",
+        "banking": "Bankacılık Çözümleri",
+        "financial_accounting": "Finansal Muhasebe Çözümleri",
+        "assets_realestate": "Duran Varlık & Gayrimenkul Yönetimi Çözümleri",
+        "budget_tax": "Bütçe Kapanış ve Vergi Çözümleri",
+        "trm": "Hazine ve Risk Yönetimi (TRM) Çözümleri",
+        "insurance": "Sigorta Çözümleri",
+        "mobile": "Mobil ve Otomasyon Çözümleri"
+      },
+      "academy": {
+        "workshops": "Kuruma Özel Atölye Eğitimleri",
+        "online": "Online / Yüzyüze Sınıflarda SAP Eğitimleri",
+        "one_on_one": "Sektöre Özel Bire Bir Kullanıcı Eğitimi"
+      }
+    }
+  },
+  "references": {
+    "title": "BİZE GÜVENENLER"
+  },
+  "contact": {
+    "form": {
+      "name": "Ad Soyad",
+      "name_placeholder": "Adınız Soyadınız",
+      "email": "E-posta",
+      "email_placeholder": "ornek@sirket.com",
+      "phone": "Telefon (Opsiyonel)",
+      "phone_placeholder": "0555...",
+      "message": "Mesajınız",
+      "message_placeholder": "Nasıl yardımcı olabiliriz?",
+      "submit": "Gönder",
+      "subject": "Konu",
+      "subject_placeholder": "Konu"
+    }
+  },
+  "career": {
+    "title": "Kariyer Fırsatları",
+    "text": "Yetenekli bir SAP danışmanı veya yazılımcı mısın? CV'ni bekliyoruz!"
+  },
+  "footer": {
+    "copyright": "© 2025 Parla Bilgi Teknolojileri. Tüm hakları saklıdır."
+  }
+}

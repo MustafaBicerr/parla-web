@@ -1,0 +1,139 @@
+{
+  "site": {
+    "title": "Parla Information Technologies | Your SAP Solution Partner"
+  },
+  "home": {
+    "hero": {
+      "title": "SAP FI/CO & TRM Special Solutions\nDigitizing Your Financial Processes\nEnd-to-End",
+      "subtitle": "We combine technology with design to add value to your business processes.",
+      "btn": {
+        "explore": "Explore Our Solutions",
+        "demo": "Request Quote / Demo"
+      }
+    },
+    "about": {
+      "title": "About",
+      "tagline": "Your Trusted Partner in SAP Solutions",
+      "p1": "At Parla Information Technologies, we deliver tailored solutions leveraging deep experience in the SAP ecosystem.",
+      "p2": "From S/4HANA migrations to license management and post-go-live support, we are with you through all stages.",
+      "bullet1": "Authorized SAP Consultancy",
+      "bullet2": "Requirements & User Analysis",
+      "bullet3": "Cloud ERP & BTP Services"
+    },
+    "solutions": {
+      "title": "Implementation & Consulting",
+      "install": {
+        "title": "SAP Implementation & Migration",
+        "desc": "End-to-end support from migrating your systems to S/4HANA to license management.",
+        "list": [
+          "SAP R/3 and S/4HANA Licensing",
+          "Requirements & User Type Analysis",
+          "Cloud ERP Subscriptions & BTP Packages",
+          "Maintenance & Renewal Management"
+        ]
+      },
+      "consulting": {
+        "title": "SAP Consulting & Support",
+        "desc": "Services that improve your processes, add new features and provide ongoing operational support.",
+        "list": [
+          "Custom Development (ABAP)",
+          "Live Support & Issue Management",
+          "Integration with Other Systems",
+          "Custom Module Deployments (FI/CO/TRM)"
+        ]
+      }
+    },
+    "sector": {
+      "title": "Sector Solutions",
+      "subtitle": "Modular Solutions Tailored To Your Needs",
+      "e_transformation": { "title": "E-Transformation", "desc": "E-Invoice, E-Ledger, E-Waybill solutions and regulatory compliance processes." },
+      "banking": { "title": "Banking", "desc": "Online DBS, MT940 Integration, Virtual POS and Bulk Payment Systems." },
+      "financial_accounting": { "title": "Financial Accounting", "desc": "Inflation Accounting, IFRS Reporting, General Ledger and Auto Reconciliation." },
+      "assets_realestate": { "title": "Fixed Assets & RE", "desc": "Fixed asset counting, assignment tracking and real estate management." },
+      "budget_tax": { "title": "Budget & Tax", "desc": "Budget management, tax filings, deferred tax and TMS provisions." },
+      "trm": { "title": "Treasury & Risk", "desc": "Credit risk management, collateral processes, leasing and bond operations." },
+      "insurance": { "title": "Insurance Solutions", "desc": "Insurance module (INSURA) integration and policy tracking processes." }
+    },
+    "mobile": {
+      "title": "Mobile & Automation",
+      "subtitle": "Smart Invoice Entry",
+      "p": "Meet our smart solution that scans paper receipts and invoices to automatically start invoice entry in SAP.",
+      "list": ["Automatic data capture with OCR","Full SAP integration","Fast and error-free entry"],
+      "btn": "Get Detailed Info"
+    },
+    "academy": {
+      "title": "Parla Academy",
+      "subtitle": "Increase Your SAP Skills with Experts",
+      "workshop": { "title": "Corporate Workshops", "desc": "Interactive workshops using your company's real data." },
+      "online": { "title": "Online & Classroom Training", "desc": "Structured trainings on FI, CO, MM, PP and ABAP modules." },
+      "one_on_one": { "title": "One-to-One User Training", "desc": "Practical and secure trainings for end users." },
+      "consulting": { "title": "Consulting Training", "desc": "In-depth technical training for key users and consultant candidates." }
+    },
+    "contact": {
+      "title": "Contact & Careers",
+      "meet": { "title": "Meet Us", "p": "Fill the form to request a quote or join our dynamic team." },
+      "email_label": "Email:",
+      "email": "info@parlabt.com",
+      "phone_label": "Phone:",
+      "phone": "+90 555 000 00 00"
+    }
+  },
+  "header": {
+    "nav": {
+      "about": "About",
+      "solutions": "Implementation & Consulting",
+      "academy": "Parla Academy / Live Trainings",
+      "references": "References",
+      "contact": "Contact"
+    },
+    "button": {
+      "demo": "Request Demo"
+    },
+    "dropdown": {
+      "solutions": {
+        "install": "SAP Implementation & Migration",
+        "consulting": "SAP Consulting & Support"
+      },
+      "sector": {
+        "e_transformation": "E-Transformation Solutions",
+        "banking": "Banking Solutions",
+        "financial_accounting": "Financial Accounting Solutions",
+        "assets_realestate": "Fixed Assets & Real Estate Management Solutions",
+        "budget_tax": "Budget Closing & Tax Solutions",
+        "trm": "Treasury & Risk Management (TRM) Solutions",
+        "insurance": "Insurance Solutions",
+        "mobile": "Mobile & Automation Solutions"
+      },
+      "academy": {
+        "workshops": "Corporate Workshops",
+        "online": "Online / In-person SAP Trainings",
+        "one_on_one": "Industry-specific One-to-One User Training"
+      }
+    }
+  },
+  "references": {
+    "title": "OUR CLIENTS"
+  },
+  "contact": {
+    "form": {
+      "name": "Full Name",
+      "name_placeholder": "Your full name",
+      "email": "Email",
+      "email_placeholder": "example@company.com",
+      "phone": "Phone (optional)",
+      "phone_placeholder": "0555...",
+      "message": "Message",
+      "message_placeholder": "How can we help?",
+      "submit": "Send",
+      "subject": "Subject",
+      "subject_placeholder": "Subject"
+    }
+  },
+  "career": {
+    "title": "Career Opportunities",
+    "text": "Are you a talented SAP consultant or developer? Send us your CV!"
+  },
+  "footer": {
+    "copyright": "© 2025 Parla Bilgi Teknolojileri. All rights reserved."
+  }
+}
