@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;600&display=swap');
 
+/* Mobile responsive container styles - Updated */
 :root {
     --primary-color: #ff8c00;
     --primary-dark: #e07b00;
@@ -37,7 +38,14 @@ header {
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
-.container { width: 90%; max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+.container { width: 80%; max-width: 1200px; margin: 0 auto; padding: 0 15px; }
+.container-mobile { display: none; width: 100%; max-width: 100%; margin: 0 auto; padding: 0 12px; }
+
+@media (max-width: 768px) {
+    .container { width: 90%; max-width: 600px; padding: 0 8px; }
+    .container-mobile { display: none; width: 80%; max-width: 500px; padding: 10px;}
+}
+
 .navbar { display: flex; justify-content: space-between; align-items: center; }
 
 .logo { font-size: 1.8rem; font-weight: 800; color: #fff; text-decoration: none; font-family: 'Montserrat', sans-serif; letter-spacing: -1px; }
@@ -83,6 +91,10 @@ header {
 /* --- MOBILE MENU --- */
 .hamburger { display: none; color: #fff; font-size: 1.8rem; cursor: pointer; }
 .mobile-lang-wrapper { display: none; }
+
+/* language toggle button (header) */
+.lang-toggle { cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,0.12); padding: 8px 12px; border-radius: 6px; font-weight: 700; background: transparent; }
+.lang-toggle[data-current-lang="en"] { background: rgba(255,255,255,0.04); }
 
 @media (max-width: 1100px) {
     .btn-demo, .header-right .lang-btn { display: none; }

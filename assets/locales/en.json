@@ -112,7 +112,8 @@
     }
   },
   "references": {
-    "title": "OUR CLIENTS"
+    "title": "OUR CLIENTS",
+    "button_see_all": "View All References"
   },
   "contact": {
     "form": {
