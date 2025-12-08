@@ -75,7 +75,48 @@ function initHeaderEvents() {
     } catch (e) { /* ignore */ }
 }
 
+// Hero Carousel - Auto-rotate images every 2 seconds
+function initCarousel() {
+    // Initialize background carousel (hero section)
+    const bgSlides = document.querySelectorAll('.hero-bg-carousel .carousel-slide');
+    if (bgSlides.length > 0) {
+        let bgIndex = 0;
+        function showBgSlide(index) {
+            bgSlides.forEach((slide, i) => {
+                slide.classList.remove('carousel-active');
+                if (i === index) slide.classList.add('carousel-active');
+            });
+        }
+        function nextBgSlide() {
+            bgIndex = (bgIndex + 1) % bgSlides.length;
+            showBgSlide(bgIndex);
+        }
+        setInterval(nextBgSlide, 4000);
+    }
+    
+    // Initialize regular carousel (if any)
+    const slides = document.querySelectorAll('.hero-carousel:not(.hero-bg-carousel) .carousel-slide');
+    if (slides.length > 0) {
+        let currentIndex = 0;
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.remove('carousel-active');
+                if (i === index) slide.classList.add('carousel-active');
+            });
+        }
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % slides.length;
+            showSlide(currentIndex);
+        }
+        setInterval(nextSlide, 2000);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-    loadComponent('header-placeholder', 'components/header.html');
-    loadComponent('footer-placeholder', 'components/footer.html');
+    // Use root-relative paths so components load correctly from pages in subfolders
+    loadComponent('header-placeholder', '/components/header.html');
+    loadComponent('footer-placeholder', '/components/footer.html');
+    
+    // Initialize carousel
+    initCarousel();
 });

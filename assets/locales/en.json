@@ -136,6 +136,27 @@
     "title": "Career Opportunities",
     "text": "Are you a talented SAP consultant or developer? Send us your CV!"
   },
+  "pages": {
+    "about": {
+      "title": "About",
+      "tagline": "Short intro about Parla Information Technologies and our value proposition.",
+      "section1": {
+        "title": "Who We Are",
+        "p": "Parla Information Technologies is a team of experienced professionals delivering SAP-based solutions. We adopt sustainable and scalable approaches while digitizing our clients' processes.",
+        "list": ["Expert SAP consultants", "Project-tailored approach", "Strong support & maintenance"]
+      },
+      "section2": {
+        "title": "What We Do",
+        "p": "We analyze your business processes and design end-to-end solutions using appropriate SAP modules and integrations. We provide migration, license management and post-go-live support services.",
+        "list": ["S/4HANA migrations", "Custom development (ABAP)", "Cloud & BTP solutions"]
+      },
+      "section3": {
+        "title": "Our Values",
+        "p": "Customer-centricity, quality and transparent communication are our core values. We aim to build long-term partnerships in every project.",
+        "note": "You can include client references or short case studies here if you like."
+      }
+    }
+  },
   "footer": {
     "copyright": "© 2025 Parla Bilgi Teknolojileri. All rights reserved."
   }

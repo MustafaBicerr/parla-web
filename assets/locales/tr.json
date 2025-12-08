@@ -136,6 +136,27 @@
     "title": "Kariyer Fırsatları",
     "text": "Yetenekli bir SAP danışmanı veya yazılımcı mısın? CV'ni bekliyoruz!"
   },
+  "pages": {
+    "about": {
+      "title": "Hakkımızda",
+      "tagline": "Parla Bilgi Teknolojileri hakkında kısa bilgi ve değer önerimiz.",
+      "section1": {
+        "title": "Kimiz?",
+        "p": "Parla Bilgi Teknolojileri, SAP tabanlı çözümler geliştiren ve uygulayan deneyimli bir ekipten oluşur. Müşterilerimizin süreçlerini dijitalleştirirken, sürdürülebilir ve ölçeklenebilir yaklaşımlar benimsiyoruz.",
+        "list": ["Uzman SAP danışmanları", "Projeye özel yaklaşım", "Güçlü destek ve bakım"]
+      },
+      "section2": {
+        "title": "Ne Yapıyoruz?",
+        "p": "İş süreçlerinizi analiz ediyor; uygun SAP modülleri ve entegrasyonlarla uçtan uca çözümler tasarlıyoruz. Migrasyon, lisans yönetimi ve canlıya geçiş sonrası destek hizmetleri sunuyoruz.",
+        "list": ["S/4HANA dönüşümleri", "Özel geliştirme (ABAP)", "Bulut & BTP çözümleri"]
+      },
+      "section3": {
+        "title": "Değerlerimiz",
+        "p": "Müşteri odaklılık, kalite ve şeffaf iletişim temel değerlerimizdir. Her projede uzun vadeli iş ortaklıkları kurmayı hedefleriz.",
+        "note": "İsterseniz buraya müşteri referansları veya kısa vakalar ekleyebiliriz."
+      }
+    }
+  },
   "footer": {
     "copyright": "© 2025 Parla Bilgi Teknolojileri. Tüm hakları saklıdır."
   }
