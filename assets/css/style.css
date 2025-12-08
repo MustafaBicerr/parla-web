@@ -24,6 +24,11 @@ body {
     -webkit-user-select: none; user-select: none; /* Seçim engelleme */
 }
 
+/* Menü açıldığında sayfa kaydırmasını engelle */
+body.menu-open {
+    overflow: hidden; /* Sayfa kaydırılmasın */
+}
+
 input, textarea { user-select: text; }
 
 /* --- HEADER & NAVIGATION --- */
@@ -62,10 +67,10 @@ header.scrolled .logo { color: #000; }
 
 /* Desktop Menu */
 .nav-menu { display: flex; gap: 30px; list-style: none; align-items: center; }
-.nav-link { color: #ffffff; font-weight: 600; font-size: 0.98rem; text-decoration: none; transition: 0.3s; padding: 10px 0; display: flex; align-items: center; gap: 6px; }
+.nav-link { color: #ffffff; font-weight: 600; font-size: 1.3rem; text-decoration: none; transition: 0.3s; padding: 10px 0; display: flex; align-items: center; gap: 6px; }
 .nav-link:hover { color: var(--primary-color); }
 header.scrolled .nav-link { color: #000000; }
-.nav-link i { font-size: 0.75rem; transition: transform 0.3s; }
+.nav-link i { font-size: 0.75rem; transition: transform 0.3s;}
 .dropdown:hover .nav-link i { transform: rotate(180deg); }
 
 /* Dropdowns */
@@ -101,43 +106,71 @@ header.scrolled .lang-btn { color: #000; border-color: rgba(0,0,0,0.2); }
 header.scrolled .lang-btn:hover { background: rgba(0,0,0,0.05); }
 
 /* --- MOBILE MENU --- */
-.hamburger { display: none; color: #fff; font-size: 1.8rem; cursor: pointer; transition: color 0.3s ease; }
-header.scrolled .hamburger { color: #000; }
-.mobile-lang-wrapper { display: none; }
+.hamburger { 
+    display: none; 
+    color: #fff; 
+    font-size: 1.8rem; 
+    font-style: var(--bg-white);
+    cursor: pointer; 
+    transition: color 0.3s ease;
+    background: none;
+    border: none;
+    padding: 0;
+    margin-left: 10px;
+    order: 3;
+    overflow-y: auto;
+}
+header.scrolled .hamburger { color: #ffffff; }
 
 /* language toggle button (header) */
-.lang-toggle { cursor: pointer; color: #fff; border: 1px solid rgba(255,255,255,0.12); padding: 8px 12px; border-radius: 6px; font-weight: 700; background: transparent; transition: all 0.3s ease; }
+.lang-toggle { 
+    cursor: pointer; 
+    color: #fff; 
+    border: 1px solid rgba(255,255,255,0.12); 
+    padding: 8px 12px; 
+    border-radius: 6px; 
+    font-weight: 700; 
+    background: transparent; 
+    transition: all 0.3s ease;
+}
 .lang-toggle[data-current-lang="en"] { background: rgba(255,255,255,0.04); }
 header.scrolled .lang-toggle { color: #000; border-color: rgba(0,0,0,0.12); }
 header.scrolled .lang-toggle[data-current-lang="en"] { background: rgba(0,0,0,0.04); }
 
+/* Desktop lang toggle (visible by default, hidden on mobile) */
+.desktop-lang-toggle { display: inline-block; order: 2; }
+/* Mobile lang toggle (hidden by default, shown on mobile) */
+.mobile-lang-toggle { display: none; order: 1; }
+
 @media (max-width: 1100px) {
     .btn-demo, .header-right .lang-btn { display: none; }
-    .hamburger { display: block; margin-left: auto; }
+    .hamburger { display: block; }
+    .desktop-lang-toggle { display: none; }
+    .mobile-lang-toggle { display: block; }
     
     .nav-menu {
-        position: fixed; top: 0; right: -100%; width: 85%; height: 100vh;
+        position: fixed; top: 0%; right: -100%; width: 75%; height: 100vh;
         background: #1a1a1a; flex-direction: column; align-items: flex-start;
         padding: 80px 25px; transition: 0.4s cubic-bezier(0.77, 0.2, 0.05, 1.0);
-        overflow-y: auto; box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+        overflow-y: auto; box-shadow: -10px 0 30px rgba(0,0,0,0.5); z-index: 1005; 
     }
     .nav-menu.active { right: 0; }
     .nav-menu li { width: 100%; }
     .nav-link { font-size: 1.1rem; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); width: 100%; justify-content: space-between; }
-    
-    .mobile-lang-wrapper { display: block; margin-bottom: 20px; }
-    .mobile-lang-item { color: #fff; padding: 8px 15px; border: 1px solid #fff; border-radius: 5px; display: inline-block; font-weight: 700; cursor: pointer; }
 
     /* Mobil Dropdown (Accordion) */
     .dropdown-menu, .dropdown-menu.mega-menu {
         position: static; width: 100%; transform: none; opacity: 1; visibility: visible;
-        display: none; background: #2a2a2a; border: none; padding: 0;
+        display: none; background: #2a2a2a; border: none; padding: 0; color: #ccc; 
         grid-template-columns: 1fr;
     }
     .dropdown.active .dropdown-menu { display: block; animation: fadeIn 0.3s; }
     .dropdown-item { color: #ccc; padding: 15px 30px; border-color: #333; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 }
+
+/* Ensure navbar has flex display for proper alignment */
+.navbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: nowrap; }
 
 /* --- HERO SECTION --- */
 .hero {
