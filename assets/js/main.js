@@ -4,7 +4,10 @@ async function loadComponent(id, file) {
     try {
         const response = await fetch(file);
         document.getElementById(id).innerHTML = await response.text();
-        if (id === 'header-placeholder') initHeaderEvents();
+        if (id === 'header-placeholder') {
+            initHeaderEvents();
+            initHeaderScroll(); // Add scroll handling after header loads
+        }
     } catch (error) { console.error("Component Yükleme Hatası:", error); }
 }
 
@@ -73,6 +76,20 @@ function initHeaderEvents() {
             window.__i18n.setLanguage(start);
         }
     } catch (e) { /* ignore */ }
+}
+
+// Handle header scroll effect
+function initHeaderScroll() {
+    const header = document.querySelector('header');
+    if (!header) return;
+    
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+    });
 }
 
 // Hero Carousel - Auto-rotate images every 2 seconds
