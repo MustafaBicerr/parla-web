@@ -49,7 +49,7 @@
       "e_transformation": { "title": "E-Transformation", "desc": "E-Invoice, E-Ledger, E-Waybill solutions and regulatory compliance processes." },
       "banking": { "title": "Banking", "desc": "Online DBS, MT940 Integration, Virtual POS and Bulk Payment Systems." },
       "financial_accounting": { "title": "Financial Accounting", "desc": "Inflation Accounting, IFRS Reporting, General Ledger and Auto Reconciliation." },
-      "assets_realestate": { "title": "Fixed Assets & RE", "desc": "Fixed asset counting, assignment tracking and real estate management." },
+      "assets_realestate": { "title": "Fixed Assets & Real Estate Management Solutions", "desc": "Fixed asset counting, assignment tracking and real estate management." },
       "budget_tax": { "title": "Budget & Tax", "desc": "Budget management, tax filings, deferred tax and TMS provisions." },
       "trm": { "title": "Treasury & Risk", "desc": "Credit risk management, collateral processes, leasing and bond operations." },
       "insurance": { "title": "Insurance Solutions", "desc": "Insurance module (INSURA) integration and policy tracking processes." }
@@ -80,11 +80,10 @@
   },
   "header": {
     "nav": {
-      "about": "About",
+      "corporate": "Corporate",
       "organisation": "Implementation & Consulting",
       "academy": "Parla Academy",
       "solutions": "Sectoral Solutions",
-      "career": "Career",
       "references": "References",
       "contact": "Contact"
     },
@@ -92,6 +91,10 @@
       "demo": "Request Demo"
     },
     "dropdown": {
+      "corporate": {
+        "about": "About Us",
+        "career": "Career"
+      },
       "solutions": {
         "install": "SAP Implementation & Migration",
         "consulting": "SAP Consulting & Support"
@@ -109,7 +112,8 @@
       "academy": {
         "workshops": "Corporate Workshops",
         "online": "Online / In-person SAP Trainings",
-        "one_on_one": "Industry-specific One-to-One User Training"
+        "one_on_one": "Industry-specific One-to-One User Training",
+        "consulting": "Consulting Training"
       }
     }
   },
@@ -156,6 +160,33 @@
         "note": "You can include client references or short case studies here if you like."
       }
     },
+    "career": {
+      "pageTitle": "Careers - Parla IT",
+      "heroTitle": "Career Opportunities",
+      "intro": {
+        "title": "Join Our Team",
+        "p1": "At Parla Information Technologies, we believe in being part of a team that constantly learns, develops, and shapes technology. While creating value for our clients, we also provide a supportive and dynamic environment for our employees to achieve their career goals.",
+        "p2": "If you want to make a difference in the SAP world, take part in innovative projects, and grow with a passionate team, you are in the right place.",
+        "list": ["Dynamic and supportive work environment", "Continuous training and development opportunities", "Chance to work on innovative and global projects"]
+      },
+      "form": {
+        "title": "Application Form",
+        "firstName": "First Name",
+        "firstName_placeholder": "Your first name",
+        "lastName": "Last Name",
+        "lastName_placeholder": "Your last name",
+        "address": "City of Residence",
+        "address_placeholder": "e.g., Istanbul",
+        "experience": "Your Experience and Skills",
+        "experience_placeholder": "Briefly describe your technical skills, previous projects, or relevant experience...",
+        "motivation": "Why do you want to work at Parla IT?",
+        "motivation_placeholder": "Explain your motivation and the value you can bring to our company...",
+        "cv": "Upload Your CV or Portfolio",
+        "cv_placeholder": "Drag and drop your file here or ",
+        "cv_browse": "browse",
+        "submit": "Submit Application"
+      }
+    },
     "organisation": {
       "install": {
         "pageTitle": "SAP Implementation & Migration - Parla IT",
@@ -181,6 +212,100 @@
           { "title": "SAP Support Services", "desc": "We provide end-to-end support and guidance for errors, performance issues, and user requests you encounter in the live system." },
           { "title": "Custom SAP Solution Implementation (FI/CO/TRM etc.)", "desc": "We provide end-to-end implementation, customization, testing, and go-live consultancy for Finance (FI/CO), Treasury and Risk Management (TRM), and other modules." }
         ]
+      }
+    },
+    "academy": {
+      "workshops": {
+        "pageTitle": "Corporate Workshops - Parla Academy",
+        "heroTitle": "Corporate Training Workshops",
+        "title": "Custom SAP Workshops for Your Company",
+        "tagline": "Interactive training enriched with your company's data, turning theory into practice.",
+        "section1": {
+          "title": "Why a Corporate Workshop?",
+          "p": "Unlike standard training, our workshops focus directly on your business processes and SAP system. Your team learns using the data and scenarios from their daily operations, which maximizes training efficiency and knowledge retention.",
+          "list": ["Work with real company data", "Process-oriented problem solving", "Enhance team synergy"]
+        },
+        "section2": {
+          "title": "Our Workshop Process",
+          "p": "Before the training, we meet with you to analyze your needs and set goals. We then prepare a custom curriculum and practical scenarios for your company. The training is conducted in an interactive environment led by our expert consultants.",
+          "list": ["Pre-analysis and goal setting", "Customized curriculum design", "Hands-on and interactive sessions"]
+        },
+        "section3": {
+          "title": "What Topics?",
+          "p": "We can organize workshops on a wide range of topics, from standard modules like FI, CO, TRM, MM, SD to ABAP development or the use of your custom Z-reports. Whatever your need, we can create a custom program for you.",
+          "note": "Participants are provided with a special certificate and training materials at the end of the workshop."
+        },
+        "image1_alt": "A team working in a training environment",
+        "image2_alt": "An SAP consultant giving a presentation"
+      },
+      "online": {
+        "pageTitle": "Online & Classroom SAP Training - Parla Academy",
+        "heroTitle": "Online & Classroom SAP Training",
+        "title": "Structured SAP Training Programs",
+        "tagline": "Module-based training designed to advance your career or enhance your team's competencies.",
+        "section1": {
+          "title": "Comprehensive Curriculum",
+          "p": "Parla Academy provides you with in-depth knowledge of SAP's basic and advanced modules. We offer a roadmap from scratch to expertise in FI (Financial Accounting), CO (Controlling), MM (Materials Management), PP (Production Planning), and ABAP programming.",
+          "list": ["Basic and advanced module training", "Real-world industry examples", "S/4HANA innovations"]
+        },
+        "section2": {
+          "title": "Flexible Training Models",
+          "p": "Whether you join from anywhere in the world with live online classes or attend in-person training in our fully equipped classrooms, we've designed our programs to meet the needs of working professionals and participants from different geographies.",
+          "list": ["Live online classes", "Access to video recordings", "Modern training classrooms"]
+        },
+        "section3": {
+          "title": "Expert Instructor Staff",
+          "p": "Our training is delivered by expert SAP consultants with many years of project experience. Our instructors share not only theoretical knowledge but also their field experience with you.",
+          "note": "A certificate of participation is awarded at the end of all our training programs."
+        },
+        "image1_alt": "A person attending an online SAP training",
+        "image2_alt": "An SAP classroom training environment"
+      },
+      "one_on_one": {
+        "pageTitle": "One-on-One User Training - Parla Academy",
+        "heroTitle": "One-on-One User Training",
+        "title": "Personalized SAP User Training",
+        "tagline": "A personal training program designed to help you use SAP more efficiently and accurately in your daily work.",
+        "section1": {
+          "title": "End-User Focused Approach",
+          "p": "Our one-on-one training focuses directly on the end-user's job description and area of responsibility. Instead of complex menus and confusing screens, we provide practical information that enables the user to do their job quickly and correctly.",
+          "list": ["Task-based training content", "Prevention of common mistakes", "Shortcuts and productivity tips"]
+        },
+        "section2": {
+          "title": "Safe and Practical Learning",
+          "p": "We eliminate the fear of making mistakes in the live system. Our training is conducted on test systems with realistic scenarios. Users increase their confidence in the system by practicing extensively under the supervision of a consultant.",
+          "list": ["Safe practice in a test environment", "Realistic business scenarios", "Instant feedback and Q&A"]
+        },
+        "section3": {
+          "title": "Who Is It For?",
+          "p": "This is an ideal solution for new employees, staff moving to a different department, or anyone experiencing difficulties with their current SAP usage. The training progresses flexibly according to the individual's pace and level of understanding.",
+          "note": "The duration and content of the training can be fully customized to the user's needs."
+        },
+        "image1_alt": "A user working one-on-one with a consultant",
+        "image2_alt": "A person looking at an SAP screen at a computer"
+      },
+      "consulting": {
+        "pageTitle": "Consulting Training - Parla Academy",
+        "heroTitle": "SAP Consulting Training",
+        "title": "Technical Training for Future Consultants",
+        "tagline": "In-depth technical and process knowledge for key users and consultant candidates.",
+        "section1": {
+          "title": "In-depth Module Knowledge",
+          "p": "This program goes beyond standard user training to teach the configuration (customizing) and technical infrastructure of SAP modules (FI, CO, TRM, etc.). Participants understand not only 'how' the system works, but also 'why' it works that way.",
+          "list": ["Module configuration (IMG) basics", "Business processes and SAP integration", "Debugging and problem-solving techniques"]
+        },
+        "section2": {
+          "title": "Project Methodology and Consulting Skills",
+          "p": "A good consultant not only has technical knowledge but also masters project management and communication skills. Our training covers project steps such as analysis, design, testing, and go-live, as well as client management principles.",
+          "list": ["ASAP and Activate methodologies", "Effective communication and presentation techniques", "Documentation standards"]
+        },
+        "section3": {
+          "title": "Who Is It For?",
+          "p": "This training is designed for professionals who are key users in their companies, wish to pursue a career as an SAP consultant, or aim to deepen their existing consulting knowledge.",
+          "note": "At the end of the training, a case study is conducted where participants apply what they have learned on a project scenario."
+        },
+        "image1_alt": "A meeting room where a group of people are discussing a project",
+        "image2_alt": "A consultant explaining an SAP system diagram"
       }
     },
     "solutions": {
@@ -237,7 +362,7 @@
         }
       },
       "asset_management": {
-        "pageTitle": "Asset & Real Estate Solutions - Parla IT",
+        "pageTitle": "Fixed Assets & Real Estate Management Solutions - Parla IT",
         "heroTitle": "Fixed Asset and Real Estate Management",
         "title": "Fixed Asset and Real Estate Management",
         "items": {

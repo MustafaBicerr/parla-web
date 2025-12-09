@@ -148,6 +148,50 @@ function initCarousel() {
     }
 }
 
+function initCareerForm() {
+    const dropArea = document.querySelector('.file-drop-area');
+    if (!dropArea) return; // Sadece kariyer sayfasında çalışmasını sağlar
+
+    const fileInput = dropArea.querySelector('.file-input');
+    const fileInfoDiv = document.querySelector('.file-info');
+
+    // Sürükle-bırak için varsayılan davranışları engelle
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
+    });
+
+    // Dosya sürüklendiğinde görsel geri bildirim için sınıf ekle
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false);
+    });
+
+    // Sürükleme alanı dışına çıkıldığında sınıfı kaldır
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false);
+    });
+
+    // Bırakılan dosyaları işle
+    dropArea.addEventListener('drop', (e) => {
+        fileInput.files = e.dataTransfer.files;
+        fileInput.dispatchEvent(new Event('change', { bubbles: true })); // Arayüzü güncellemek için 'change' olayını tetikle
+    }, false);
+
+    // Dosya seçildiğinde arayüzü güncelle
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+            fileInfoDiv.innerHTML = `<span>${this.files[0].name}</span> <i class="fas fa-times remove-file-btn" title="Dosyayı kaldır"></i>`;
+            fileInfoDiv.style.display = 'flex';
+            dropArea.style.display = 'none';
+
+            fileInfoDiv.querySelector('.remove-file-btn').addEventListener('click', () => {
+                fileInput.value = ''; // Dosya seçimini temizle
+                fileInfoDiv.style.display = 'none';
+                dropArea.style.display = 'flex';
+            });
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     // Use root-relative paths so components load correctly from pages in subfolders
     loadComponent('header-placeholder', '/components/header.html');
@@ -162,5 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize carousel
     initCarousel();
 
-    
+    // Initialize career form interactions if the form exists on the page
+    initCareerForm();
 });

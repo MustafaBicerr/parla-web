@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="pages.career.pageTitle">Kariyer - Parla BT</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div id="header-placeholder"></div>
+    <div id="hero-placeholder" data-hero-key="pages.career.heroTitle"></div>
+
+    <main>
+        <section class="career-section">
+            <div class="container">
+                <div class="career-grid">
+                    <!-- Sol Taraf: Tanıtım Metni -->
+                    <div class="career-intro anim-block" data-animate="true" data-anim-type="fade-right">
+                        <h2 data-i18n="pages.career.intro.title">Ekibimize Katılın</h2>
+                        <p data-i18n="pages.career.intro.p1">
+                            Parla Bilgi Teknolojileri olarak, sürekli öğrenen, gelişen ve teknolojiye yön veren bir ekibin parçası olmaya inanıyoruz. Müşterilerimiz için değer yaratırken, çalışanlarımızın da kariyer hedeflerine ulaşmaları için destekleyici ve dinamik bir ortam sunuyoruz.
+                        </p>
+                        <p data-i18n="pages.career.intro.p2">
+                            Eğer siz de SAP dünyasında fark yaratmak, yenilikçi projelerde yer almak ve tutkulu bir ekiple birlikte büyümek istiyorsanız, doğru yerdesiniz.
+                        </p>
+                        <ul class="about-list">
+                            <li data-i18n="pages.career.intro.list.0">Dinamik ve destekleyici çalışma ortamı</li>
+                            <li data-i18n="pages.career.intro.list.1">Sürekli eğitim ve gelişim fırsatları</li>
+                            <li data-i18n="pages.career.intro.list.2">Yenilikçi ve global projelerde yer alma şansı</li>
+                        </ul>
+                    </div>
+
+                    <!-- Sağ Taraf: Başvuru Formu -->
+                    <div class="career-form anim-block" data-animate="true" data-anim-type="fade-left">
+                        <h3 data-i18n="pages.career.form.title">Başvuru Formu</h3>
+                        <form action="https://formspree.io/f/SENIN_ID" method="POST" enctype="multipart/form-data">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="firstName" data-i18n="pages.career.form.firstName">Ad</label>
+                                    <input type="text" id="firstName" name="firstName" required data-i18n-placeholder="pages.career.form.firstName_placeholder">
+                                </div>
+                                <div class="form-group">
+                                    <label for="lastName" data-i18n="pages.career.form.lastName">Soyad</label>
+                                    <input type="text" id="lastName" name="lastName" required data-i18n-placeholder="pages.career.form.lastName_placeholder">
+                                </div>
+                                <div class="form-group">
+                                    <label for="email" data-i18n="contact.form.email">E-posta</label>
+                                    <input type="email" id="email" name="email" required data-i18n-placeholder="contact.form.email_placeholder">
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone" data-i18n="contact.form.phone">Telefon</label>
+                                    <input type="tel" id="phone" name="phone" required data-i18n-placeholder="contact.form.phone_placeholder">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="address" data-i18n="pages.career.form.address">İkamet Şehri</label>
+                                    <input type="text" id="address" name="address" required data-i18n-placeholder="pages.career.form.address_placeholder">
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="experience" data-i18n="pages.career.form.experience">Deneyimleriniz ve Yetenekleriniz</label>
+                                    <textarea id="experience" name="experience" rows="5" data-i18n-placeholder="pages.career.form.experience_placeholder"></textarea>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label for="motivation" data-i18n="pages.career.form.motivation">Neden Parla BT'de çalışmak istiyorsunuz?</label>
+                                    <textarea id="motivation" name="motivation" rows="5" required data-i18n-placeholder="pages.career.form.motivation_placeholder"></textarea>
+                                </div>
+                                <div class="form-group full-width">
+                                    <label data-i18n="pages.career.form.cv">CV'nizi veya Portfolyonuzu Yükleyin</label>
+                                    <div class="file-drop-area">
+                                        <i class="fas fa-cloud-upload-alt file-icon"></i>
+                                        <span class="file-msg">
+                                            <span data-i18n="pages.career.form.cv_placeholder">Dosyayı sürükleyip bırakın veya </span>
+                                            <span class="file-browse" data-i18n="pages.career.form.cv_browse">göz atın</span>
+                                        </span>
+                                        <input type="file" name="attachment" class="file-input">
+                                    </div>
+                                    <div class="file-info"></div>
+                                </div>
+                                <div class="form-group full-width">
+                                    <button type="submit" class="btn btn-primary" style="width: 100%; border:none;" data-i18n="pages.career.form.submit">Başvuruyu Gönder</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="/assets/js/i18n.js"></script>
+    <script src="/assets/js/anim.js"></script>
+    <script src="/assets/js/main.js"></script>
+</body>
+</html>

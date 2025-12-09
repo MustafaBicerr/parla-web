@@ -1,4 +1,7 @@
 <header>
+        <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 
 
     <div class="container navbar">
@@ -6,7 +9,13 @@
 
         <nav>
             <ul class="nav-menu" id="nav-menu">
-                <li><a href="/pages/about.html" class="nav-link" id="nav-about" data-i18n="header.nav.about">Hakkımızda</a></li>
+                <li class="dropdown">
+                    <a href="#" class="nav-link"><span id="nav-corporate" data-i18n="header.nav.corporate">Kurumsal</span> <i class="fas fa-chevron-down"></i></a>
+                    <div class="dropdown-menu">
+                        <a href="/pages/corporate/about.html" class="dropdown-item" data-i18n="header.dropdown.corporate.about">Hakkımızda</a>
+                        <a href="/pages/corporate/career.html" class="dropdown-item" data-i18n="header.dropdown.corporate.career">Kariyer</a>
+                    </div>
+                </li>
 
                 <li class="dropdown">
                     <a href="#" class="nav-link"><span id="nav-solutions" data-i18n="header.nav.organisation">Kurulum & Danışmanlık</span> <i class="fas fa-chevron-down"></i></a>
@@ -19,27 +28,29 @@
                 <li class="dropdown">
                     <a href="#" class="nav-link"><span id="nav-sector" data-i18n="header.nav.solutions">Sektörel Çözümler</span> <i class="fas fa-chevron-down"></i></a>
                     <div class="dropdown-menu mega-menu">
-                        <a href="/pages/solutions/e-transformation/e-transformation.html" class="dropdown-item" data-i18n="header.dropdown.sector.e_transformation">E-Dönüşüm Çözümleri</a>
-                        <a href="/pages/solutions/banking/banking.html" class="dropdown-item" data-i18n="header.dropdown.sector.banking">Bankacılık Çözümleri</a>
-                        <a href="/pages/solutions/financial-accounting/financial-accounting.html" class="dropdown-item" data-i18n="header.dropdown.sector.financial_accounting">Finansal Muhasebe Çözümleri</a>
-                        <a href="/pages/solutions/asset-management/asset-management.html" class="dropdown-item" data-i18n="header.dropdown.sector.assets_realestate">Duran Varlık & Gayrimenkul Yönetimi Çözümleri</a>
-                        <a href="/pages/solutions/budget-tax/budget-tax.html" class="dropdown-item" data-i18n="header.dropdown.sector.budget_tax">Bütçe Kapanış ve Vergi Çözümleri</a>
-                        <a href="/pages/solutions/treasury-risk/treasury-risk.html" class="dropdown-item" data-i18n="header.dropdown.sector.trm">Hazine ve Risk Yönetimi (TRM) Çözümleri</a>
-                        <a href="/pages/solutions/insurance/insurance.html" class="dropdown-item" data-i18n="header.dropdown.sector.insurance">Sigorta Çözümleri</a>
-                        <a href="/pages/solutions/mobile-automation/mobile-automation.html" class="dropdown-item" data-i18n="header.dropdown.sector.mobile">Mobil ve Otomasyon Çözümleri</a>
+                        <a href="/pages/solutions/e-transformation.html" class="dropdown-item" data-i18n="header.dropdown.sector.e_transformation">E-Dönüşüm Çözümleri</a>
+                        <a href="/pages/solutions/banking.html" class="dropdown-item" data-i18n="header.dropdown.sector.banking">Bankacılık Çözümleri</a>
+                        <a href="/pages/solutions/financial-accounting.html" class="dropdown-item" data-i18n="header.dropdown.sector.financial_accounting">Finansal Muhasebe Çözümleri</a>
+                        <a href="/pages/solutions/asset-management.html" class="dropdown-item" data-i18n="header.dropdown.sector.assets_realestate">Duran Varlık & Gayrimenkul Yönetimi Çözümleri</a>
+                        <a href="/pages/solutions/budget-tax.html" class="dropdown-item" data-i18n="header.dropdown.sector.budget_tax">Bütçe Kapanış ve Vergi Çözümleri</a>
+                        <a href="/pages/solutions/treasury-risk.html" class="dropdown-item" data-i18n="header.dropdown.sector.trm">Hazine ve Risk Yönetimi (TRM) Çözümleri</a>
+                        <a href="/pages/solutions/insurance.html" class="dropdown-item" data-i18n="header.dropdown.sector.insurance">Sigorta Çözümleri</a>
+                        <a href="/pages/solutions/mobile-automation.html" class="dropdown-item" data-i18n="header.dropdown.sector.mobile">Mobil ve Otomasyon Çözümleri</a>
                     </div>
                 </li>
 
                 <li class="dropdown">
                     <a href="#" class="nav-link"><span id="nav-academy" data-i18n="header.nav.academy">Parla Akademi</span> <i class="fas fa-chevron-down"></i></a>
                     <div class="dropdown-menu">
-                        <a href="#" class="dropdown-item" data-i18n="header.dropdown.academy.workshops">Kuruma Özel Atölye Eğitimleri</a>
-                        <a href="#" class="dropdown-item" data-i18n="header.dropdown.academy.online">Online / Yüzyüze Sınıflarda SAP Eğitimleri</a>
-                        <a href="#" class="dropdown-item" data-i18n="header.dropdown.academy.one_on_one">Sektöre Özel Bire Bir Kullanıcı Eğitimi</a>
+                        <a href="/pages/academy/corporate-workshops.html" class="dropdown-item" data-i18n="header.dropdown.academy.workshops">Kuruma Özel Atölye Eğitimleri</a>
+                        <a href="/pages/academy/online-classroom-training.html" class="dropdown-item" data-i18n="header.dropdown.academy.online">Online / Yüzyüze Sınıflarda SAP Eğitimleri</a>
+                        <a href="/pages/academy/one-on-one-training.html" class="dropdown-item" data-i18n="header.dropdown.academy.one_on_one">Sektöre Özel Bire Bir Kullanıcı Eğitimi</a>
+                        <a href="/pages/academy/consulting-training.html" class="dropdown-item" data-i18n="header.dropdown.academy.consulting">Danışmanlık Eğitimi</a>
                     </div>
                 </li>
 
-                <li><a href="#" class="nav-link" id="nav-referance" data-i18n="header.nav.references">Referanslar</a></li>
+                <li><a href="/pages/references.html" class="nav-link" id="nav-referance" data-i18n="header.nav.references">Referanslar</a></li>
+           
             </ul>
         </nav>
 

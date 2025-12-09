@@ -49,7 +49,7 @@
       "e_transformation": { "title": "E-Dönüşüm", "desc": "E-Fatura, E-Defter, E-İrsaliye çözümleri ve yasal uyumluluk süreçleri." },
       "banking": { "title": "Bankacılık", "desc": "Online DBS, MT940 Entegrasyonu, Sanal POS ve Toplu Ödeme Sistemleri." },
       "financial_accounting": { "title": "Finansal Muhasebe", "desc": "Enflasyon Muhasebesi, UFRS Raporlama, Defteri Kebir ve Otomatik Denkleştirme." },
-      "assets_realestate": { "title": "Duran Varlık & GM", "desc": "Duran Varlık Sayım, Zimmet Takibi ve Gayrimenkul Yönetimi (RE)." },
+      "assets_realestate": { "title": "Duran Varlık & Gayrimenkul Yönetimi Çözümleri", "desc": "Duran Varlık Sayım, Zimmet Takibi ve Gayrimenkul Yönetimi (RE)." },
       "budget_tax": { "title": "Bütçe & Vergi", "desc": "Bütçe Yönetimi, Vergi Beyannameleri, Ertelenmiş Vergi ve TMS Reeskont." },
       "trm": { "title": "Hazine & Risk", "desc": "Kredi Risk Yönetimi, Teminat Süreçleri, Leasing ve Tahvil İşlemleri." },
       "insurance": { "title": "Sigorta Çözümleri", "desc": "Sigorta modülü (INSURA) entegrasyonu ve poliçe takip süreçleri." }
@@ -80,11 +80,10 @@
   },
   "header": {
     "nav": {
-      "about": "Hakkımızda",
+      "corporate": "Kurumsal",
       "organisation": "Kurulum & Danışmanlık",
       "academy": "Parla Akademi",
       "solutions": "Sektörel Çözümler",
-      "career": "Kariyer",
       "references": "Referanslar",
       "contact": "İletişim"
     },
@@ -92,6 +91,10 @@
       "demo": "Demo Talep Et"
     },
     "dropdown": {
+      "corporate": {
+        "about": "Hakkımızda",
+        "career": "Kariyer"
+      },
       "solutions": {
         "install": "SAP Kurulumu & Geçiş",
         "consulting": "SAP Danışmanlık & Destek"
@@ -109,7 +112,8 @@
       "academy": {
         "workshops": "Kuruma Özel Atölye Eğitimleri",
         "online": "Online / Yüzyüze Sınıflarda SAP Eğitimleri",
-        "one_on_one": "Sektöre Özel Bire Bir Kullanıcı Eğitimi"
+        "one_on_one": "Sektöre Özel Bire Bir Kullanıcı Eğitimi",
+        "consulting": "Danışmanlık Eğitimi"
       }
     }
   },
@@ -156,6 +160,33 @@
         "note": "İsterseniz buraya müşteri referansları veya kısa vakalar ekleyebiliriz."
       }
     },
+    "career": {
+      "pageTitle": "Kariyer - Parla BT",
+      "heroTitle": "Kariyer Fırsatları",
+      "intro": {
+        "title": "Ekibimize Katılın",
+        "p1": "Parla Bilgi Teknolojileri olarak, sürekli öğrenen, gelişen ve teknolojiye yön veren bir ekibin parçası olmaya inanıyoruz. Müşterilerimiz için değer yaratırken, çalışanlarımızın da kariyer hedeflerine ulaşmaları için destekleyici ve dinamik bir ortam sunuyoruz.",
+        "p2": "Eğer siz de SAP dünyasında fark yaratmak, yenilikçi projelerde yer almak ve tutkulu bir ekiple birlikte büyümek istiyorsanız, doğru yerdesiniz.",
+        "list": ["Dinamik ve destekleyici çalışma ortamı", "Sürekli eğitim ve gelişim fırsatları", "Yenilikçi ve global projelerde yer alma şansı"]
+      },
+      "form": {
+        "title": "Başvuru Formu",
+        "firstName": "Ad",
+        "firstName_placeholder": "Adınız",
+        "lastName": "Soyad",
+        "lastName_placeholder": "Soyadınız",
+        "address": "İkamet Şehri",
+        "address_placeholder": "Örn: İstanbul",
+        "experience": "Deneyimleriniz ve Yetenekleriniz",
+        "experience_placeholder": "Kısaca teknik yeteneklerinizden, önceki projelerinizden veya ilgili deneyimlerinizden bahsedin...",
+        "motivation": "Neden Parla BT'de çalışmak istiyorsunuz?",
+        "motivation_placeholder": "Motivasyonunuzu ve şirketimize katabileceğiniz değeri anlatın...",
+        "cv": "CV'nizi veya Portfolyonuzu Yükleyin",
+        "cv_placeholder": "Dosyayı sürükleyip bırakın veya ",
+        "cv_browse": "göz atın",
+        "submit": "Başvuruyu Gönder"
+      }
+    },
     "organisation": {
       "install": {
         "pageTitle": "SAP Kurulum & Geçiş - Parla BT",
@@ -181,6 +212,100 @@
           { "title": "SAP Destek Hizmetleri", "desc": "Canlı sistemde karşılaştığınız hatalar, performans sorunları ve kullanıcı talepleri için uçtan uca destek ve yönlendirme sağlıyoruz." },
           { "title": "Özel SAP Çözümleri Kurulumu (FI/CO/TRM vb.)", "desc": "Finans (FI/CO), Hazine ve Risk Yönetimi (TRM) ve diğer modüller için baştan sona kurulum, uyarlama, test ve canlıya geçiş danışmanlığı veriyoruz." }
         ]
+      }
+    },
+    "academy": {
+      "workshops": {
+        "pageTitle": "Kuruma Özel Atölye Eğitimleri - Parla Akademi",
+        "heroTitle": "Kuruma Özel Atölye Eğitimleri",
+        "title": "Şirketinize Özel SAP Atölyeleri",
+        "tagline": "Teoriyi pratiğe dönüştüren, şirket verilerinizle zenginleştirilmiş interaktif eğitimler.",
+        "section1": {
+          "title": "Neden Kuruma Özel Atölye?",
+          "p": "Standart eğitimlerin aksine, atölye çalışmalarımız doğrudan sizin iş süreçlerinize ve SAP sisteminize odaklanır. Ekibiniz, kendi günlük operasyonlarında kullandığı veriler ve senaryolar üzerinden öğrenir, bu da eğitim verimliliğini ve kalıcılığını en üst düzeye çıkarır.",
+          "list": ["Gerçek şirket verileriyle çalışma", "Süreç odaklı problem çözme", "Ekip içi sinerjiyi artırma"]
+        },
+        "section2": {
+          "title": "Atölye Sürecimiz",
+          "p": "Eğitim öncesi sizinle bir araya gelerek ihtiyaçlarınızı analiz eder, hedeflerinizi belirleriz. Ardından, şirketinize özel bir müfredat ve uygulama senaryoları hazırlarız. Eğitim, uzman danışmanlarımız liderliğinde interaktif bir ortamda gerçekleştirilir.",
+          "list": ["Ön analiz ve hedef belirleme", "Özelleştirilmiş müfredat tasarımı", "Uygulamalı ve interaktif oturumlar"]
+        },
+        "section3": {
+          "title": "Hangi Konular?",
+          "p": "FI, CO, TRM, MM, SD gibi standart modüllerden, ABAP geliştirmeye veya özel Z-raporlarınızın kullanımına kadar geniş bir yelpazede atölye düzenleyebiliriz. İhtiyacınız ne olursa olsun, size özel bir program oluşturabiliriz.",
+          "note": "Atölye sonunda katılımcılara özel sertifika ve eğitim materyalleri sunulmaktadır."
+        },
+        "image1_alt": "Eğitim ortamında çalışan bir ekip",
+        "image2_alt": "Sunum yapan bir SAP danışmanı"
+      },
+      "online": {
+        "pageTitle": "Online & Sınıf SAP Eğitimleri - Parla Akademi",
+        "heroTitle": "Online & Sınıf SAP Eğitimleri",
+        "title": "Yapılandırılmış SAP Eğitim Programları",
+        "tagline": "Kariyerinize yön vermek veya ekibinizin yetkinliğini artırmak için tasarlanmış modül bazlı eğitimler.",
+        "section1": {
+          "title": "Kapsamlı Müfredat",
+          "p": "Parla Akademi, SAP'nin temel ve ileri düzey modüllerinde derinlemesine bilgi sahibi olmanızı sağlar. FI (Finansal Muhasebe), CO (Maliyet Muhasebesi), MM (Malzeme Yönetimi), PP (Üretim Planlama) ve ABAP programlama dillerinde, sıfırdan uzmanlığa giden bir yol haritası sunuyoruz.",
+          "list": ["Temel ve ileri düzey modül eğitimleri", "Sektörden gerçek örnekler", "S/4HANA yenilikleri"]
+        },
+        "section2": {
+          "title": "Esnek Eğitim Modelleri",
+          "p": "İster online canlı derslerle dünyanın her yerinden katılın, ister tam donanımlı sınıflarımızda yüz yüze eğitim alın. Programlarımızı, çalışan profesyonellerin ve farklı coğrafyalardaki katılımcıların ihtiyaçlarına göre tasarladık.",
+          "list": ["Canlı online dersler", "Video kayıtlarına erişim", "Modern eğitim sınıfları"]
+        },
+        "section3": {
+          "title": "Uzman Eğitmen Kadrosu",
+          "p": "Eğitimlerimiz, uzun yıllar proje deneyimine sahip, alanında uzman SAP danışmanları tarafından verilmektedir. Eğitmenlerimiz, sadece teorik bilgiyi değil, aynı zamanda saha tecrübelerini de sizlerle paylaşır.",
+          "note": "Tüm eğitimlerimiz sonunda katılım sertifikası verilmektedir."
+        },
+        "image1_alt": "Online SAP eğitimi alan bir kişi",
+        "image2_alt": "SAP sınıf eğitimi ortamı"
+      },
+      "one_on_one": {
+        "pageTitle": "Bire Bir Kullanıcı Eğitimi - Parla Akademi",
+        "heroTitle": "Bire Bir Kullanıcı Eğitimi",
+        "title": "Kişiye Özel SAP Kullanıcı Eğitimleri",
+        "tagline": "SAP'yi günlük işlerinizde daha verimli ve hatasız kullanmanız için tasarlanmış kişisel eğitim programı.",
+        "section1": {
+          "title": "Son Kullanıcı Odaklı Yaklaşım",
+          "p": "Bire bir eğitimlerimiz, doğrudan son kullanıcının görev tanımına ve sorumluluk alanına odaklanır. Karmaşık menüler ve anlaşılmaz ekranlar yerine, kullanıcının sadece kendi işini en hızlı ve doğru şekilde yapmasını sağlayacak pratik bilgiler aktarılır.",
+          "list": ["Görev bazlı eğitim içeriği", "Sık yapılan hataların önlenmesi", "Kısayollar ve verimlilik ipuçları"]
+        },
+        "section2": {
+          "title": "Güvenli ve Pratik Öğrenme",
+          "p": "Canlı sistemde hata yapma korkusunu ortadan kaldırıyoruz. Eğitimlerimiz, test sistemleri üzerinde, gerçekçi senaryolarla yapılır. Kullanıcılar, danışman gözetiminde bol bol pratik yaparak sisteme olan güvenlerini artırır.",
+          "list": ["Test ortamında güvenli pratik", "Gerçekçi iş senaryoları", "Anında geri bildirim ve soru-cevap"]
+        },
+        "section3": {
+          "title": "Kimler İçin Uygun?",
+          "p": "Şirketinize yeni katılan personeller, farklı bir departmana geçen çalışanlar veya mevcut SAP kullanımında zorluk yaşayan herkes için ideal bir çözümdür. Eğitim, kişinin hızına ve anlama düzeyine göre tamamen esnek bir şekilde ilerler.",
+          "note": "Eğitim süresi ve içeriği, kullanıcının ihtiyacına göre tamamen özelleştirilebilir."
+        },
+        "image1_alt": "Danışman ile bire bir çalışan kullanıcı",
+        "image2_alt": "Bilgisayar başında SAP ekranına bakan bir kişi"
+      },
+      "consulting": {
+        "pageTitle": "Danışmanlık Eğitimi - Parla Akademi",
+        "heroTitle": "SAP Danışmanlık Eğitimi",
+        "title": "Geleceğin Danışmanları İçin Teknik Eğitim",
+        "tagline": "Anahtar kullanıcılar ve danışman adayları için derinlemesine teknik ve süreç bilgisi.",
+        "section1": {
+          "title": "Derinlemesine Modül Bilgisi",
+          "p": "Bu program, standart kullanıcı eğitimlerinin ötesine geçerek, SAP modüllerinin (FI, CO, TRM vb.) yapılandırma (customizing) ve teknik altyapısını öğretmeyi hedefler. Katılımcılar, sistemin 'nasıl' çalıştığının yanı sıra 'neden' o şekilde çalıştığını da anlarlar.",
+          "list": ["Modül yapılandırma (IMG) temelleri", "İşletme süreçleri ve SAP entegrasyonu", "Hata ayıklama ve problem çözme teknikleri"]
+        },
+        "section2": {
+          "title": "Proje Metodolojisi ve Danışmanlık Becerileri",
+          "p": "İyi bir danışman sadece teknik bilgiye sahip olmakla kalmaz, aynı zamanda proje yönetimi ve iletişim becerilerine de hakimdir. Eğitimimiz, analiz, tasarım, test ve canlıya geçiş gibi proje adımlarını ve müşteri yönetimi prensiplerini kapsar.",
+          "list": ["ASAP ve Activate metodolojileri", "Etkili iletişim ve sunum teknikleri", "Belgelendirme standartları"]
+        },
+        "section3": {
+          "title": "Kimler İçin?",
+          "p": "Bu eğitim, şirketlerinde anahtar kullanıcı (key user) rolü üstlenen, SAP alanında kariyerine danışman olarak devam etmek isteyen veya mevcut danışmanlık bilgisini derinleştirmeyi hedefleyen profesyoneller için tasarlanmıştır.",
+          "note": "Eğitim sonunda, katılımcıların bir proje senaryosu üzerinde öğrendiklerini uyguladıkları bir vaka çalışması gerçekleştirilir."
+        },
+        "image1_alt": "Bir grup insanın proje üzerinde tartıştığı bir toplantı odası",
+        "image2_alt": "SAP sistem şemasını anlatan bir danışman"
       }
     },
     "solutions": {
@@ -237,7 +362,7 @@
         }
       },
       "asset_management": {
-        "pageTitle": "Duran Varlık & GM Çözümleri - Parla BT",
+        "pageTitle": "Duran Varlık & Gayrimenkul Yönetimi Çözümleri - Parla BT",
         "heroTitle": "Duran Varlık ve Gayrimenkul Yönetimi",
         "title": "Duran Varlık ve Gayrimenkul Yönetimi",
         "items": {
