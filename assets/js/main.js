@@ -202,47 +202,172 @@ function openSolutionModal(jsonKey) {
 // Expose the function to the global scope to be callable from HTML onclick
 window.openSolutionModal = openSolutionModal;
 
+
+
+// İletişim ve Kariyer Formları için ortak Google Apps Script URL'si
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFYTp7y4IY-x8rhK2g-tnaXaLSiNECWBjqW_MBHQZ1ZyM_ypW3DYRRjDcjr0iG2QmK/exec";
+
 function initCareerForm() {
     const dropArea = document.querySelector('.file-drop-area');
-    if (!dropArea) return; // Sadece kariyer sayfasında çalışmasını sağlar
+    if (!dropArea) return;
 
     const fileInput = dropArea.querySelector('.file-input');
     const fileInfoDiv = document.querySelector('.file-info');
 
-    // Sürükle-bırak için varsayılan davranışları engelle
+    // Sürükle-bırak olayları (Aynı kalıyor)
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
         dropArea.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
     });
-
-    // Dosya sürüklendiğinde görsel geri bildirim için sınıf ekle
     ['dragenter', 'dragover'].forEach(eventName => {
         dropArea.addEventListener(eventName, () => dropArea.classList.add('dragover'), false);
     });
-
-    // Sürükleme alanı dışına çıkıldığında sınıfı kaldır
     ['dragleave', 'drop'].forEach(eventName => {
         dropArea.addEventListener(eventName, () => dropArea.classList.remove('dragover'), false);
     });
-
-    // Bırakılan dosyaları işle
     dropArea.addEventListener('drop', (e) => {
         fileInput.files = e.dataTransfer.files;
-        fileInput.dispatchEvent(new Event('change', { bubbles: true })); // Arayüzü güncellemek için 'change' olayını tetikle
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
     }, false);
 
-    // Dosya seçildiğinde arayüzü güncelle
     fileInput.addEventListener('change', function() {
         if (this.files && this.files.length > 0) {
             fileInfoDiv.innerHTML = `<span>${this.files[0].name}</span> <i class="fas fa-times remove-file-btn" title="Dosyayı kaldır"></i>`;
             fileInfoDiv.style.display = 'flex';
             dropArea.style.display = 'none';
-
             fileInfoDiv.querySelector('.remove-file-btn').addEventListener('click', () => {
-                fileInput.value = ''; // Dosya seçimini temizle
+                fileInput.value = '';
                 fileInfoDiv.style.display = 'none';
                 dropArea.style.display = 'flex';
-            });
+            });s
         }
+    });
+
+    const form = document.getElementById('career-application-form');
+    if (!form) return;
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        // --- HATA AYIKLAMA İÇİN KONTROL ---
+        // Eğer bu ID'ler HTML'de yoksa kod burada patlar ve istek gitmez.
+        const elFirstName = document.getElementById('firstName');
+        const elLastName = document.getElementById('lastName');
+        
+        if (!elFirstName || !elLastName) {
+            console.error("HATA: HTML ID'leri bulunamadı. Lütfen input ID'lerinin 'firstName' ve 'lastName' olduğundan emin olun.");
+            alert("Teknik bir hata oluştu (HTML ID Uyuşmazlığı). Lütfen console'u kontrol edin.");
+            return;
+        }
+        // ----------------------------------
+
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerText;
+
+        // Form verilerini al
+        const payload = {
+            type: 'career', // <--- KRİTİK EKLEME: Backend'in bunu tanıması için şart!
+            first_name: elFirstName.value,
+            last_name: elLastName.value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value,
+            city: document.getElementById('address').value, // HTML'deki ID'nin 'address' olduğundan emin ol
+            experience: document.getElementById('experience').value,
+            motivation: document.getElementById('motivation').value,
+        };
+
+        const file = fileInput.files.length > 0 ? fileInput.files[0] : null;
+
+        if (!file) {
+            alert('Lütfen başvurunuza CV veya portfolyo dosyanızı ekleyin.');
+            return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.innerText = 'Gönderiliyor...';
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+
+        reader.onload = function() {
+            const base64File = reader.result.split(',')[1];
+
+            payload.file = {
+                name: file.name,
+                type: file.type,
+                data: base64File
+            };
+
+            
+            // mode: 'no-cors' KALDIRILDI. Hata varsa görelim.
+            fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            })
+            .then(res => {
+                // Google Redirect döneceği için 'res.ok' her zaman true olmayabilir ama hata fırlatmazsa işlem başarılıdır.
+                alert('Başvurunuz başarıyla gönderildi. İlginiz için teşekkür ederiz!');
+                form.reset();
+                fileInfoDiv.style.display = 'none';
+                dropArea.style.display = 'flex';
+            })
+            .catch(error => {
+                console.error('Form Gönderme Hatası:', error);
+                alert('Başvurunuz gönderilirken bir hata oluştu. Lütfen Console (F12) ekranını kontrol edin.');
+            })
+            .finally(() => {
+                submitButton.disabled = false;
+                submitButton.innerText = originalButtonText;
+            });
+        };
+
+        reader.onerror = function() {
+            alert('Dosyanız okunurken bir hata oluştu.');
+            submitButton.disabled = false;
+            submitButton.innerText = originalButtonText;
+        };
+    });
+}
+
+function initContactForm() {
+    const form = document.getElementById('contact-form');
+    if (!form) return;
+
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton.innerText;
+
+        const payload = {
+            type: 'contact', // Backend'in formu tanıması için
+            name: document.getElementById('contact-name').value,
+            email: document.getElementById('contact-email').value,
+            phone: document.getElementById('contact-phone').value,
+            subject: document.getElementById('contact-subject').value,
+            message: document.getElementById('contact-message').value,
+        };
+
+        submitButton.disabled = true;
+        submitButton.innerText = 'Gönderiliyor...';
+
+        
+
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            alert('Mesajınız başarıyla gönderildi. Teşekkür ederiz!');
+            form.reset();
+        })
+        .catch(error => {
+            console.error('İletişim Formu Gönderme Hatası:', error);
+            alert('Mesajınız gönderilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+        })
+        .finally(() => {
+            submitButton.disabled = false;
+            submitButton.innerText = originalButtonText;
+        });
     });
 }
 
@@ -265,4 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize career form interactions if the form exists on the page
     initCareerForm();
+
+    // Initialize contact form interactions if the form exists on the page
+    initContactForm();
 });

@@ -344,18 +344,21 @@
                 </div>
 
                 <div class="anim-block" data-animate="true" data-anim-type="fade-right">
-                    <form action="https://formspree.io/f/SENIN_ID" method="POST">
+                    <form id="contact-form">
                         <label data-i18n="contact.form.name">Ad Soyad</label>
-                        <input type="text" name="name" required data-i18n-placeholder="contact.form.name_placeholder" placeholder="Adınız Soyadınız">
+                        <input type="text" id="contact-name" name="name" required data-i18n-placeholder="contact.form.name_placeholder" placeholder="Adınız Soyadınız">
 
                         <label data-i18n="contact.form.email">E-posta</label>
-                        <input type="email" name="email" required data-i18n-placeholder="contact.form.email_placeholder" placeholder="ornek@sirket.com">
+                        <input type="email" id="contact-email" name="email" required data-i18n-placeholder="contact.form.email_placeholder" placeholder="ornek@sirket.com">
 
                         <label data-i18n="contact.form.phone">Telefon (Opsiyonel)</label>
-                        <input type="tel" name="phone" data-i18n-placeholder="contact.form.phone_placeholder" placeholder="0555...">
+                        <input type="tel" id="contact-phone" name="phone" data-i18n-placeholder="contact.form.phone_placeholder" placeholder="0555...">
+
+                        <label data-i18n="contact.form.subject">Konu</label>
+                        <input type="text" id="contact-subject" name="subject" required data-i18n-placeholder="contact.form.subject_placeholder" placeholder="Konu">
 
                         <label data-i18n="contact.form.message">Mesajınız</label>
-                        <textarea name="message" rows="23" required data-i18n-placeholder="contact.form.message_placeholder" placeholder="Nasıl yardımcı olabiliriz?"></textarea>
+                        <textarea id="contact-message" name="message" rows="10" required data-i18n-placeholder="contact.form.message_placeholder" placeholder="Nasıl yardımcı olabiliriz?"></textarea>
 
                         <button type="submit" class="btn btn-primary" style="width: 100%; border:none;" data-i18n="contact.form.submit">Gönder</button>
                     </form>

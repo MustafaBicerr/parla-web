@@ -35,7 +35,7 @@
                     <!-- Sağ Taraf: Başvuru Formu -->
                     <div class="career-form anim-block" data-animate="true" data-anim-type="fade-left">
                         <h3 data-i18n="pages.career.form.title">Başvuru Formu</h3>
-                        <form action="https://formspree.io/f/SENIN_ID" method="POST" enctype="multipart/form-data">
+                        <form id="career-application-form" method="POST" enctype="multipart/form-data">
                             <div class="form-grid">
                                 <div class="form-group">
                                     <label for="firstName" data-i18n="pages.career.form.firstName">Ad</label>
@@ -51,7 +51,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="phone" data-i18n="contact.form.phone">Telefon</label>
-                                    <input type="tel" id="phone" name="phone" required data-i18n-placeholder="contact.form.phone_placeholder">
+                                    <input type="tel" id="phone" name="phone" data-i18n-placeholder="contact.form.phone_placeholder">
                                 </div>
                                 <div class="form-group full-width">
                                     <label for="address" data-i18n="pages.career.form.address">İkamet Şehri</label>

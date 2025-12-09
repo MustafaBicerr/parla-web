@@ -72,7 +72,9 @@ header.scrolled .logo { color: #000; }
 .nav-menu { display: flex; gap: 30px; list-style: none; align-items: center; }
 .nav-link { color: #ffffff; font-weight: 600; font-size: 1.3rem; text-decoration: none; transition: 0.3s; padding: 10px 0; display: flex; align-items: center; gap: 6px; }
 .nav-link:hover { color: var(--primary-color); }
-header.scrolled .nav-link { color: #000000; }
+@media (min-width: 1101px) {
+    header.scrolled .nav-link { color: #000000; }
+}
 .nav-link i { font-size: 0.75rem; transition: transform 0.3s;}
 .dropdown:hover .nav-link i { transform: rotate(180deg); }
 
@@ -121,9 +123,9 @@ header.scrolled .lang-btn:hover { background: rgba(0,0,0,0.05); }
     padding: 0;
     margin-left: 10px;
     order: 3;
-    overflow-y: auto;
+    z-index: 1006; /* Menünün üstünde kalması için */
 }
-header.scrolled .hamburger { color: #ffffff; }
+header.scrolled .hamburger { color: var(--secondary-color); }
 
 /* language toggle button (header) */
 .lang-toggle { 
@@ -159,7 +161,10 @@ header.scrolled .lang-toggle[data-current-lang="en"] { background: rgba(0,0,0,0.
     }
     .nav-menu.active { right: 0; }
     .nav-menu li { width: 100%; }
-    .nav-link { font-size: 1.1rem; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); width: 100%; justify-content: space-between; }
+    /* Mobil menüdeki linklerin scroll durumundan etkilenmemesi ve her zaman beyaz kalması için: */
+    .nav-menu .nav-link { 
+        color: #fff; font-size: 1.1rem; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); width: 100%; justify-content: space-between; 
+    }
 
     /* Mobil Dropdown (Accordion) */
     .dropdown-menu, .dropdown-menu.mega-menu {
