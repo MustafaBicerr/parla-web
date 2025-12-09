@@ -117,6 +117,183 @@
       }
     }
   },
+  "modal": {
+    "close_btn": "Kapat"
+  },
+  "solutions_details": {
+    "e_transformation": {
+      "e_invoice": {
+        "title": "E-Fatura Entegrasyonu",
+        "desc": "Faturalarınızı SAP ile uçtan uca elektronik ortamda yönetin, işlem hızınızı ve nakit akışınızı artırın. Gelen ve giden faturaları tek kokpit üzerinden yönetebilir, onay/red süreçlerini takip edebilirsiniz."
+      },
+      "e_ledger": {
+        "title": "E-Defter Entegrasyonu",
+        "desc": "Yevmiye ve büyük defterlerinizi dijitale taşıyın. SAP üzerinden tarih aralığı vererek defterlerinizi oluşturun, 'Test Modu' ile ön izleme yapın ve denetim süreçlerinizi kolaylaştırın."
+      },
+      "e_archive": {
+        "title": "E-Arşiv Fatura Portalı",
+        "desc": "Tüm faturalarınızı güvenle saklayın. Faturaları gönderim öncesi görüntüleyebilir, manuel not ekleyebilir, vergi muafiyet/tevkifat kodlarını yönetebilir ve toplu gönderim yapabilirsiniz."
+      },
+      "e_waybill": {
+        "title": "E-İrsaliye ve Mobil İmza",
+        "desc": "Sevkiyatlarınızı elektronik ortamda yönetin. Gelen ve giden irsaliyeleri listeleyin, PDF/XML formatlarında indirin ve mal kabul süreçlerinizi hızlandırın."
+      },
+      "e_reconciliation": {
+        "title": "E-Mutabakat",
+        "desc": "BA/BS ve cari bakiye mutabakatlarınızı dijitalleştirin. Müşteri ve satıcılarınıza otomatik mutabakat mailleri gönderin, yanıtları online toplayın ve SAP içinde raporlayın."
+      },
+      "e_accounting": {
+        "title": "E-Muhasebe",
+        "desc": "Muhasebe fişlerinizin ve yasal süreçlerinizin dijital ortamda, GİB standartlarına tam uyumlu olarak oluşturulması ve saklanması süreçlerini kapsar."
+      },
+      "e_producer": {
+        "title": "E-Müstahsil",
+        "desc": "Müstahsil makbuzlarınızı elektronik ortamda oluşturun, çiftçi ve üreticilerle olan süreçlerinizi dijitalleştirerek kağıt israfını önleyin."
+      },
+      "e_guarantee": {
+        "title": "E-Teminat",
+        "desc": "Teminat mektuplarının elektronik ortamda alınması, verilmesi ve banka entegrasyonu ile süreçlerin anlık takibini sağlayan çözümdür."
+      }
+    },
+    "banking": {
+      "eho": {
+        "title": "Elektronik Hesap Özeti (EHÖ)",
+        "desc": "Tüm banka hesap hareketlerinizi tek ekrandan izleyin. Bankalardan gelen MT940 formatındaki ekstreleri SAP sistemine otomatik aktararak muhasebeleşmesini sağlayın."
+      },
+      "payment_process": {
+        "title": "Ödeme Süreci Yönetimi",
+        "desc": "Tedarikçi ödemelerinizi, ithalat transferlerinizi ve personel ödemelerinizi SAP üzerinden otomatik talimatlarla yönetin. Onay mekanizmaları ile güvenliği artırın."
+      },
+      "cash_flow": {
+        "title": "Nakit Akışı Süreçleri",
+        "desc": "Gelecek nakit giriş ve çıkışlarınızı anlık raporlayın. Banka bakiyeleri, bekleyen ödemeler ve tahsilatları tek raporda görerek finansal kararlarınızı güçlendirin."
+      },
+      "dbs": {
+        "title": "Doğrudan Borçlandırma Sistemi (DBS)",
+        "desc": "Bayi ağınızdan yapacağınız tahsilatları garanti altına alın. Bayi limitlerini kontrol edin ve otomatik tahsilat talimatları ile nakit akışınızı hızlandırın."
+      },
+      "virtual_pos": {
+        "title": "Sanal POS Entegrasyonu",
+        "desc": "Kredi kartı tahsilatlarınızı SAP ile entegre edin. Sanal POS işlemlerinin otomatik muhasebe kaydını oluşturun ve banka komisyonlarını takip edin."
+      },
+      "check_promissory": {
+        "title": "Çek / Senet Süreçleri",
+        "desc": "Portföydeki, tahsildeki ve teminattaki çek/senetlerinizi takip edin. Vade hatırlatmaları ve durum güncellemeleri ile riskinizi yönetin."
+      },
+      "electronic_bulk_payment": {
+        "title": "Elektronik Toplu Ödeme",
+        "desc": "Çoklu ödeme talimatlarınızı banka formatlarına uygun olarak tek seferde hazırlayın ve bankaya iletin."
+      },
+      "online_dbs": {
+        "title": "Online DBS Çözümü",
+        "desc": "DBS süreçlerinizi anlık ve online olarak bankalarla entegre bir şekilde yönetin."
+      }
+    },
+    "financial_accounting": {
+      "inflation_accounting": {
+        "title": "Enflasyon Muhasebesi Paketi",
+        "desc": "Enflasyonun mali tablolar üzerindeki etkisini yönetin. VUK ve UFRS standartlarına uygun düzeltme katsayıları ile otomatik yeniden değerleme yapın."
+      },
+      "auto_clearing": {
+        "title": "Otomatik Denkleştirme Programı",
+        "desc": "Bakiye, referans numarası veya tutar bazlı kurallar ile açık kalemleri otomatik eşleştirin ve denkleştirin. FIFO mantığı veya bakiye sıfırlama yöntemlerini destekler."
+      },
+      "exchange_rate_diff": {
+        "title": "Kur Farkı Faturası Süreçleri",
+        "desc": "Cari hesaplarınızdaki kur farklarını otomatik hesaplayın. Oluşan farklar için otomatik kur farkı faturası veya muhasebe fişi oluşturun, öncesinde simülasyon yapın."
+      },
+      "gib_compliance": {
+        "title": "GİB Uyum Güncellemeleri",
+        "desc": "Gelir İdaresi Başkanlığı'nın mevzuat değişikliklerine (KDV oranları, tevkifat kodları vb.) %100 uyumlu, güncel SAP çözümleri."
+      },
+      "ifrs": {
+        "title": "UFRS & UFRS 16",
+        "desc": "Uluslararası Finansal Raporlama Standartlarına uygun raporlama setleri. Özellikle UFRS 16 kapsamında kiralama işlemlerinin (Leasing) doğru muhasebeleştirilmesi."
+      },
+      "cost_accounting": {
+        "title": "Maliyet Muhasebesi",
+        "desc": "Üretim ve hizmet maliyetlerinizi ürün, sipariş veya masraf yeri bazında detaylı analiz edin. Karlılık raporlarınızı gerçek verilerle oluşturun."
+      },
+      "travel_mgmt": {
+        "title": "Seyahat Yönetimi",
+        "desc": "Personel seyahat masraflarını, harcırah hesaplamalarını ve onay süreçlerini sistem üzerinden yönetin."
+      }
+    },
+    "asset_management": {
+      "asset_processes": {
+        "title": "Duran Varlık Süreçleri",
+        "desc": "Duran varlıkların satın alma, aktifleştirme, amortisman hesaplama ve hurdaya ayırma süreçlerini SAP üzerinden uçtan uca yönetin."
+      },
+      "counting": {
+        "title": "Duran Varlık Sayım ve Zimmetleme",
+        "desc": "Barkod veya RFID ile duran varlık sayımlarınızı yapın, zimmet takibini sistem üzerinden gerçekleştirerek kayıp/çalıntı riskini azaltın."
+      },
+      "real_estate": {
+        "title": "Gayrimenkul Yönetimi (RE)",
+        "desc": "Şirketinizin gayrimenkul portföyünü, kira sözleşmelerini, bakım onarım giderlerini ve gelirlerini tek platformdan yönetin."
+      }
+    },
+    "budget_tax": {
+      "budget_mgmt": {
+        "title": "Bütçe Yönetimi",
+        "desc": "Departman bazlı bütçeleri planlayın, fiili gerçekleşmelerle karşılaştırın ve bütçe aşımlarında sistemin otomatik uyarı vermesini sağlayın."
+      },
+      "closing_ops": {
+        "title": "Kapanış İşlemleri",
+        "desc": "Ay sonu ve yıl sonu kapanış süreçlerini hızlandırın. Otomatik yansıtma, değerleme ve devir işlemlerini hatasız gerçekleştirin."
+      },
+      "deferred_tax": {
+        "title": "Ertelenmiş Vergi Hesaplanması",
+        "desc": "VUK ve UFRS arasındaki değerleme farklarından kaynaklanan ertelenmiş vergi varlık ve yükümlülüklerini otomatik hesaplayın ve muhasebeleştirin."
+      },
+      "transfer_ops": {
+        "title": "280-180 Virman İşlemleri",
+        "desc": "Gelecek aylara/yıllara ait giderlerin dönemsellik ilkesine uygun olarak otomatik virmanlanmasını ve ilgili dönemde giderleşmesini sağlayın."
+      },
+      "tms_rediscount": {
+        "title": "TMS Reeskont Hesaplama",
+        "desc": "TMS standartlarına uygun reeskont hesaplamalarını otomatik yapın, alacak ve borçlar için faiz oranlarını yönetin."
+      }
+    },
+    "treasury_risk": {
+      "risk_mgmt": {
+        "title": "Hazine ve Risk Yönetimi (TRM)",
+        "desc": "Finansal risklerinizi (Kur, Faiz, Likidite) tanımlayın ve izleyin. Türev ürünleri ve hedging işlemlerini sistem üzerinde takip edin."
+      },
+      "credit_limit": {
+        "title": "Kredi Limit Raporu ve Risk Yönetimi",
+        "desc": "Müşterilerinizin kredi limitlerini, DBS limitlerini, açık hesap risklerini ve teminat durumlarını tek raporda analiz edin. Limit aşımlarını kontrol altına alın."
+      },
+      "collateral": {
+        "title": "Teminat Süreçleri",
+        "desc": "Alınan ve verilen teminat mektuplarını, ipotekleri ve çekleri vade tarihleri ile takip edin. Nazım hesaplara otomatik kayıt atın. Vade hatırlatma mailleri gönderin."
+      },
+      "leasing": {
+        "title": "Leasing Süreçleri",
+        "desc": "Finansal kiralama sözleşmelerinizi, ödeme planlarını ve faiz ayrıştırmalarını yönetin. Duran varlık entegrasyonu ile süreci tamamlayın."
+      }
+    },
+    "insurance": {
+      "insura": {
+        "title": "Sigorta Modülü (INSURA)",
+        "desc": "Şirket varlıklarının sigorta poliçelerini, zeyilnamelerini, prim ödemelerini ve hasar süreçlerini SAP S/4HANA uyumlu ürünümüzle yönetin."
+      }
+    },
+    "mobile_automation": {
+      "smart_invoice": {
+        "title": "Yapay Zeka Destekli Akıllı Fatura",
+        "desc": "Gelen kağıt/PDF faturaları OCR ve Yapay Zeka ile tarayın. Tutar, tarih, VKN bilgilerini otomatik okuyarak SAP'ye ön kayıt atın ve manuel girişi bitirin."
+      },
+      "mobile_docs": {
+        "title": "Mobil Doküman Yönetimi",
+        "desc": "Masraf fişlerini ve belgeleri mobil uygulama üzerinden fotoğrafını çekerek sisteme yükleyin, onay süreçlerini cepten yönetin."
+      },
+      "auto_matching": {
+        "title": "Otomatik Denkleştirme ve Hatırlatma",
+        "desc": "Ödemeleri ve faturaları otomatik eşleştirin, vadesi geçen ödemeler için otomatik hatırlatma mailleri kurgulayın."
+      }
+    }
+  },
   "references": {
     "title": "REFERANSLARIMIZ",
     "button_see_all": "Tüm Referansları Gör"

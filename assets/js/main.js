@@ -148,6 +148,60 @@ function initCarousel() {
     }
 }
 
+function initSolutionModal() {
+    // Check if modal already exists to prevent duplicates
+    if (document.getElementById('solutionModalOverlay')) return;
+
+    const modalHTML = `
+        <div class="solution-modal-overlay" id="solutionModalOverlay">
+            <div class="solution-modal" id="solutionModal">
+                <div class="solution-modal-header">
+                    <h3 id="solutionModalTitle"></h3>
+                    <button class="solution-modal-close-btn" id="solutionModalCloseBtn" title="Kapat">&times;</button>
+                </div>
+                <div class="solution-modal-content">
+                    <p id="solutionModalContent"></p>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    const overlay = document.getElementById('solutionModalOverlay');
+    const closeBtn = document.getElementById('solutionModalCloseBtn');
+
+    const closeModal = () => {
+        overlay.classList.remove('visible');
+    };
+
+    closeBtn.addEventListener('click', closeModal);
+    overlay.addEventListener('click', (e) => {
+        // Only close if the overlay itself is clicked, not the modal content
+        if (e.target === overlay) {
+            closeModal();
+        }
+    });
+}
+
+function openSolutionModal(jsonKey) {
+    const overlay = document.getElementById('solutionModalOverlay');
+    if (!overlay || !window.__i18n) return;
+
+    const translations = window.__i18n.t;
+    const getKey = (path, obj) => path.split('.').reduce((o, k) => (o && o[k] !== undefined) ? o[k] : null, obj);
+    const data = getKey(jsonKey, translations);
+
+    if (data && data.title && data.desc) {
+        document.getElementById('solutionModalTitle').innerText = data.title;
+        document.getElementById('solutionModalContent').innerText = data.desc;
+        overlay.classList.add('visible');
+    } else {
+        console.error(`Modal content not found for key: ${jsonKey}`);
+    }
+}
+// Expose the function to the global scope to be callable from HTML onclick
+window.openSolutionModal = openSolutionModal;
+
 function initCareerForm() {
     const dropArea = document.querySelector('.file-drop-area');
     if (!dropArea) return; // Sadece kariyer sayfasında çalışmasını sağlar
@@ -205,6 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize carousel
     initCarousel();
+
+    // Create the modal structure on page load
+    initSolutionModal();
 
     // Initialize career form interactions if the form exists on the page
     initCareerForm();

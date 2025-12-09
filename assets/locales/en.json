@@ -117,6 +117,183 @@
       }
     }
   },
+  "modal": {
+    "close_btn": "Close"
+  },
+  "solutions_details": {
+    "e_transformation": {
+      "e_invoice": {
+        "title": "E-Invoice Integration",
+        "desc": "Manage your invoices end-to-end electronically with SAP, increasing your processing speed and cash flow. You can manage incoming and outgoing invoices from a single cockpit and track approval/rejection processes."
+      },
+      "e_ledger": {
+        "title": "E-Ledger Integration",
+        "desc": "Digitize your general and subsidiary ledgers. Create your ledgers by providing a date range via SAP, preview with 'Test Mode', and simplify your audit processes."
+      },
+      "e_archive": {
+        "title": "E-Archive Invoice Portal",
+        "desc": "Store all your invoices securely. You can view invoices before sending, add manual notes, manage tax exemption/withholding codes, and perform bulk sending."
+      },
+      "e_waybill": {
+        "title": "E-Waybill and Mobile Signature",
+        "desc": "Manage your shipments electronically. List incoming and outgoing waybills, download them in PDF/XML formats, and speed up your goods receipt processes."
+      },
+      "e_reconciliation": {
+        "title": "E-Reconciliation",
+        "desc": "Digitize your BA/BS and current account balance reconciliations. Send automatic reconciliation emails to your customers and vendors, collect responses online, and report within SAP."
+      },
+      "e_accounting": {
+        "title": "E-Accounting",
+        "desc": "This covers the processes of creating and storing your accounting vouchers and legal processes digitally, in full compliance with TRA standards."
+      },
+      "e_producer": {
+        "title": "E-Producer Receipt",
+        "desc": "Create your producer receipts electronically, digitize your processes with farmers and producers, and prevent paper waste."
+      },
+      "e_guarantee": {
+        "title": "E-Guarantee Letter",
+        "desc": "A solution that enables the electronic receipt and issuance of guarantee letters and provides real-time tracking of processes through bank integration."
+      }
+    },
+    "banking": {
+      "eho": {
+        "title": "Electronic Account Statement (EAS)",
+        "desc": "Monitor all your bank account activities from a single screen. Automatically transfer MT940 format statements from banks to the SAP system for accounting."
+      },
+      "payment_process": {
+        "title": "Payment Process Management",
+        "desc": "Manage your supplier payments, import transfers, and personnel payments with automatic instructions via SAP. Enhance security with approval mechanisms."
+      },
+      "cash_flow": {
+        "title": "Cash Flow Processes",
+        "desc": "Report your future cash inflows and outflows in real-time. Strengthen your financial decisions by viewing bank balances, pending payments, and collections in a single report."
+      },
+      "dbs": {
+        "title": "Direct Debiting System (DDS)",
+        "desc": "Secure your collections from your dealer network. Control dealer limits and accelerate your cash flow with automatic collection instructions."
+      },
+      "virtual_pos": {
+        "title": "Virtual POS Integration",
+        "desc": "Integrate your credit card collections with SAP. Create automatic accounting entries for virtual POS transactions and track bank commissions."
+      },
+      "check_promissory": {
+        "title": "Check / Promissory Note Processes",
+        "desc": "Track your checks/notes in portfolio, in collection, and in collateral. Manage your risk with due date reminders and status updates."
+      },
+      "electronic_bulk_payment": {
+        "title": "Electronic Bulk Payment",
+        "desc": "Prepare your multiple payment instructions in accordance with bank formats in a single go and transmit them to the bank."
+      },
+      "online_dbs": {
+        "title": "Online DDS Solution",
+        "desc": "Manage your DDS processes in real-time and online, fully integrated with banks."
+      }
+    },
+    "financial_accounting": {
+      "inflation_accounting": {
+        "title": "Inflation Accounting Package",
+        "desc": "Manage the impact of inflation on financial statements. Perform automatic revaluation with correction coefficients compliant with VUK and IFRS standards."
+      },
+      "auto_clearing": {
+        "title": "Automatic Clearing Program",
+        "desc": "Automatically match and clear open items with rules based on balance, reference number, or amount. Supports FIFO logic or balance zeroing methods."
+      },
+      "exchange_rate_diff": {
+        "title": "Exchange Rate Difference Invoice Processes",
+        "desc": "Automatically calculate exchange rate differences in your current accounts. Create automatic exchange rate difference invoices or accounting vouchers for the resulting differences, with a simulation option."
+      },
+      "gib_compliance": {
+        "title": "TRA Compliance Updates",
+        "desc": "100% compliant, up-to-date SAP solutions for the regulatory changes of the Turkish Revenue Administration (VAT rates, withholding codes, etc.)."
+      },
+      "ifrs": {
+        "title": "IFRS & IFRS 16",
+        "desc": "Reporting sets compliant with International Financial Reporting Standards. Especially for the correct accounting of leasing transactions under IFRS 16."
+      },
+      "cost_accounting": {
+        "title": "Cost Accounting",
+        "desc": "Analyze your production and service costs in detail by product, order, or cost center. Generate your profitability reports with real data."
+      },
+      "travel_mgmt": {
+        "title": "Travel Management",
+        "desc": "Manage personnel travel expenses, per diem calculations, and approval processes through the system."
+      }
+    },
+    "asset_management": {
+      "asset_processes": {
+        "title": "Fixed Asset Processes",
+        "desc": "Manage the entire lifecycle of fixed assets from acquisition, capitalization, depreciation calculation, to scrapping, all through SAP."
+      },
+      "counting": {
+        "title": "Fixed Asset Counting and Assignment",
+        "desc": "Perform your fixed asset counts with barcode or RFID, and track assignments through the system to reduce the risk of loss/theft."
+      },
+      "real_estate": {
+        "title": "Real Estate Management (RE)",
+        "desc": "Manage your company's real estate portfolio, lease agreements, maintenance expenses, and revenues from a single platform."
+      }
+    },
+    "budget_tax": {
+      "budget_mgmt": {
+        "title": "Budget Management",
+        "desc": "Plan department-based budgets, compare them with actuals, and have the system provide automatic warnings for budget overruns."
+      },
+      "closing_ops": {
+        "title": "Closing Operations",
+        "desc": "Accelerate month-end and year-end closing processes. Perform automatic allocations, valuations, and carry-forward transactions without errors."
+      },
+      "deferred_tax": {
+        "title": "Deferred Tax Calculation",
+        "desc": "Automatically calculate and post deferred tax assets and liabilities arising from valuation differences between VUK and IFRS."
+      },
+      "transfer_ops": {
+        "title": "280-180 Transfer Operations",
+        "desc": "Ensure that expenses for future months/years are automatically transferred and expensed in the relevant period in accordance with the matching principle."
+      },
+      "tms_rediscount": {
+        "title": "TMS Rediscount Calculation",
+        "desc": "Perform rediscount calculations automatically according to TMS standards and manage interest rates for receivables and payables."
+      }
+    },
+    "treasury_risk": {
+      "risk_mgmt": {
+        "title": "Treasury and Risk Management (TRM)",
+        "desc": "Identify and monitor your financial risks (Currency, Interest Rate, Liquidity). Track derivative instruments and hedging transactions within the system."
+      },
+      "credit_limit": {
+        "title": "Credit Limit Report and Risk Management",
+        "desc": "Analyze your customers' credit limits, DDS limits, open account risks, and collateral status in a single report. Control limit breaches."
+      },
+      "collateral": {
+        "title": "Collateral Processes",
+        "desc": "Track received and issued letters of guarantee, mortgages, and checks with their due dates. Post automatic entries to special G/L accounts. Send due date reminder emails."
+      },
+      "leasing": {
+        "title": "Leasing Processes",
+        "desc": "Manage your financial lease agreements, payment plans, and interest segregation. Complete the process with fixed asset integration."
+      }
+    },
+    "insurance": {
+      "insura": {
+        "title": "Insurance Module (INSURA)",
+        "desc": "Manage your company's asset insurance policies, endorsements, premium payments, and claims processes with our SAP S/4HANA compliant product."
+      }
+    },
+    "mobile_automation": {
+      "smart_invoice": {
+        "title": "AI-Powered Smart Invoice",
+        "desc": "Scan incoming paper/PDF invoices with OCR and AI. Automatically read amount, date, TIN information to create a preliminary entry in SAP and eliminate manual entry."
+      },
+      "mobile_docs": {
+        "title": "Mobile Document Management",
+        "desc": "Upload expense receipts and documents by taking a photo via the mobile app and manage approval processes on the go."
+      },
+      "auto_matching": {
+        "title": "Automatic Matching and Reminders",
+        "desc": "Automatically match payments and invoices, and set up automatic reminder emails for overdue payments."
+      }
+    }
+  },
   "references": {
     "title": "OUR CLIENTS",
     "button_see_all": "View All References"
