@@ -14,7 +14,7 @@
   let translations = {};
 
   function fetchTranslations(lang) {
-    return fetch(`assets/locales/${lang}.json`).then(res => {
+    return fetch(`/assets/locales/${lang}.json`).then(res => {
       if (!res.ok) throw new Error('Failed to load locale ' + lang);
       return res.json();
     });

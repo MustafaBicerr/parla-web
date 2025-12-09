@@ -78,9 +78,13 @@ function initHeaderEvents() {
             // delegate to i18n loader if available
             if (window.__i18n && typeof window.__i18n.setLanguage === 'function') {
                 window.__i18n.setLanguage(next);
+                // Update all toggles to reflect the new state
+                langToggles.forEach(b => {
+                    b.setAttribute('data-current-lang', next);
+                    b.innerText = (next === 'tr') ? 'TR | EN' : 'EN | TR';
+                });
             } else {
-                // fallback: swap button text
-                this.innerText = (next === 'tr') ? 'TR | EN' : 'EN | TR';
+                // fallback: if i18n fails, set storage and reload
                 localStorage.setItem('site_lang', next);
                 document.documentElement.setAttribute('lang', next);
                 location.reload();
@@ -88,15 +92,6 @@ function initHeaderEvents() {
         });
     });
 
-    // After header injection, re-apply i18n in case translations were loaded earlier
-    try {
-        const stored = localStorage.getItem('site_lang');
-        const htmlLang = document.documentElement.getAttribute('lang');
-        const start = stored || htmlLang || 'tr';
-        if (window.__i18n && typeof window.__i18n.setLanguage === 'function') {
-            window.__i18n.setLanguage(start);
-        }
-    } catch (e) { /* ignore */ }
 }
 
 // Handle header scroll effect
@@ -166,4 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize carousel
     initCarousel();
+
+    
 });

@@ -84,7 +84,7 @@
       "organisation": "Kurulum & Danışmanlık",
       "academy": "Parla Akademi",
       "solutions": "Sektörel Çözümler",
-      "carier": "Kariyer",
+      "career": "Kariyer",
       "references": "Referanslar",
       "contact": "İletişim"
     },
@@ -154,6 +154,142 @@
         "title": "Değerlerimiz",
         "p": "Müşteri odaklılık, kalite ve şeffaf iletişim temel değerlerimizdir. Her projede uzun vadeli iş ortaklıkları kurmayı hedefleriz.",
         "note": "İsterseniz buraya müşteri referansları veya kısa vakalar ekleyebiliriz."
+      }
+    },
+    "organisation": {
+      "install": {
+        "pageTitle": "SAP Kurulum & Geçiş - Parla BT",
+        "heroTitle": "SAP Kurulum & Geçiş Hizmetleri",
+        "title": "SAP Kurulumu & Geçiş",
+        "intro": "SAP’e ilk geçişten mevcut sisteminizi S/4HANA’ya taşıma sürecine kadar, lisans seçiminden teknik kurulum ve canlıya geçişe dek uçtan uca danışmanlık sağlıyoruz.",
+        "features": [
+          { "title": "SAP R/3 Lisansı", "desc": "Mevcut ihtiyaçlarınıza uygun SAP R/3 lisans yapısının belirlenmesi ve lisanslama sürecinin yönetilmesi." },
+          { "title": "S/4HANA Lisansı", "desc": "S/4HANA’ya geçiş yol haritasına uygun lisans tiplerinin seçilmesi ve dönüşüm sürecine hazırlık." },
+          { "title": "İhtiyaç & Kullanıcı Tipi Analizi", "desc": "Şirket yapınız, kullanıcı sayınız ve süreçlerinize göre en uygun lisans, modül ve kullanıcı tiplerinin belirlenmesi." },
+          { "title": "Cloud ERP Aboneliği", "desc": "Bulut tabanlı SAP ERP çözümleri için abonelik modeli, maliyet yapısı ve geçiş senaryoları konusunda danışmanlık." },
+          { "title": "BTP Hizmet Paketleri", "desc": "Entegrasyon, özel geliştirme ve raporlama ihtiyaçlarınız için SAP BTP üzerinde size özel hizmet paketlerinin tasarlanması." },
+          { "title": "Bakım & Yenileme Yönetimi", "desc": "Lisans bakım anlaşmaları, yenileme tarihleri ve versiyon geçişlerinin planlı şekilde takip edilmesi ve yönetilmesi." }
+        ]
+      },
+      "consulting": {
+        "pageTitle": "SAP Danışmanlık & Destek - Parla BT",
+        "heroTitle": "SAP Danışmanlık & Destek Hizmetleri",
+        "title": "SAP Danışmanlık ve Destek",
+        "intro": "Mevcut SAP sisteminizi analiz ederek, süreçlerinizi iyileştiren, yeni fonksiyonlar ekleyen ve günlük operasyonlarınıza sürekli destek sağlayan danışmanlık hizmetleri sunuyoruz.",
+        "features": [
+          { "title": "İsteğe Özel Geliştirme Hizmetleri", "desc": "Şirketinize özel raporlar, ekranlar, entegrasyonlar ve otomasyonlar geliştirerek SAP süreçlerinizi ihtiyaçlarınıza göre uyarlıyoruz." },
+          { "title": "SAP Destek Hizmetleri", "desc": "Canlı sistemde karşılaştığınız hatalar, performans sorunları ve kullanıcı talepleri için uçtan uca destek ve yönlendirme sağlıyoruz." },
+          { "title": "Özel SAP Çözümleri Kurulumu (FI/CO/TRM vb.)", "desc": "Finans (FI/CO), Hazine ve Risk Yönetimi (TRM) ve diğer modüller için baştan sona kurulum, uyarlama, test ve canlıya geçiş danışmanlığı veriyoruz." }
+        ]
+      }
+    },
+    "solutions": {
+      "e_transformation": {
+        "pageTitle": "E-Dönüşüm Çözümleri - Parla BT",
+        "heroTitle": "E-Dönüşüm Çözümleri",
+        "title": "E-Dönüşüm Çözümleri",
+        "items": {
+          "e_invoice": "E-Fatura Entegrasyonu",
+          "e_ledger": "E-Defter Entegrasyonu",
+          "e_archive": "E-Arşiv Fatura Portalı",
+          "e_waybill": "E-İrsaliye Mobil İmza",
+          "e_reconciliation": "E-Mutabakat",
+          "e_accounting": "E-Muhasebe",
+          "e_producer": "E-Müstahsil",
+          "e_collateral": "E-Teminat"
+        }
+      },
+      "banking": {
+        "pageTitle": "Bankacılık Çözümleri - Parla BT",
+        "heroTitle": "Bankacılık Çözümleri",
+        "title": "Bankacılık Çözümleri",
+        "items": {
+          "eas": "Elektronik Hesap Özeti (EHÖ)",
+          "eas_payment": "EHÖ ve ödeme talimatı süreçleri",
+          "payment_management": "Ödeme süreci yönetimi",
+          "cash_flow": "Nakit akışı süreçleri ve raporları",
+          "dbs": "Doğrudan Borçlandırma Sistemi (DBS)",
+          "check_note": "Çek / senet süreçleri",
+          "virtual_pos": "Sanal POS",
+          "bulk_payment": "Elektronik Toplu Ödeme",
+          "online_dbs": "Online DBS Çözümü"
+        }
+      },
+      "financial_accounting": {
+        "pageTitle": "Finansal Muhasebe Çözümleri - Parla BT",
+        "heroTitle": "Finansal Muhasebe Çözümleri",
+        "title": "Finansal Muhasebe Çözümleri",
+        "items": {
+          "inflation_accounting": "Enflasyon Muhasebesi Paketi",
+          "general_ledger": "Defteri kebir muhasebesi",
+          "vendor_payment_report": "Satıcılar ortalama ödeme süresi raporu",
+          "auto_clearing": "Otomatik denkleştirme programı",
+          "phone_bill_management": "Telefon faturaları yönetimi",
+          "travel_management": "Seyahat yönetimi",
+          "payment_integration": "Ödeme süreçleri ile entegrasyon (fatura/fiş bazlı)",
+          "exchange_diff_invoice": "Kur farkı faturası süreçleri",
+          "cost_accounting": "Maliyet Muhasebesi",
+          "gib_compliance": "GİB Uyum Güncellemeleri",
+          "ifrs": "UFRS",
+          "ifrs_16": "UFRS 16",
+          "collateral_management": "Teminat Yönetimi",
+          "credit_risk_management": "Kredibilite ve Risk Yönetimi"
+        }
+      },
+      "asset_management": {
+        "pageTitle": "Duran Varlık & GM Çözümleri - Parla BT",
+        "heroTitle": "Duran Varlık ve Gayrimenkul Yönetimi",
+        "title": "Duran Varlık ve Gayrimenkul Yönetimi",
+        "items": {
+          "fixed_assets": "Duran varlık süreçleri",
+          "asset_counting": "Duran varlık sayım ve zimmetleme",
+          "real_estate": "Gayrimenkul Yönetimi (RE)"
+        }
+      },
+      "budget_tax": {
+        "pageTitle": "Bütçe, Kapanış ve Vergi Çözümleri - Parla BT",
+        "heroTitle": "Bütçe, Kapanış ve Vergi Çözümleri",
+        "title": "Bütçe, Kapanış ve Vergi Çözümleri",
+        "items": {
+          "budget_management": "Bütçe yönetimi",
+          "closing_operations": "Kapanış işlemleri",
+          "tax_declaration": "Vergi beyannameleri süreçleri",
+          "inflation_accounting": "Enflasyon muhasebesi",
+          "tms_vuk_transfer": "280–180 aylık (TMS) ve yıllık (VUK) virman işlemleri",
+          "deferred_tax": "Ertelenmiş vergi hesaplanması",
+          "tms_revaluation": "TMS reeskont hesaplama programı"
+        }
+      },
+      "treasury_risk": {
+        "pageTitle": "Hazine ve Risk Yönetimi (TRM) - Parla BT",
+        "heroTitle": "Hazine ve Risk Yönetimi (TRM)",
+        "title": "Hazine ve Risk Yönetimi (TRM)",
+        "items": {
+          "trm_main": "Hazine ve Risk Yönetimi (TRM) ana süreçleri",
+          "credit_risk": "Kredi risk yönetimi ve kredi limit raporu",
+          "credit_processes": "Kredi süreçleri: tahvil vade hatırlatma ve otomatik mail",
+          "collateral_processes": "Teminat süreçleri: nazım hesaplara ÖDK’lı kayıt",
+          "collateral_reminder": "Teminat vade hatırlatma mail gönderimi",
+          "leasing": "Leasing süreçleri"
+        }
+      },
+      "insurance": {
+        "pageTitle": "Sigorta Çözümleri - Parla BT",
+        "heroTitle": "Sigorta Çözümleri",
+        "title": "Sigorta Çözümleri",
+        "items": {
+          "insura_integration": "Sigorta modülü (INSURA) entegrasyonu ve süreçleri"
+        }
+      },
+      "mobile_automation": {
+        "pageTitle": "Mobil ve Otomasyon Çözümleri - Parla BT",
+        "heroTitle": "Mobil ve Otomasyon Çözümleri",
+        "title": "Mobil ve Otomasyon Çözümleri",
+        "items": {
+          "smart_invoice": "Akıllı Fatura Girişi (SAP Entegre, Mobil)",
+          "mobile_doc_management": "Ödeme süreci ile entegre mobil doküman yönetimi",
+          "auto_clearing_reminders": "Otomatik denkleştirme ve hatırlatma mekanizmaları"
+        }
       }
     }
   },

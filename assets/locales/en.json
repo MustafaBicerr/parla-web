@@ -84,7 +84,7 @@
       "organisation": "Implementation & Consulting",
       "academy": "Parla Academy",
       "solutions": "Sectoral Solutions",
-      "carier": "Career",
+      "career": "Career",
       "references": "References",
       "contact": "Contact"
     },
@@ -154,6 +154,142 @@
         "title": "Our Values",
         "p": "Customer-centricity, quality and transparent communication are our core values. We aim to build long-term partnerships in every project.",
         "note": "You can include client references or short case studies here if you like."
+      }
+    },
+    "organisation": {
+      "install": {
+        "pageTitle": "SAP Implementation & Migration - Parla IT",
+        "heroTitle": "SAP Implementation & Migration Services",
+        "title": "SAP Implementation & Migration",
+        "intro": "We provide end-to-end consultancy from the initial transition to SAP to migrating your existing system to S/4HANA, covering license selection, technical setup, and go-live.",
+        "features": [
+          { "title": "SAP R/3 License", "desc": "Determining the appropriate SAP R/3 license structure for your current needs and managing the licensing process." },
+          { "title": "S/4HANA License", "desc": "Selecting license types suitable for the S/4HANA transition roadmap and preparing for the conversion process." },
+          { "title": "Requirement & User Type Analysis", "desc": "Identifying the most suitable licenses, modules, and user types based on your company structure, user count, and processes." },
+          { "title": "Cloud ERP Subscription", "desc": "Consultancy on subscription models, cost structures, and transition scenarios for cloud-based SAP ERP solutions." },
+          { "title": "BTP Service Packages", "desc": "Designing custom service packages on SAP BTP for your integration, custom development, and reporting needs." },
+          { "title": "Maintenance & Renewal Management", "desc": "Systematically tracking and managing license maintenance agreements, renewal dates, and version upgrades." }
+        ]
+      },
+      "consulting": {
+        "pageTitle": "SAP Consulting & Support - Parla IT",
+        "heroTitle": "SAP Consulting & Support Services",
+        "title": "SAP Consulting and Support",
+        "intro": "We offer consultancy services that analyze your existing SAP system, improve your processes, add new functionalities, and provide continuous support for your daily operations.",
+        "features": [
+          { "title": "Custom Development Services", "desc": "We tailor your SAP processes to your needs by developing custom reports, screens, integrations, and automations for your company." },
+          { "title": "SAP Support Services", "desc": "We provide end-to-end support and guidance for errors, performance issues, and user requests you encounter in the live system." },
+          { "title": "Custom SAP Solution Implementation (FI/CO/TRM etc.)", "desc": "We provide end-to-end implementation, customization, testing, and go-live consultancy for Finance (FI/CO), Treasury and Risk Management (TRM), and other modules." }
+        ]
+      }
+    },
+    "solutions": {
+      "e_transformation": {
+        "pageTitle": "E-Transformation Solutions - Parla IT",
+        "heroTitle": "E-Transformation Solutions",
+        "title": "E-Transformation Solutions",
+        "items": {
+          "e_invoice": "E-Invoice Integration",
+          "e_ledger": "E-Ledger Integration",
+          "e_archive": "E-Archive Invoice Portal",
+          "e_waybill": "E-Waybill Mobile Signature",
+          "e_reconciliation": "E-Reconciliation",
+          "e_accounting": "E-Accounting",
+          "e_producer": "E-Producer Receipt",
+          "e_collateral": "E-Collateral"
+        }
+      },
+      "banking": {
+        "pageTitle": "Banking Solutions - Parla IT",
+        "heroTitle": "Banking Solutions",
+        "title": "Banking Solutions",
+        "items": {
+          "eas": "Electronic Account Statement (EAS)",
+          "eas_payment": "EAS and payment instruction processes",
+          "payment_management": "Payment process management",
+          "cash_flow": "Cash flow processes and reports",
+          "dbs": "Direct Debiting System (DDS)",
+          "check_note": "Check / promissory note processes",
+          "virtual_pos": "Virtual POS",
+          "bulk_payment": "Electronic Bulk Payment",
+          "online_dbs": "Online DDS Solution"
+        }
+      },
+      "financial_accounting": {
+        "pageTitle": "Financial Accounting Solutions - Parla IT",
+        "heroTitle": "Financial Accounting Solutions",
+        "title": "Financial Accounting Solutions",
+        "items": {
+          "inflation_accounting": "Inflation Accounting Package",
+          "general_ledger": "General ledger accounting",
+          "vendor_payment_report": "Vendor average payment period report",
+          "auto_clearing": "Automatic clearing program",
+          "phone_bill_management": "Phone bill management",
+          "travel_management": "Travel management",
+          "payment_integration": "Integration with payment processes (invoice/receipt based)",
+          "exchange_diff_invoice": "Exchange difference invoice processes",
+          "cost_accounting": "Cost Accounting",
+          "gib_compliance": "TRA Compliance Updates",
+          "ifrs": "IFRS",
+          "ifrs_16": "IFRS 16",
+          "collateral_management": "Collateral Management",
+          "credit_risk_management": "Creditworthiness and Risk Management"
+        }
+      },
+      "asset_management": {
+        "pageTitle": "Asset & Real Estate Solutions - Parla IT",
+        "heroTitle": "Fixed Asset and Real Estate Management",
+        "title": "Fixed Asset and Real Estate Management",
+        "items": {
+          "fixed_assets": "Fixed asset processes",
+          "asset_counting": "Fixed asset counting and assignment",
+          "real_estate": "Real Estate Management (RE)"
+        }
+      },
+      "budget_tax": {
+        "pageTitle": "Budget, Closing & Tax Solutions - Parla IT",
+        "heroTitle": "Budget, Closing, and Tax Solutions",
+        "title": "Budget, Closing, and Tax Solutions",
+        "items": {
+          "budget_management": "Budget management",
+          "closing_operations": "Closing operations",
+          "tax_declaration": "Tax declaration processes",
+          "inflation_accounting": "Inflation accounting",
+          "tms_vuk_transfer": "280–180 monthly (TMS) and annual (VUK) transfer transactions",
+          "deferred_tax": "Deferred tax calculation",
+          "tms_revaluation": "TMS revaluation calculation program"
+        }
+      },
+      "treasury_risk": {
+        "pageTitle": "Treasury & Risk Management (TRM) - Parla IT",
+        "heroTitle": "Treasury & Risk Management (TRM)",
+        "title": "Treasury & Risk Management (TRM)",
+        "items": {
+          "trm_main": "Treasury and Risk Management (TRM) main processes",
+          "credit_risk": "Credit risk management and credit limit report",
+          "credit_processes": "Credit processes: bond maturity reminder and automatic email",
+          "collateral_processes": "Collateral processes: special ledger entry with SBLC",
+          "collateral_reminder": "Collateral maturity reminder email sending",
+          "leasing": "Leasing processes"
+        }
+      },
+      "insurance": {
+        "pageTitle": "Insurance Solutions - Parla IT",
+        "heroTitle": "Insurance Solutions",
+        "title": "Insurance Solutions",
+        "items": {
+          "insura_integration": "Insurance module (INSURA) integration and processes"
+        }
+      },
+      "mobile_automation": {
+        "pageTitle": "Mobile & Automation Solutions - Parla IT",
+        "heroTitle": "Mobile & Automation Solutions",
+        "title": "Mobile & Automation Solutions",
+        "items": {
+          "smart_invoice": "Smart Invoice Entry (SAP Integrated, Mobile)",
+          "mobile_doc_management": "Mobile document management integrated with payment process",
+          "auto_clearing_reminders": "Automatic clearing and reminder mechanisms"
+        }
       }
     }
   },

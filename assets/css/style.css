@@ -7,8 +7,8 @@
     --secondary-color: #222222;
     --text-color: #555555;
     --bg-light: #f8f9fa;
-    --bg-white: #ffffff;
-    --header-bg: rgb(255, 255, 255);
+    --bg-white: #fff;
+    --header-bg: rgba(255, 255, 255, 0.85); /* Saydamlık eklendi */
     --section-padding: 100px 0; /* Geniş boşluk standardı */
 }
 
@@ -21,7 +21,13 @@ body {
     background: var(--bg-white);
     line-height: 1.7; /* Okunabilirlik için satır arası */
     overflow-x: hidden;
-    -webkit-user-select: none; user-select: none; /* Seçim engelleme */
+    cursor: default; /* Metin üzerinde düzenleme imleci çıkmasını engeller, seçimi etkilemez */
+}
+
+/* Metin imlecinin (I-beam) görünmesini engellemek için genel metin elementlerine de cursor:default eklenir */
+p, h1, h2, h3, h4, h5, h6, span, li, blockquote {
+    cursor: default; /* İmleci standart ok yapar */
+    user-select: none; /* Metin seçimini engeller, I-beam imlecinin çıkmasını önler */
 }
 
 /* Menü açıldığında sayfa kaydırmasını engelle */
@@ -51,17 +57,14 @@ header.scrolled {
 }
 
 .container { width: 80%; max-width: 1200px; margin: 0 auto; padding: 0 15px; }
-.container-mobile { display: none; width: 100%; max-width: 100%; margin: 0 auto; padding: 0 12px; }
 
 @media (max-width: 768px) {
     .container { width: 90%; max-width: 600px; padding: 0 8px; }
-    .container-mobile { display: none; width: 80%; max-width: 500px; padding: 10px;}
 }
 
 .navbar { display: flex; justify-content: space-between; align-items: center; }
 
-.logo { font-size: 1.8rem; font-weight: 800; color: #fff; text-decoration: none; font-family: 'Montserrat', sans-serif; letter-spacing: -1px; transition: color 0.3s ease; }
-.logo span { color: var(--primary-color); }
+.logo { padding: 0 30px;  }
 
 header.scrolled .logo { color: #000; }
 
@@ -274,6 +277,12 @@ section { padding: var(--section-padding); overflow: hidden; position: relative;
     transform: translateY(-10px) scale(1.03) !important; /* !important ile animasyon transformunu eziyoruz */
     box-shadow: 0 20px 40px rgba(0,0,0,0.12);
     border-bottom-color: var(--primary-color);
+}
+
+/* Link wrapper for service cards */
+.service-card-link {
+    text-decoration: none;
+    display: block; /* Ensures the link takes up the full grid cell space */
 }
 
 .service-card i { margin-bottom: 25px; transition: 0.3s; }
