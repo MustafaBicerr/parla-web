@@ -310,7 +310,9 @@ section { padding: var(--section-padding); overflow: hidden; position: relative;
 
 .reference-logo {   transition: 0.3s; }
 .reference-logo-1 { height: 150px; margin: 0 30px; }
+@media (max-width: 768px) { .reference-logo-1 { height: 100px; } }
 .reference-logo-2 { height: 80px; margin: 0 20px; }
+@media (max-width: 768px) { .reference-logo-2 { height: 60px; } }
 .reference-logo:hover { opacity: 1; filter: grayscale(0%); transform: scale(1.1); }
 
 @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }

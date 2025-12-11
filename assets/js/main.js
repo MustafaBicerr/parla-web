@@ -205,7 +205,7 @@ window.openSolutionModal = openSolutionModal;
 
 
 // İletişim ve Kariyer Formları için ortak Google Apps Script URL'si
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzFYTp7y4IY-x8rhK2g-tnaXaLSiNECWBjqW_MBHQZ1ZyM_ypW3DYRRjDcjr0iG2QmK/exec";
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxe2v7-LXZBon0Hi36K96DXo0MOrNZ6MDRZ5Jv5t-6aCrKNcvUtF-OyPDvnGp0HhsI/exec";
 
 function initCareerForm() {
     const dropArea = document.querySelector('.file-drop-area');
@@ -393,4 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize contact form interactions if the form exists on the page
     initContactForm();
+
+    // Initialize the floating action buttons and chatbot widget
+    if (typeof initChatWidget === 'function') initChatWidget();
 });
