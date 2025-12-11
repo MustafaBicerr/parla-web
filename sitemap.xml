@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    <!-- 
+    Not: Alan adını (https://www.parlabilgiteknolojileri.net) kendi alan adınızla güncellemeyi unutmayın.
+    'lastmod' tarihlerini sayfaları en son güncellediğiniz tarihlerle değiştirebilirsiniz.
+    -->
+
+    <!-- Ana Sayfa -->
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/index.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+
+    <!-- Kurumsal Sayfalar -->
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/corporate/about.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/corporate/career.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/references.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Kurulum & Danışmanlık Sayfaları -->
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/organisation/sap-implementation.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/organisation/sap-consulting-support.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+
+    <!-- Sektörel Çözüm Sayfaları -->
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/solutions/e-transformation.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/solutions/banking.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/solutions/financial-accounting.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/solutions/asset-management.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/solutions/budget-tax.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/solutions/treasury-risk.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/solutions/insurance.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/solutions/mobile-automation.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+    </url>
+
+    <!-- Parla Akademi Sayfaları -->
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/academy/corporate-workshops.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/academy/online-classroom-training.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/academy/one-on-one-training.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.parlabilgiteknolojileri.net/pages/academy/consulting-training.html</loc>
+        <lastmod>2024-05-21</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
+</urlset>

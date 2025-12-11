@@ -3,10 +3,12 @@ function initChatWidget() {
     if (document.getElementById('fab-container')) return;
 
     // --- Configuration ---
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxe2v7-LXZBon0Hi36K96DXo0MOrNZ6MDRZ5Jv5t-6aCrKNcvUtF-OyPDvnGp0HhsI/exec";
-    const WHATSAPP_NUMBER = "905352265408"; // Using the number from your contact info
-    const PHONE_NUMBER = "+905352265408";
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzL_coGc0SwmH3KqFEOot0DTzmpSjOk4wDf7jAj0IpOoKZX0bQLz3J3iSpGJ5ky1JU0/exec";
+    const WHATSAPP_NUMBER = "905352130735"; // Using the number from your contact info
+    const PHONE_NUMBER = "+905352130735";
     const WHATSAPP_TEXT = "SAP+ile+ilgili+bilgi+almak+istiyorum";
+
+    
 
     const widgetHTML = `
         <div class="chat-widget" id="chat-widget">

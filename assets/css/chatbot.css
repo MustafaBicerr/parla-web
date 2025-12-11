@@ -193,6 +193,15 @@
     visibility: visible;
 }
 
+/* Hide thought bubble and other FABs when chat widget is open */
+.chat-widget.visible ~ .fab-container .fab-thought-bubble,
+.chat-widget.visible ~ .fab-container > a.fab-item {
+    opacity: 0;
+    transform: scale(0.5);
+    visibility: hidden;
+    transition: all 0.2s ease;
+}
+
 .chat-widget-header {
     background-color: var(--parla-dark-grey);
     color: white;
