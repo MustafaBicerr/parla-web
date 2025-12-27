@@ -3,13 +3,26 @@
     "title": "Parla Information Technologies | Your SAP Solution Partner"
   },
   "home": {
+    "announcements": {
+      "title": "Announcements & News",
+      "subtitle": "Latest developments and projects from Parla BT world.",
+      "btn_show_all": "Show All",
+      "btn_hide": "Hide"
+    },
     "hero": {
       "title": "SAP FI/CO & TRM Special Solutions\nDigitizing Your Financial Processes\nEnd-to-End",
-      "subtitle": "We combine technology with design to add value to your business processes.",
+      "subtitle": "The future belongs to those who manage digitalization.",
       "btn": {
         "explore": "Explore Our Solutions",
         "demo": "Request Quote / Demo"
-      }
+      },
+      "carousel": [
+        { "title": "SAP Installation" },
+        { "title": "SAP S/4HANA Conversion" },
+        { "title": "SAP Additional Modules & Custom Developments" },
+        { "title": "SAP Support and Continuity Consulting" },
+        { "title": "Finish Your Unfinished Projects" }
+      ]
     },
     "about": {
       "title": "About",
@@ -81,9 +94,9 @@
   "header": {
     "nav": {
       "corporate": "Corporate",
-      "organisation": "Implementation & Consulting",
-      "academy": "Parla Academy",
-      "solutions": "Sectoral Solutions",
+      "organisation": "Consulting",
+      "academy": "Academy",
+      "solutions": "Solutions",
       "references": "References",
       "contact": "Contact"
     },

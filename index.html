@@ -16,6 +16,21 @@
 
     <div id="hero-placeholder" data-hero-key="home.hero.title"></div>
 
+    <section id="announcements">
+        <div class="container">
+            <div class="section-title anim-block" data-animate="true" data-anim-type="fade-up">
+                <h2 data-i18n="home.announcements.title">Duyurular & Haberler</h2>
+                <p data-i18n="home.announcements.subtitle">Parla BT dünyasından en güncel gelişmeler ve projeler.</p>
+            </div>
+            <div class="announcements-grid" id="announcements-grid">
+                <!-- Cards will be injected here via JS -->
+            </div>
+            <div id="announcements-btn-container" style="text-align: center; margin-top: 40px; display: none;">
+                <button id="announcement-toggle-btn" class="btn btn-primary" data-i18n="home.announcements.btn_show_all">Tümünü Göster</button>
+            </div>
+        </div>
+    </section>
+
     <section id="about">
         <div class="container">
             <div class="section-title anim-block" data-animate="true" data-anim-type="fade-up">
@@ -101,6 +116,22 @@
         <!-- İkinci Satır - Küçük Görseller -->
         <div class="reference-slider reference-slider-2">
             <div class="reference-track reference-track-2">
+                <img src="assets/img/ref2/esan-eczacibasi-logo.png" class="reference-logo reference-logo-2" alt="esan-eczacibasi-logo">
+
+                <img src="assets/img/ref2/votorantim-cimentos-logo.png" class="reference-logo reference-logo-2" alt="votorantim-cimentos">
+                <img src="assets/img/ref2/tpao-logo.png" class="reference-logo reference-logo-2" alt="tpao-logo">
+                <img src="assets/img/ref2/dyo-logo.png" class="reference-logo reference-logo-2" alt="dyo-logo">
+                <img src="assets/img/ref2/tedas-logo.png" class="reference-logo reference-logo-2" alt="tedas-logo">
+                <img src="assets/img/ref2/istac-logo.png" class="reference-logo reference-logo-2" alt="istac-logo">
+                <img src="assets/img/ref2/isbir-sunger-logo.png" class="reference-logo reference-logo-2" alt="isbir-sunger-logo">
+                <img src="assets/img/ref2/tuvturk-logo.png" class="reference-logo reference-logo-2" alt="tuvturk-logo">
+                <img src="assets/img/ref2/aselsan-logo.png" class="reference-logo reference-logo-2" alt="aselsan-logo">
+                <img src="assets/img/ref2/havelsan-logo.png" class="reference-logo reference-logo-2" alt="havelsan-logo">
+                <img src="assets/img/ref2/kardemir-logo.png" class="reference-logo reference-logo-2" alt="kardemir-logo">
+                <img src="assets/img/ref2/solensis.png" class="reference-logo reference-logo-2" alt="solensis">
+                <img src="assets/img/ref2/paycore-logo.png" class="reference-logo reference-logo-2" alt="paycore-logo">
+                
+
                 <img src="assets/img/ref2/balsu-logo.png" class="reference-logo reference-logo-2" alt="balsu-logo">
                 <img src="assets/img/ref2/carlsberg-logo.png" class="reference-logo reference-logo-2" alt="carlsberg-logo">
                 <img src="assets/img/ref2/dalgakiran-logo.png" class="reference-logo reference-logo-2" alt="dalgakiran-logo">
@@ -120,6 +151,22 @@
                 <img src="assets/img/ref2/yilport-holding-logo.png" class="reference-logo reference-logo-2" alt="yilport-holding-logo">
                 <img src="assets/img/ref2/zegna-logo.png" class="reference-logo reference-logo-2" alt="zegna-logo">
                 <!--  -->
+
+                <img src="assets/img/ref2/esan-eczacibasi-logo.png" class="reference-logo reference-logo-2" alt="esan-eczacibasi-logo">
+
+                <img src="assets/img/ref2/votorantim-cimentos-logo.png" class="reference-logo reference-logo-2" alt="votorantim-cimentos-logo">
+                <img src="assets/img/ref2/tpao-logo.png" class="reference-logo reference-logo-2" alt="tpao-logo">
+                <img src="assets/img/ref2/dyo-logo.png" class="reference-logo reference-logo-2" alt="dyo-logo">
+                <img src="assets/img/ref2/tedas-logo.png" class="reference-logo reference-logo-2" alt="tedas-logo">
+                <img src="assets/img/ref2/istac-logo.png" class="reference-logo reference-logo-2" alt="istac-logo">
+                <img src="assets/img/ref2/isbir-sunger-logo.png" class="reference-logo reference-logo-2" alt="isbir-sunger-logo">
+                <img src="assets/img/ref2/tuvturk-logo.png" class="reference-logo reference-logo-2" alt="tuvturk-logo">
+                <img src="assets/img/ref2/aselsan-logo.png" class="reference-logo reference-logo-2" alt="aselsan-logo">
+                <img src="assets/img/ref2/havelsan-logo.png" class="reference-logo reference-logo-2" alt="havelsan-logo">
+                <img src="assets/img/ref2/kardemir-logo.png" class="reference-logo reference-logo-2" alt="kardemir-logo">
+                <img src="assets/img/ref2/solensis.png" class="reference-logo reference-logo-2" alt="solensis">
+                <img src="assets/img/ref2/paycore-logo.png" class="reference-logo reference-logo-2" alt="paycore-logo">
+
                 <img src="assets/img/ref2/balsu-logo.png" class="reference-logo reference-logo-2" alt="balsu-logo">
                 <img src="assets/img/ref2/carlsberg-logo.png" class="reference-logo reference-logo-2" alt="carlsberg-logo">
                 <img src="assets/img/ref2/dalgakiran-logo.png" class="reference-logo reference-logo-2" alt="dalgakiran-logo">
@@ -182,7 +229,7 @@
         </div>
     </section>
 
-    <section>
+    <section id="sectoral-solutions">
         <div class="container">
                 <div class="section-title anim-block" data-animate="true" data-anim-type="fade-up">
                 <h2 data-i18n="home.sector.title">Sektörel Çözümler</h2>
@@ -325,11 +372,15 @@
                     
                     <div style="margin-bottom: 20px;">
                         <p style="font-weight: 700; color: #333;" data-i18n="home.contact.email_label">E-posta:</p>
-                        <p style="color: var(--primary-color);" data-i18n="home.contact.email">info@parlabt.com</p>
+                        <a href="mailto:info@parlabilgiteknolojileri.net" style="color: var(--primary-color); text-decoration: none;" data-i18n="home.contact.email">info@parlabilgiteknolojileri.net</a>
                     </div>
                     <div style="margin-bottom: 30px;">
                         <p style="font-weight: 700; color: #333;" data-i18n="home.contact.phone_label">Telefon:</p>
-                        <p style="color: var(--primary-color);" data-i18n="home.contact.phone">+90 555 000 00 00</p>
+                        <a href="tel:+905352130735" style="color: var(--primary-color); text-decoration: none;" data-i18n="home.contact.phone">0 535 213 07 35</a>
+                    </div>
+                    <div style="margin-bottom: 30px;">
+                        <p style="font-weight: 700; color: #333;" >Linkedin</p>
+                        <a href="https://www.linkedin.com/company/parla-bilgi-teknolojileri/posts/?feedView=all" style="color: var(--primary-color); text-decoration: none;" >Parla Bilgi Teknolojileri</a>
                     </div>
 
                     <div style="padding: 25px; background: #fff; border-radius: 12px; border-left: 5px solid var(--primary-color); box-shadow: 0 5px 20px rgba(0,0,0,0.05);">
@@ -376,5 +427,7 @@
     <script src="assets/js/i18n.js"></script>
     <script src="assets/js/chatbot.js"></script>
     <script src="assets/js/main.js"></script>
+    <script src="assets/js/hero-carousel.js"></script>
+    <script src="assets/js/announcements.js"></script>
 </body>
 </html>

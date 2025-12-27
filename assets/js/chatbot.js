@@ -6,11 +6,48 @@ function initChatWidget() {
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzL_coGc0SwmH3KqFEOot0DTzmpSjOk4wDf7jAj0IpOoKZX0bQLz3J3iSpGJ5ky1JU0/exec";
     const WHATSAPP_NUMBER = "905352130735"; // Using the number from your contact info
     const PHONE_NUMBER = "+905352130735";
-    const WHATSAPP_TEXT = "SAP+ile+ilgili+bilgi+almak+istiyorum";
-
     
+    // WhatsApp Menu Options
+    const whatsappOptions = [
+        "Şirketim SAP kullanıyor, destek almak istiyorum",
+        "Şirketim farklı bir ERP programı kullanıyor, SAP' ye geçmek istiyoruz.",
+        "SAP Danışmanlık eğitimi alma istiyorum.",
+        "SAP kullanıcı eğitimi almak istiyorum"
+    ];
+
+    const whatsappMenuHTML = whatsappOptions.map(opt => 
+        `<a href="https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(opt)}" target="_blank" class="whatsapp-menu-item">${opt}</a>`
+    ).join('');
 
     const widgetHTML = `
+        <style>
+            .fab-whatsapp-wrapper { position: relative; }
+            .whatsapp-menu {
+                position: absolute;
+                bottom: 70px;
+                right: 0;
+                width: 280px;
+                background: white;
+                border-radius: 8px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                display: none;
+                flex-direction: column;
+                overflow: hidden;
+                z-index: 10000;
+            }
+            .whatsapp-menu.active { display: flex; }
+            .whatsapp-menu-item {
+                padding: 12px 15px;
+                border-bottom: 1px solid #f0f0f0;
+                color: #333;
+                text-decoration: none;
+                font-size: 13px;
+                transition: background 0.2s;
+                line-height: 1.4;
+            }
+            .whatsapp-menu-item:hover { background: #f5f5f5; color: #25D366; }
+            .whatsapp-menu-item:last-child { border-bottom: none; }
+        </style>
         <div class="chat-widget" id="chat-widget">
             <div class="chat-widget-header">
                 <h3>Parla BT Asistanı</h3>
@@ -44,9 +81,14 @@ function initChatWidget() {
                     </div>
                 </div>
             </div>
-            <a href="https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_TEXT}" target="_blank" class="fab-item fab-whatsapp" title="WhatsApp ile Ulaşın">
-                <i class="fab fa-whatsapp"></i>
-            </a>
+            <div class="fab-whatsapp-wrapper">
+                <div class="whatsapp-menu" id="whatsapp-menu">
+                    ${whatsappMenuHTML}
+                </div>
+                <div id="whatsapp-fab" class="fab-item fab-whatsapp" title="WhatsApp ile Ulaşın" style="cursor: pointer;">
+                    <i class="fab fa-whatsapp"></i>
+                </div>
+            </div>
             <a href="tel:${PHONE_NUMBER}" class="fab-item fab-phone" title="Bizi Arayın">
                 <i class="fas fa-phone"></i>
             </a>
@@ -62,11 +104,17 @@ function initChatWidget() {
     const chatForm = document.getElementById('chat-form');
     const chatInput = document.getElementById('chat-input');
     const chatBody = document.getElementById('chat-body');
+    
+    const whatsappFab = document.getElementById('whatsapp-fab');
+    const whatsappMenu = document.getElementById('whatsapp-menu');
 
     // --- Event Listeners ---
 
     // Toggle chat widget visibility
     const toggleChat = () => {
+        if (whatsappMenu && whatsappMenu.classList.contains('active')) {
+            whatsappMenu.classList.remove('active');
+        }
         chatWidget.classList.toggle('visible');
         if (chatWidget.classList.contains('visible')) {
             chatInput.focus();
@@ -75,6 +123,20 @@ function initChatWidget() {
 
     chatbotFab.addEventListener('click', toggleChat);
     closeBtn.addEventListener('click', toggleChat);
+
+    if (whatsappFab) {
+        whatsappFab.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (chatWidget.classList.contains('visible')) toggleChat();
+            whatsappMenu.classList.toggle('active');
+        });
+    }
+
+    document.addEventListener('click', (e) => {
+        if (whatsappMenu && whatsappMenu.classList.contains('active') && !whatsappFab.contains(e.target) && !whatsappMenu.contains(e.target)) {
+            whatsappMenu.classList.remove('active');
+        }
+    });
 
     // Handle form submission
     chatForm.addEventListener('submit', (e) => {

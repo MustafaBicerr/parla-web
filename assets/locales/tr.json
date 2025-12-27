@@ -3,13 +3,26 @@
     "title": "Parla Bilgi Teknolojileri | SAP Çözüm Ortağınız"
   },
   "home": {
+    "announcements": {
+      "title": "Duyurular & Haberler",
+      "subtitle": "Parla BT dünyasından en güncel gelişmeler ve projeler.",
+      "btn_show_all": "Tümünü Göster",
+      "btn_hide": "Gizle"
+    },
     "hero": {
       "title": "SAP FI/CO & TRM Özel Çözümleriyle\nFinansal Süreçlerinizi\nUçtan Uca\nDijitalleştiriyoruz",
-      "subtitle": "Teknolojiyi estetikle buluşturuyor, iş süreçlerinize değer katıyoruz.",
+      "subtitle": "Gelecek, dijitalleşmeyi yönetenlerin olacak.",
       "btn": {
         "explore": "Çözümlerimizi İnceleyin",
         "demo": "Teklif / Demo Talep Edin"
-      }
+      },
+      "carousel": [
+        { "title": "SAP Kurulumu" },
+        { "title": "SAP S/4HANA Dönüşümü" },
+        { "title": "SAP Ek Modüller & Özel Geliştirmeler" },
+        { "title": "SAP Destek ve Süreklilik Danışmanlığı" },
+        { "title": "Yarım Kalan Projelerinizi Bitirin" }
+      ]
     },
     "about": {
       "title": "Hakkımızda",
@@ -81,9 +94,9 @@
   "header": {
     "nav": {
       "corporate": "Kurumsal",
-      "organisation": "Kurulum & Danışmanlık",
-      "academy": "Parla Akademi",
-      "solutions": "Sektörel Çözümler",
+      "organisation": "Danışmanlık",
+      "academy": "Akademi",
+      "solutions": "Çözümler",
       "references": "Referanslar",
       "contact": "İletişim"
     },
