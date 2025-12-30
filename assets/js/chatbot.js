@@ -11,7 +11,7 @@ function initChatWidget() {
     const whatsappOptions = [
         "Şirketim SAP kullanıyor, destek almak istiyorum",
         "Şirketim farklı bir ERP programı kullanıyor, SAP' ye geçmek istiyoruz.",
-        "SAP Danışmanlık eğitimi alma istiyorum.",
+        "SAP Danışmanlık eğitimi almak istiyorum.",
         "SAP kullanıcı eğitimi almak istiyorum"
     ];
 

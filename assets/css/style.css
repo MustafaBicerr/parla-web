@@ -300,8 +300,8 @@ section { padding: var(--section-padding); overflow: hidden; position: relative;
 .service-card ul li { font-size: 0.9rem; color: #555; margin-bottom: 8px; position: relative; padding-left: 20px; text-align: left;}
 .service-card ul li::before { content: '\f00c'; font-family: 'Font Awesome 6 Free'; font-weight: 900; position: absolute; left: 0; color: var(--primary-color); font-size: 0.8rem; }
 /* --- REFERANSLAR (MARQUEE) --- */
-.reference-slider { background: #fff; padding: 30px 0; overflow: hidden; white-space: nowrap; }
-.reference-slider-1 { border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 40px 0; }
+.reference-slider { background: #fff; padding: 0px 0; overflow: hidden; white-space: nowrap; }
+.reference-slider-1 { border-top: 1px solid #eee; border-bottom: 1px solid #eee; padding: 30px 0; }
 .reference-slider-2 { border-bottom: 1px solid #eee; padding: 30px 0; }
 
 .reference-track { display: inline-block; }
