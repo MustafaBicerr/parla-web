@@ -1,0 +1,708 @@
+parlaBT_web
+├─ .git
+│  ├─ COMMIT_EDITMSG
+│  ├─ config
+│  ├─ description
+│  ├─ FETCH_HEAD
+│  ├─ HEAD
+│  ├─ hooks
+│  │  ├─ applypatch-msg.sample
+│  │  ├─ commit-msg.sample
+│  │  ├─ fsmonitor-watchman.sample
+│  │  ├─ post-update.sample
+│  │  ├─ pre-applypatch.sample
+│  │  ├─ pre-commit.sample
+│  │  ├─ pre-merge-commit.sample
+│  │  ├─ pre-push.sample
+│  │  ├─ pre-rebase.sample
+│  │  ├─ pre-receive.sample
+│  │  ├─ prepare-commit-msg.sample
+│  │  ├─ push-to-checkout.sample
+│  │  ├─ sendemail-validate.sample
+│  │  └─ update.sample
+│  ├─ index
+│  ├─ info
+│  │  └─ exclude
+│  ├─ logs
+│  │  ├─ HEAD
+│  │  └─ refs
+│  │     ├─ heads
+│  │     │  └─ main
+│  │     └─ remotes
+│  │        └─ origin
+│  │           └─ main
+│  ├─ objects
+│  │  ├─ 00
+│  │  │  ├─ 4287c8aac0d71548079c347abe8a514584bc07
+│  │  │  ├─ 953883d4f9a4897374cad784fd2173cbfea319
+│  │  │  ├─ a83532462cca3da8102cead112b688029606e7
+│  │  │  └─ b3fd6c0a0c1f9b9f0e7fa066416c09629e3a20
+│  │  ├─ 01
+│  │  │  ├─ 7c7165a0c5103632a2efc2880dbce75f4485d2
+│  │  │  └─ 8fbdef098a63e3a2874562c9bf637a2093d842
+│  │  ├─ 02
+│  │  │  └─ 8e0b37b6bfffc13d2e49250526b351154a03b1
+│  │  ├─ 04
+│  │  │  └─ 49615928c8696a8d0f154b0020e7219b5d15cf
+│  │  ├─ 05
+│  │  │  └─ 8f02ec91cc4ee3edf59864c69859357973f107
+│  │  ├─ 06
+│  │  │  └─ 6b0b263f659e225fd8fea73fa0e84b7a13b1e6
+│  │  ├─ 07
+│  │  │  └─ 5f19a4c55d374759fcab36a6b771195f76441f
+│  │  ├─ 0a
+│  │  │  └─ ceec35db30f054f8ba7c48a138e0a15c953d27
+│  │  ├─ 0b
+│  │  │  └─ 32a0be7fcab662e36f8b24cc568524f41db05a
+│  │  ├─ 0c
+│  │  │  ├─ 3620d8a3121374e5a4634bf51813b98af423ca
+│  │  │  └─ 6f0acd962471bac90b437c95cbb6d1f2d69f6f
+│  │  ├─ 10
+│  │  │  └─ 4ae2894367e0c2a620f82bf2abd090949decbd
+│  │  ├─ 11
+│  │  │  ├─ 5c4b09d67695be72c54dc5bfcf2552ddf2d9e4
+│  │  │  ├─ 6b670155acbbe298039abecd434f32c5d17153
+│  │  │  └─ a57f0739f1a5aa79b4788025c7e4dd4a866a77
+│  │  ├─ 13
+│  │  │  └─ 620864af2741576807fe7c367aeee3e973d4fd
+│  │  ├─ 15
+│  │  │  ├─ 7ef1295c13d22705c41e4208d732517330d97f
+│  │  │  ├─ 8164b05fa5cf7b75c099f962fa82935ddf0367
+│  │  │  └─ e7fab968fbd854a516f52fbcc039f482535636
+│  │  ├─ 16
+│  │  │  ├─ 0957f67f4e2e39c573fc3ad9690ebbcddb1a53
+│  │  │  └─ 38da1b77c8ecec7574ca47ec3d0249aaee1b17
+│  │  ├─ 17
+│  │  │  ├─ 21efe0a57cbc1bfddfcc41ab33686cee7be3ff
+│  │  │  ├─ 2e405e6ecb0705264f0aeab119c9642e9c84c3
+│  │  │  └─ c2049975478743496c89eeec7025331e0dc386
+│  │  ├─ 18
+│  │  │  └─ 14046afc741174d49aa5622ba5e49b33106a57
+│  │  ├─ 1b
+│  │  │  ├─ 0135109b98bac237eb53f10144f6910dc13e75
+│  │  │  ├─ 42dedc466f44b533da055d1adf6984df9c6747
+│  │  │  └─ 850bfeb3f780beb0710ace2fb5ade81ab47f9f
+│  │  ├─ 1d
+│  │  │  └─ a20d4bf8b2570368093cee016c2d980190c688
+│  │  ├─ 1f
+│  │  │  ├─ 3bc51fac2e0e3da4ad1b6f004a00a9a140b87a
+│  │  │  └─ 9cd55f1215f877925d8b5476e30339b0cdbfd4
+│  │  ├─ 20
+│  │  │  ├─ c8365b28f5c886af88a41a3ec7388075b35278
+│  │  │  └─ da5c9b2149186007b788b3ce1712188fb5cc99
+│  │  ├─ 22
+│  │  │  ├─ cadc101ce739c64a69089e50489eebd7699b35
+│  │  │  └─ d6f82fa3131a7f193cfd5e03e17e8e4d0bd796
+│  │  ├─ 23
+│  │  │  ├─ 852535f165d178894b90ce307de75f0cc3d01f
+│  │  │  └─ 8dc792cd0b8e3815216d54500d26af30aceaef
+│  │  ├─ 24
+│  │  │  └─ b9b74e254f3c2566c53df714fd289ba254b9a9
+│  │  ├─ 26
+│  │  │  ├─ 5e2b1e693e311d602652ef84bd4efce86a04c8
+│  │  │  └─ df82cff6e3ffa166471f82f5f63534d2e25304
+│  │  ├─ 27
+│  │  │  ├─ 1de09372bf0d984ceb2006558dcbf337e01273
+│  │  │  └─ f1487dbe69b9390d99aba2e389f871b2baa5d6
+│  │  ├─ 2b
+│  │  │  └─ cb197f60f0b4a4de74ae0c4cd1e5f84ada20f5
+│  │  ├─ 2c
+│  │  │  ├─ 42011f8dc757ff82a7dce38ff38d4c715a4648
+│  │  │  └─ 9871d00b50721176710162d6ff080c2a699585
+│  │  ├─ 2d
+│  │  │  ├─ 0e096548f50d8120d168408ce17dba6606d5b3
+│  │  │  ├─ a07c9527e195a9d763f4e7298b9c5cd8b40530
+│  │  │  └─ f791a9ea666d1b3a010b9c6952d86ba20bd66b
+│  │  ├─ 2e
+│  │  │  └─ d9054f0fcf4f02f3fa47445e6e19e6579cf6b4
+│  │  ├─ 2f
+│  │  │  └─ 5fcd721b2b37add07954a0376dfa3bf8104c55
+│  │  ├─ 31
+│  │  │  ├─ 64ed8da385e455fc1cd9a4136d53e31ce38b59
+│  │  │  └─ afeac73228608f6af07b692d3121fc65ed6e68
+│  │  ├─ 32
+│  │  │  ├─ 7bd66218f0c4ffef832d441d6c681b202f05ed
+│  │  │  ├─ 88914c55c016a71e72843c81789812282873f3
+│  │  │  ├─ 8cd9b85093bcdd7041b1b42d95c2de3c76f8d5
+│  │  │  └─ ccb5fd113775a8123c6d1df6d61c107f203019
+│  │  ├─ 33
+│  │  │  └─ 6b39556654f23ad819c03687e1d962bb37f452
+│  │  ├─ 34
+│  │  │  ├─ 7f982bfa00c794068afc4403f4bd0c93d9a4fe
+│  │  │  └─ 9c49cfebb195f359f22051a2363c485108c1e6
+│  │  ├─ 37
+│  │  │  └─ 633f61b53d36325045ea629960207f789dc07d
+│  │  ├─ 38
+│  │  │  ├─ 0603558be11e7ab783e052e80f580d26387b62
+│  │  │  ├─ da9cc3a9780b046c581ae3494d890bc1f3ec4f
+│  │  │  └─ e0657df87f680913717316bb0c0573baab9921
+│  │  ├─ 39
+│  │  │  └─ b7fee11e2a71e14cf4a0ca40425d04e4d123a2
+│  │  ├─ 3a
+│  │  │  ├─ 3b8c16253480b7ceec1733bfd8983476c285f4
+│  │  │  └─ e6e904045ffd04b172e9dc011bc49717531b2a
+│  │  ├─ 3b
+│  │  │  └─ 0e8ccea4c7e7f31e80366f8da335f3e80dc7a3
+│  │  ├─ 3c
+│  │  │  └─ d28be70678bbca9d723ddcad6563b9392dced0
+│  │  ├─ 3e
+│  │  │  ├─ 4908686baab4e17eb54c0f11b02f7139fbc63e
+│  │  │  └─ a8a9e4fe7d23794a543234c38e2c38e5296fdc
+│  │  ├─ 3f
+│  │  │  └─ 6af0593f50f1e2cb73892200b1802d26189873
+│  │  ├─ 40
+│  │  │  ├─ b0d4cdd16128784412939f19701857d74c44ba
+│  │  │  └─ c38e6e8eff277533fb104332cf05da26c1063f
+│  │  ├─ 41
+│  │  │  ├─ 86c895219ad509dd7cb3babb49872cbc796279
+│  │  │  ├─ a9604e180955b87fbba64e7e6a86e8c5f0a942
+│  │  │  └─ c2da332a0ebf1cc09ea00d4a40f422bab2a532
+│  │  ├─ 42
+│  │  │  ├─ 721566e6107efb0d6b609d7e28ee156cb22779
+│  │  │  └─ f4a7e023e0d916bdcd805995e77de118271e7e
+│  │  ├─ 43
+│  │  │  └─ 0942acf7a7083e885b3c6d97ce9577f960ecbf
+│  │  ├─ 44
+│  │  │  ├─ 63881a56029e9c4d4ccd642ca8bec0e8434db4
+│  │  │  ├─ a67d4f1cadd27083a2d8a62eb6a6a26ee4f751
+│  │  │  └─ a79d9873ed68ac1c48fcad45493d5acb351774
+│  │  ├─ 45
+│  │  │  └─ cb50da25358e8ece6ce6dece81cb76e3d8f022
+│  │  ├─ 49
+│  │  │  └─ e3c45f082aa29f9384feda19816fc511954a3c
+│  │  ├─ 4a
+│  │  │  └─ 0e3b4c27d3b41f8f8dea76aad669a322c4b92a
+│  │  ├─ 4d
+│  │  │  ├─ 13edf9ae0f409055d0bf3298d25df9dde1a3c7
+│  │  │  ├─ 630814cc70d4b0f1d3f0382301137f92497cdb
+│  │  │  ├─ cfeb9365cbc104f8d721fb2a681c32d7c8edae
+│  │  │  └─ dfcaf79ddc687e3d5ff1b3ac486873ab48afa3
+│  │  ├─ 4f
+│  │  │  ├─ 5f1ba9dc3d25a745dbd892a2f3af219b6398f1
+│  │  │  ├─ 845092be9eadbca2bd66fccb9202fea7d4e3fb
+│  │  │  └─ 9e74c5ddb35c61296ed0ee930898eb3f1881bd
+│  │  ├─ 52
+│  │  │  ├─ 41cf22690c9fd109a15241ef0a1a8f59914098
+│  │  │  ├─ bea9cee9f1a8350e69600da198bd997934b511
+│  │  │  └─ f5429e372e9bedded3a76e10bec753a73cb48b
+│  │  ├─ 53
+│  │  │  └─ 3df13f153e6c75bd429ad75716142cb9d6f7b4
+│  │  ├─ 54
+│  │  │  └─ 0e90f3987994128c3bcbb2512de5fda3fdfbf3
+│  │  ├─ 55
+│  │  │  ├─ 09a87e9a99a7d24fcdce0feaa2b1e26be42862
+│  │  │  ├─ 7ec50c463f0db32a632222fefa51fdfdff8cb6
+│  │  │  └─ e51d27600bb62b2c9d3340d5718b97a30a0c58
+│  │  ├─ 57
+│  │  │  └─ 522c18812dae997af00919a4eb0d3626cf5545
+│  │  ├─ 58
+│  │  │  └─ 33121ee4611cd7d18b6f6009783379cc4f772c
+│  │  ├─ 5a
+│  │  │  ├─ 12882cfa3f36aa5680fd3842fe69f6b8c145c4
+│  │  │  └─ 8c4440e8d0904e2e2cdc232bc855a4f7e3042c
+│  │  ├─ 5b
+│  │  │  └─ cad397755e7234308344f438a360fa9559a590
+│  │  ├─ 5c
+│  │  │  ├─ 48b83e7f29eb6095a97587541db2cf473e9f68
+│  │  │  ├─ 52c33272f98da22ef07a8eb479283410724e93
+│  │  │  ├─ 8ea52f1accccafdfd01ec5ccc09e6697289cb7
+│  │  │  ├─ c4e1e82b1bb5e00f86196de5f0c18e91601b1e
+│  │  │  └─ d2f6578564e38b6d9e16f31c1928dca24c2b4c
+│  │  ├─ 5d
+│  │  │  └─ cc9690cfdef57039ace3564725aa759cf88ef7
+│  │  ├─ 5e
+│  │  │  └─ b379ae71e1bbdf4256b5d0323bbb25f5ca4333
+│  │  ├─ 5f
+│  │  │  └─ a9cb569132745c97cce16ebeddc9b20b8d518f
+│  │  ├─ 61
+│  │  │  ├─ 0e7840ecc3514523bffba324e1836f7e10429c
+│  │  │  └─ c3551b4fce9394fa658849b9155c3d212eb8e3
+│  │  ├─ 62
+│  │  │  ├─ 9b9f8f616b9bad86710dc6e10b3ce3db585338
+│  │  │  └─ c916b3820e7b2f8b02adc3389a382e14003bc8
+│  │  ├─ 63
+│  │  │  └─ efddaebcebbd802943502468ab22cdea1140ac
+│  │  ├─ 65
+│  │  │  └─ 1a426e33be41308c34a9c53485c91cecfff16d
+│  │  ├─ 66
+│  │  │  ├─ 04d3676266b3e90eab1df37173b8fb98b10e06
+│  │  │  ├─ 6ee7fb66c2eba758384456e66731c31c399d05
+│  │  │  ├─ 72bd34918711a6c1e7928ae266ce6241438e07
+│  │  │  └─ 7de7967f2c187537ccef7b3062d33888795383
+│  │  ├─ 67
+│  │  │  ├─ 6bef036e168dab051fc32881926d5e9f87a904
+│  │  │  └─ 9d576d35a5a6055085cfd734b81213f311c403
+│  │  ├─ 68
+│  │  │  └─ 5bea6167681b83de210e83336964f59d243b69
+│  │  ├─ 69
+│  │  │  └─ d4b7b79c3d06020f07c4c71a6be1e5974e24a4
+│  │  ├─ 6a
+│  │  │  ├─ e2e72d2f9818c92912793a00f6114c7bb1fe74
+│  │  │  └─ e647b282a023eabf5a1fc324137f152d4a2224
+│  │  ├─ 6b
+│  │  │  └─ 82ab57f999f890186932ea4b40f1053abea585
+│  │  ├─ 6d
+│  │  │  └─ d8f06746bdd0e8e8ddf5842cd321f8b50d6c0e
+│  │  ├─ 70
+│  │  │  ├─ 89a83aa9a0b8cd782a4eec4c32679ea81254bb
+│  │  │  └─ 8b284f75db6897410aa73d8418a85006bfdad3
+│  │  ├─ 71
+│  │  │  ├─ 6732346dc7f3d7df025f2785a9e6f8d6c0f001
+│  │  │  ├─ 71d9173d3d7c44470a4bb306e76a3cdcb4d578
+│  │  │  ├─ 75e051bbf91fa5f174feca40225647122db0db
+│  │  │  └─ 81cbb4d1a986908f5555610443725b3409b3f2
+│  │  ├─ 72
+│  │  │  ├─ 61d10975f51c5dfa9278b9ddc6c86c969efb8c
+│  │  │  └─ ac687589c6a1fa4a82309ae2e8a17d72c3d339
+│  │  ├─ 76
+│  │  │  ├─ 2b93f1a0787cbd7584fb5d80b516a130d47682
+│  │  │  ├─ 4d8dc42dde4ce3efa732571435be71f6a63b42
+│  │  │  └─ 77d7527fb5a1c617c9dcdcedba2fe484878b32
+│  │  ├─ 77
+│  │  │  ├─ 1dfbeac308a30fa4f87fb969ec96c4538521b6
+│  │  │  └─ 948be3fc953ae70a3e83e62c0efec1decfabec
+│  │  ├─ 78
+│  │  │  ├─ a1bbc7fd1d8bf941949f6c2ddafab1947cb9c5
+│  │  │  └─ d5b1906ed76b56fe36cd48d20ddd4f0c89d1ae
+│  │  ├─ 79
+│  │  │  └─ 21041ed5898e36bfb048b75f9eeccf757aa964
+│  │  ├─ 7b
+│  │  │  ├─ 6da5b1e00373cc99d2550aa7333bec76e4652a
+│  │  │  ├─ 949f20b399eb5e83952302beb980c7268e4f32
+│  │  │  ├─ c1d162d0ff1516eaa373969a853f8930c0aa8f
+│  │  │  └─ e32289ae0907c414f4637681544ac7431ddb03
+│  │  ├─ 7c
+│  │  │  ├─ 2c7785a1782f1ea1b4e6577524ba5b09c65bab
+│  │  │  ├─ 69119c96942466996ec3ced272fbcf59f9bf52
+│  │  │  └─ b209082893561b59dd362cabd01658fad5afea
+│  │  ├─ 7d
+│  │  │  └─ 7ca6d9fb228ae88cfa59748849cee538491866
+│  │  ├─ 7f
+│  │  │  ├─ 3d89684a94d7c5405efa41489630eb59776147
+│  │  │  ├─ 437ebb8778b81d8dac5fa6780b0ce1836c324a
+│  │  │  └─ d20aec1fd929ede99f80807df28e597caa1009
+│  │  ├─ 80
+│  │  │  ├─ 644179ef086c33aa8f954ed83078c0e34a0693
+│  │  │  └─ 9dd0e1b762760e2c7bbfbafaa4acb5316ce6ce
+│  │  ├─ 81
+│  │  │  ├─ 5ca8ad4d2c142d88e006310db7328d35b3509e
+│  │  │  ├─ 66ff4d1e3d042606ec479b159f3684e4404077
+│  │  │  └─ 7c221755522cdff5536c9f0c09af59d544eca9
+│  │  ├─ 82
+│  │  │  ├─ 152584b04e2d3fe3019525355d955551428eb4
+│  │  │  ├─ 7122cbc650555c4f0e8a1bfbe341135dc458b5
+│  │  │  └─ a41d46a3d63e2063a164218b57f2a1b1e2132d
+│  │  ├─ 83
+│  │  │  ├─ 0749a72b80f4699c4dfb789d89f5e80eb35a1c
+│  │  │  └─ ec44daaecfe922fdc76088283a5d6167cd8102
+│  │  ├─ 84
+│  │  │  ├─ a513fc86c89f80610dcd85dfaa41aa6eb11261
+│  │  │  ├─ ce6d30bf91e158322d3e3a93df5a0cd7fd7abf
+│  │  │  └─ fc5f341b54fa6c7ef1453ab1bc376b58b59de9
+│  │  ├─ 86
+│  │  │  ├─ 28427e2a5f238885f169f503703cc696b94798
+│  │  │  ├─ 79e4ee3d9fa45eab25259660407253ade84aac
+│  │  │  └─ 9f88d90e7ef547a49a3f4b564d782df58eb63f
+│  │  ├─ 87
+│  │  │  └─ 7ac59958082e1a32d5e0a4c52e31a42f8c06a1
+│  │  ├─ 88
+│  │  │  ├─ aeb9e0cb9ed404ef609837bd7c437889a5a6df
+│  │  │  └─ fd4414caf9d7a1dec06f1d39f20adedd39b269
+│  │  ├─ 89
+│  │  │  └─ 1467456f444f1840c5e8b0cc03035b283f1590
+│  │  ├─ 8a
+│  │  │  ├─ 719532772063f3effb4688b4945d88f5873fef
+│  │  │  ├─ a7fd3807b3699c55824a897404b7070ffd5a2b
+│  │  │  └─ fc57e5c915275e5ae2dfbeefb5d02fcdac9051
+│  │  ├─ 8b
+│  │  │  ├─ 08af7649ebba94ad86b05ae9aed98f59263e53
+│  │  │  ├─ 97802498ba3b57da531fc673e7a4850d0d4ced
+│  │  │  └─ f5bcad0caa790500376afc108fadeba0ccf3be
+│  │  ├─ 8c
+│  │  │  └─ c1ab2fed46d51ed89b112f5e2a021a0cd773d9
+│  │  ├─ 8d
+│  │  │  └─ 5c54cfe93de414a9c59a4f3361102474bbb5dc
+│  │  ├─ 8e
+│  │  │  └─ 3444d02d436c1cd2363c2427a1d30a409d4a29
+│  │  ├─ 90
+│  │  │  └─ 7ae68497df0ea5ae780424d852925b31d56e56
+│  │  ├─ 91
+│  │  │  └─ 460859a26af722b358c922fb15dcd1240ee603
+│  │  ├─ 93
+│  │  │  ├─ 11385bb26fc7cf4cc4228d23183192732961c3
+│  │  │  └─ 729cb86a30d4bde7d915da1fd2f4c0fe9b497f
+│  │  ├─ 95
+│  │  │  ├─ 4731e4322709d9b9cd9bf365f302f1f42f20f3
+│  │  │  └─ 9facb63d576dcd146095e134f82b0cc46397fb
+│  │  ├─ 96
+│  │  │  └─ d2e36a5b5c5cba95901439aa28858482f45fb6
+│  │  ├─ 97
+│  │  │  └─ ffac32e075a8c11e5004280edb24cc744b9169
+│  │  ├─ 98
+│  │  │  ├─ 4d6107e28d5b29e57d2334b6b4e6161524138c
+│  │  │  └─ a0a3b0caa5cda3a18fd0759609b1ef6fec8288
+│  │  ├─ 99
+│  │  │  ├─ 4514ccce32c99460705fef7f777e6981d96fca
+│  │  │  └─ e7cad9ad104931e99548982fdb30d9ff47a018
+│  │  ├─ 9a
+│  │  │  └─ 1f60c7199afef78fde919edc51f6d9a6ec25cd
+│  │  ├─ 9b
+│  │  │  └─ 120e675d7f0e6a0a2a2714c2878c90343b84e1
+│  │  ├─ 9c
+│  │  │  └─ 115b84946d4754ce951c3af1b6b04cb83ff8b3
+│  │  ├─ 9d
+│  │  │  ├─ 1f7da72847e3ab696efaacce39a9c7318a0afe
+│  │  │  ├─ 2c0d3f62fc07a82d63111968c3cc0f44a59ff2
+│  │  │  ├─ d42157f3766badd51d11778f685c7e2d41cd60
+│  │  │  └─ dc92c2337f93112ec29165c1b29a5b46bae300
+│  │  ├─ 9f
+│  │  │  └─ a8b11ce610117119c1570bc662adc47fdbdcac
+│  │  ├─ a0
+│  │  │  ├─ a49274a79f288fb98406c2285b6cd5de3a9734
+│  │  │  └─ dd2f8b79bf439ef1047cd682bf4e7cde08b9af
+│  │  ├─ a1
+│  │  │  ├─ 2440523491cfa39a5c2f968ccdc5b932b2e57b
+│  │  │  └─ bcee85c89eacf06b90f57149d87767a24b1894
+│  │  ├─ a2
+│  │  │  ├─ 0a4384fc5162a78d0ec90eb4817093039b151f
+│  │  │  └─ f974c1737f5109aa667d21b4b9329f122da161
+│  │  ├─ a3
+│  │  │  └─ 04398706cf76dc702478b08b445db0e50437db
+│  │  ├─ a4
+│  │  │  └─ db79b3ea0858bb06d15d89e67764bf57ed0811
+│  │  ├─ a6
+│  │  │  └─ 88c64bbeb228f736c2ecd441f02278819478c6
+│  │  ├─ a7
+│  │  │  └─ 4dbe8ba75d2d30d829bc5aa9b7ec358cd30621
+│  │  ├─ a8
+│  │  │  ├─ 3bae1f4a6ce2673bfc4fd8f381c2ea2fb6a094
+│  │  │  └─ f286acb332fce63edee9990cb94e4305e356f6
+│  │  ├─ ab
+│  │  │  └─ 55f92b8d5044241a5db003ae28323888920845
+│  │  ├─ ac
+│  │  │  └─ 34d4c14b07df496d055df8830b741454ff9a23
+│  │  ├─ ad
+│  │  │  ├─ 82872baa3584a473e9a2aec670562f460e73eb
+│  │  │  ├─ bd20fd3c603b4200fea79e2ca5e1fdfdf0c518
+│  │  │  └─ e7f29ef7565ac5e737f5d727c20b3ec3f81a2d
+│  │  ├─ ae
+│  │  │  ├─ 1ff6fe70ce06375bc7cdd3a47ea2d4ec6e85b4
+│  │  │  ├─ 3f85906f86fe7f26a150f288585aa22852b779
+│  │  │  └─ cd73753b45bd740544d05c5bb78f6b9d28499f
+│  │  ├─ af
+│  │  │  ├─ 678f6fad4af7924290f9f17a2071bd7fa954da
+│  │  │  └─ 8fd46c85ab3bcaa97c3d2758bbf5ba270cf9fb
+│  │  ├─ b0
+│  │  │  └─ f29dea9034c63e1c1a4a5bd5518ec045245aab
+│  │  ├─ b1
+│  │  │  ├─ 1aee98c5e0b3a220ecdeece7ae40cd7ea378ed
+│  │  │  └─ 49b7e1492c8700b68ed8cdaf66e6da61d7210c
+│  │  ├─ b2
+│  │  │  ├─ 461b98f73455f8ba9155b962e2d798d6e09738
+│  │  │  └─ 57a01ce6b98682595dd63f0a7e300d14284210
+│  │  ├─ b3
+│  │  │  └─ 18319c49a5880f760c5a8ebeadbf50ba9edca4
+│  │  ├─ b4
+│  │  │  └─ 00ca380191a0e7456b1badeeeff0ee2ca429d7
+│  │  ├─ b5
+│  │  │  └─ f8935bf9c767a6a5c8e153cc0ee9a5692e810c
+│  │  ├─ b6
+│  │  │  └─ fa9938b0aa614d42abe4738a811d2b4248f939
+│  │  ├─ b7
+│  │  │  └─ ee1a2b1c21ee15d68551afe94fd56d84094a9a
+│  │  ├─ b8
+│  │  │  └─ 05601c64bb8925d2101fdabcca104aeabf5602
+│  │  ├─ b9
+│  │  │  ├─ 8a7273eab7c0b86a5d958d99e89f762fa2c6b6
+│  │  │  ├─ 95e28a3033fdbe5c94e6f6ca67b85cab8eeac4
+│  │  │  └─ 9c9d2c790dec92d4c4468a997cb8ef02955320
+│  │  ├─ ba
+│  │  │  └─ f7143d94c4cc31d44c647234752efda550f2e9
+│  │  ├─ bb
+│  │  │  └─ 4b5950404403679100968279c66e8f65ed6cf7
+│  │  ├─ bc
+│  │  │  └─ 93746e7437c3079f230be0e11e27efc800fc88
+│  │  ├─ bd
+│  │  │  ├─ 5958edc638d09d45e1bb0d257b059920aca0cc
+│  │  │  └─ a01a069a954242d7dfee3d9a35700a86083e14
+│  │  ├─ be
+│  │  │  ├─ 3bf14768c7e171608592b8e7f9017821e2c438
+│  │  │  └─ bc54da883741a15a323e4f58ee8e40dfae38a3
+│  │  ├─ bf
+│  │  │  └─ fff28fe0c6db728bf0ffd09d18616b9701c454
+│  │  ├─ c0
+│  │  │  └─ 1566ec06d12909eb002e3152842905a8ad685d
+│  │  ├─ c1
+│  │  │  └─ d4f0acfe143c7e9f2333278770be49daf40599
+│  │  ├─ c4
+│  │  │  └─ a053eb784ff71f667db86d02a9988a5997f11a
+│  │  ├─ c5
+│  │  │  ├─ 0c78d394eb1cbe52c6fa09847aa02f745f9c6a
+│  │  │  └─ bd694a0d03d85dff790741dbc7c4e5f8849166
+│  │  ├─ c6
+│  │  │  ├─ 2ea1e8dee87128c96159f782372a4c6189e8e7
+│  │  │  └─ afa520c2bb8c66fa5857985ccc20d3a86694ac
+│  │  ├─ c7
+│  │  │  └─ ab13de5c2e577c542e32ac4cf970232494dc03
+│  │  ├─ c8
+│  │  │  └─ 62d564fd71c6eb93b71644244903992528bbe4
+│  │  ├─ ca
+│  │  │  └─ 564db7926a9c057302af8f30efa58c2bc50369
+│  │  ├─ cd
+│  │  │  ├─ 709593482eff375bf31c1b43df06f76e7fd54a
+│  │  │  └─ 81199d23f687e0e306a1831e3c3c593b9e54d1
+│  │  ├─ ce
+│  │  │  └─ 180bd742edb30d97aec9e229f70d656baa0c15
+│  │  ├─ cf
+│  │  │  └─ ef663120ed82cddf54e54861ff16bbeb48b200
+│  │  ├─ d0
+│  │  │  └─ 6f54f36a471fcd9c164302dde775aad96338d1
+│  │  ├─ d2
+│  │  │  └─ 9c3b8ddca650a1bd380ffb4b1792db7fcdc39b
+│  │  ├─ d3
+│  │  │  ├─ 27f4fca2056a139003a76fbda51748e97fefb7
+│  │  │  ├─ 5b7760a28f6568838d6742e1cd3703146d6fb7
+│  │  │  └─ 76aa6f92dbadfceff1f634836e4183a3bbcf4f
+│  │  ├─ d4
+│  │  │  ├─ 57a88b743ff35bf85dcc37e7fc69707acfd366
+│  │  │  └─ bdfc9d815770d6c045826ed43b84a73559674a
+│  │  ├─ d5
+│  │  │  └─ e44d6ee891d51ea598f89fc2b9a91df9169c2b
+│  │  ├─ d6
+│  │  │  └─ c65ae614bd3338c493de64693acd072e778cd8
+│  │  ├─ d8
+│  │  │  ├─ 982948526552f90b6a7cdcd6dbdea69796a097
+│  │  │  ├─ a79d7b41f4e674b432fbef4e504068f6e6f1d9
+│  │  │  └─ bb2ce4f433d631b8aeb1d8b0be3794dfb9c1a8
+│  │  ├─ d9
+│  │  │  ├─ 487eb162b2169e861c594ff768c1473555e243
+│  │  │  └─ 5a9e5c50d9b95015092f6f021560c9c8471482
+│  │  ├─ da
+│  │  │  ├─ 03bc5ce67e9439bc3dbede0eb116c3cfb48695
+│  │  │  └─ 8e67ab188f122fc47a058009bcffbc145da3b1
+│  │  ├─ db
+│  │  │  ├─ 2e54ebed714513789098ba247cb1a1303666de
+│  │  │  ├─ bf470acd8e2e745a59562600782a96ee75f05e
+│  │  │  └─ bf71cde647743d5f642e19b125e3a82e765b03
+│  │  ├─ dc
+│  │  │  ├─ 56aadd0c2e51b6852dc83d1c2fe43bae5db5b6
+│  │  │  └─ f7aa00ba8b624a50c1ac80cf3c97d79c9eaf93
+│  │  ├─ dd
+│  │  │  └─ eea2b88d2e6da9fb52df1b09702ce445706b35
+│  │  ├─ de
+│  │  │  ├─ 19f7802567e1a6356d232854d1628481c45d8c
+│  │  │  └─ 78c0d1397c7ac3ba7aa3d5fd4fec814fe37816
+│  │  ├─ e0
+│  │  │  ├─ 39c4a3dd69a809fbe76bc3576c6f535715c89c
+│  │  │  └─ f317ce02ed882df46b3496e935a4e57ddfd7f8
+│  │  ├─ e1
+│  │  │  ├─ 72016e68f67a10dc1cf1f7c7b8b7c966681ced
+│  │  │  └─ ce12bdbb140ab5b40cd9c237c8d58bbbc6a4e5
+│  │  ├─ e2
+│  │  │  └─ efcff91bc86f3c31b59e6e44705934a941f63c
+│  │  ├─ e3
+│  │  │  ├─ 6e66267deb4a8e15adc09b3e0785fd0be14a7a
+│  │  │  └─ f8afd0700c926b192db210a387b1ca5e53160d
+│  │  ├─ e5
+│  │  │  └─ df34812768d7ce5c81d598de06887f93be7095
+│  │  ├─ e6
+│  │  │  ├─ 193ed5ec013f755b997e652a6883d720dd1778
+│  │  │  └─ 9de29bb2d1d6434b8b29ae775ad8c2e48c5391
+│  │  ├─ e7
+│  │  │  └─ d934c78e67de60aacb4112862974b356e6cb49
+│  │  ├─ e8
+│  │  │  └─ f1a6a71179629939ea74f95f629746105da191
+│  │  ├─ e9
+│  │  │  ├─ 42ba4b243d61d8d55ddaa2794333ab3c1ce617
+│  │  │  ├─ 600b9b547fc04443c32c6964f902b360da8a3a
+│  │  │  └─ 64c9cc274022a6783ef1e29762ea6e99a2e806
+│  │  ├─ ea
+│  │  │  ├─ 69d34f1884c9d0a23e55263e923f1bcbfe1efa
+│  │  │  ├─ 738fb2989c587e86bb94f534526a207ce9843b
+│  │  │  └─ 83fb2bb3691de7d5274d6043c1b4de5d58259c
+│  │  ├─ eb
+│  │  │  ├─ e92d348ef0d0bca5522c81f33a7d122df03b4e
+│  │  │  └─ ffb6fef28b01c530dc4957a331103e4422d8e9
+│  │  ├─ ee
+│  │  │  └─ 2cbea7682fbafa187a3a49e7b6cb1882293da1
+│  │  ├─ ef
+│  │  │  ├─ 10535639a4efec4ad72983d0a97957a9928ef3
+│  │  │  ├─ 32d53b0e24d0d6ad8e9d15982d857d543b8c5d
+│  │  │  ├─ 58e49831bad807b86f32e89f833af0be57f3ab
+│  │  │  ├─ 64d1d28747c11edec113eb272675b9e0d26c92
+│  │  │  └─ ee27d718b2794369c810593b5a3582efa6a2bc
+│  │  ├─ f0
+│  │  │  ├─ 7308516272f0f95cad741c4c948ff37527539c
+│  │  │  └─ d8a0689b170dacdf8f06841f5619b78eb46c3c
+│  │  ├─ f1
+│  │  │  ├─ 3fc284350d5e1b2f16462c57bde910992b3221
+│  │  │  └─ fb759e3870c0dc4eb72c997cec76d4653a8d19
+│  │  ├─ f2
+│  │  │  └─ 8b84ce0560c97d9d492259847a371739724889
+│  │  ├─ f3
+│  │  │  ├─ 559f6bb0c85cf1807a3b9569615db15206a1d9
+│  │  │  └─ cb3d60891aa10faaa22f8119530b17fb9a5b35
+│  │  ├─ f4
+│  │  │  └─ f2c491bc93e88d95c3920b6f7b15d5dd7ca7c4
+│  │  ├─ f5
+│  │  │  └─ b4ad9dc9638885b03828b108079abe6b0d7eef
+│  │  ├─ f6
+│  │  │  └─ 4e78d74d44b82c14acfb218783e7220594d713
+│  │  ├─ f7
+│  │  │  ├─ 3afd27572632b068086bf483c62d5b3f60b0c0
+│  │  │  └─ abe5a18dca29de39413848bdf5f8f2aa058a9c
+│  │  ├─ f8
+│  │  │  ├─ 327a01201eb8d1b3330ca1d2c0a375778535bd
+│  │  │  ├─ 5aca53516f0451f1a24ad67d9aabf821d6ee29
+│  │  │  ├─ 776e69b47876d7860700722bb5ebeb568d9493
+│  │  │  └─ 99756b22821bc5f9f9331e1467df39edda1db5
+│  │  ├─ f9
+│  │  │  └─ bc7972f5874d010f434574cd145904faa52ae3
+│  │  ├─ fa
+│  │  │  ├─ 9445fac2dcc2967380f4e4ae773e4187422b86
+│  │  │  └─ a07e447fea5add2b06b9d55c3c1b7612c476c8
+│  │  ├─ fb
+│  │  │  └─ 8ad7d0b79471e4a107b4484dbe9b62ca3e1381
+│  │  ├─ fc
+│  │  │  ├─ 041075657830a1015dc33457559640971f6520
+│  │  │  └─ ddd02d0e8692ec6739a9f70ad9de467a4d450b
+│  │  ├─ fd
+│  │  │  ├─ 8e8e8d82b06a4946cd39d413ce476a9575dfe9
+│  │  │  └─ ddda8bb71d7283707c4448e064e940c0ce36f7
+│  │  ├─ fe
+│  │  │  └─ 7d9cdd06ec7fcbccf295024cfacfdf48cdd5b7
+│  │  ├─ ff
+│  │  │  ├─ 58a7fa93b57e0a76a3e5fd50d8f89cc2f7a3dc
+│  │  │  └─ 68ce270765254c8852738d43de714d53df32bb
+│  │  ├─ info
+│  │  └─ pack
+│  ├─ ORIG_HEAD
+│  └─ refs
+│     ├─ heads
+│     │  └─ main
+│     ├─ remotes
+│     │  └─ origin
+│     │     └─ main
+│     └─ tags
+├─ assets
+│  ├─ css
+│  │  ├─ animation.css
+│  │  ├─ chatbot.css
+│  │  ├─ responsive.css
+│  │  └─ style.css
+│  ├─ img
+│  │  ├─ footer-logos
+│  │  │  ├─ dia.png
+│  │  │  ├─ java.png
+│  │  │  ├─ qnb.png
+│  │  │  ├─ qnb2.png
+│  │  │  └─ sap.png
+│  │  ├─ hero-background
+│  │  │  ├─ 01.png
+│  │  │  ├─ 02.png
+│  │  │  └─ 03.png
+│  │  ├─ hero-carousel-cards
+│  │  ├─ parla-logo
+│  │  │  ├─ parla-logo-beyaz.png
+│  │  │  ├─ parla-logo-siyah.png
+│  │  │  ├─ parla-logo.png
+│  │  │  └─ parla.png
+│  │  ├─ references
+│  │  │  ├─ first_row
+│  │  │  │  ├─ anadolu-ajansi-logo.png
+│  │  │  │  ├─ aselsan-konya-logo.png
+│  │  │  │  ├─ aselsan-logo.png
+│  │  │  │  ├─ dalgakiran-logo.png
+│  │  │  │  ├─ diversey-logo.png
+│  │  │  │  ├─ dogus-insaat-logo.png
+│  │  │  │  ├─ dyo-logo.png
+│  │  │  │  ├─ etimaden-logo.png
+│  │  │  │  ├─ havelsan-logo.png
+│  │  │  │  ├─ kadir-has-universitesi-logo.png
+│  │  │  │  ├─ m&g-group-logo.png
+│  │  │  │  ├─ milli-piyango-logo.png
+│  │  │  │  ├─ qnb-logo.png
+│  │  │  │  ├─ siemens-logo.png
+│  │  │  │  ├─ solen-logo.png
+│  │  │  │  ├─ ted-logo.png
+│  │  │  │  ├─ tpao-logo.png
+│  │  │  │  ├─ trt-logo.png
+│  │  │  │  └─ turk-kizilayi-logo.png
+│  │  │  ├─ second_row
+│  │  │  │  ├─ m&t-displays-logo.png
+│  │  │  │  ├─ milli-reasurans-logo.png
+│  │  │  │  ├─ mmk-logo.png
+│  │  │  │  ├─ oyak-logo.png
+│  │  │  │  ├─ oztrans-grup-logo.png
+│  │  │  │  ├─ paycore-logo.png
+│  │  │  │  ├─ simsek-as-logo.png
+│  │  │  │  ├─ solensis.png
+│  │  │  │  ├─ tedas-logo.png
+│  │  │  │  ├─ tuborg-logo.png
+│  │  │  │  ├─ tuvturk-logo.png
+│  │  │  │  ├─ votorantim-cimentos-logo.png
+│  │  │  │  ├─ yapiray-logo.png
+│  │  │  │  ├─ yildirim-grup-logo.png
+│  │  │  │  ├─ yilport-holding-logo.png
+│  │  │  │  └─ zegna-logo.png
+│  │  │  └─ third_row
+│  │  │     ├─ balsu-logo.png
+│  │  │     ├─ carlsberg-logo.png
+│  │  │     ├─ celik-halat-logo.png
+│  │  │     ├─ colakoglu-logo.png
+│  │  │     ├─ dem-ilac-logo.png
+│  │  │     ├─ efesan-logo.png
+│  │  │     ├─ esan-eczacibasi-logo.png
+│  │  │     ├─ fercim-logo.png
+│  │  │     ├─ hidromek-logo.png
+│  │  │     ├─ isbir-sunger-logo.png
+│  │  │     ├─ istac-logo.png
+│  │  │     ├─ kardemir-logo.png
+│  │  │     ├─ kiran-holding-logo.png
+│  │  │     ├─ koluman-logo.png
+│  │  │     └─ lukoil-logo.png
+│  │  └─ sap
+│  │     ├─ sap-1.png
+│  │     ├─ sap-2.png
+│  │     ├─ sap-3.png
+│  │     ├─ sap-4.png
+│  │     ├─ sap-5.png
+│  │     └─ sap-6.png
+│  ├─ js
+│  │  ├─ anim.js
+│  │  ├─ announcements.js
+│  │  ├─ chatbot.js
+│  │  ├─ hero-carousel.js
+│  │  ├─ i18n.js
+│  │  └─ main.js
+│  └─ locales
+│     ├─ en.json
+│     └─ tr.json
+├─ components
+│  ├─ footer.html
+│  ├─ header.html
+│  └─ hero.html
+├─ index.html
+├─ pages
+│  ├─ academy
+│  │  ├─ consulting-training.html
+│  │  ├─ corporate-workshops.html
+│  │  ├─ one-on-one-training.html
+│  │  └─ online-classroom-training.html
+│  ├─ corporate
+│  │  ├─ about.html
+│  │  └─ career.html
+│  ├─ organisation
+│  │  ├─ sap-consulting-support.html
+│  │  └─ sap-implementation.html
+│  ├─ references.html
+│  └─ solutions
+│     ├─ asset-management.html
+│     ├─ banking.html
+│     ├─ budget-tax.html
+│     ├─ e-transformation.html
+│     ├─ financial-accounting.html
+│     ├─ insurance.html
+│     ├─ mobile-automation.html
+│     └─ treasury-risk.html
+└─ sitemap.xml

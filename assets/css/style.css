@@ -305,7 +305,7 @@ section { padding: var(--section-padding); overflow: hidden; position: relative;
 .reference-slider-2 { border-bottom: 1px solid #eee; padding: 30px 0; }
 
 .reference-track { display: inline-block; }
-.reference-track-1 { animation: scroll 30s linear infinite; }
+.reference-track-1 { animation: scroll 45s linear infinite; }
 .reference-track-2 { animation: scroll 25s linear infinite; }
 
 .reference-logo {   transition: 0.3s; }
