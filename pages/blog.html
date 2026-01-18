@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parla BT - Blog</title>
+    
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    <link rel="stylesheet" href="../assets/css/blog.css">
+</head>
+<body>
+
+    <div id="header-placeholder"></div>
+    <div id="hero-placeholder" data-hero-key="references.title" style="height: 80px; overflow: hidden;"></div>
+
+    <section class="page-hero" style="background-color: #f8f9fa; padding: 60px 0; text-align: center; margin-top: 80px;">
+        <div class="container">
+            <h1>Blog & Haberler</h1>
+            <p style="color:#666; margin-top:10px;">Teknoloji ve yönetim dünyasından güncel bilgiler.</p>
+        </div>
+    </section>
+
+    <div id="blog-container" class="blog-container">
+        </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/blog.js"></script>
+
+    <script>
+        fetch('../components/header.html').then(res=>res.text()).then(data=>document.getElementById('header-placeholder').innerHTML=data);
+        fetch('../components/footer.html').then(res=>res.text()).then(data=>document.getElementById('footer-placeholder').innerHTML=data);
+    </script>
+</body>
+</html>

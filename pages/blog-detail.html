@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Detay - Parla BT</title>
+    
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/responsive.css">
+    <link rel="stylesheet" href="../assets/css/blog.css">
+</head>
+<body>
+
+    <div id="header-placeholder"></div>
+    <div id="hero-placeholder" data-hero-key="references.title" style="height: 80px; overflow: hidden;"></div>
+
+    <div style="height: 100px;"></div>
+
+    <div id="blog-post-content" class="blog-detail-container">
+        
+        <h1 id="post-title" class="detail-title">Yükleniyor...</h1>
+        
+        <div id="post-date" class="detail-meta"></div>
+        
+        <img id="post-hero-image" src="" alt="" class="detail-image" style="display: none;">
+        
+        <div id="rich-text-area" class="rich-text-content">
+        </div>
+        
+        <div style="margin-top: 50px; border-top: 1px solid #eee; padding-top: 20px;">
+            <a href="blog.html" style="color: #007bff; text-decoration: none; font-weight: bold;">&larr; Blog Listesine Dön</a>
+        </div> 
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/contentful@latest/dist/contentful.browser.min.js"></script>
+
+    <script type="module">
+        import { documentToHtmlString } from 'https://cdn.jsdelivr.net/npm/@contentful/rich-text-html-renderer@16.0.0/+esm';
+        // Fonksiyonu tüm sayfada kullanılabilir yapıyoruz
+        window.documentToHtmlString = documentToHtmlString;
+    </script>
+
+    <script src="../assets/js/main.js"></script>
+    <script src="../assets/js/blog.js"></script>
+
+    <script>
+        fetch('../components/header.html').then(res=>res.text()).then(data=>document.getElementById('header-placeholder').innerHTML=data);
+        fetch('../components/footer.html').then(res=>res.text()).then(data=>document.getElementById('footer-placeholder').innerHTML=data);
+    </script>
+</body>
+</html>

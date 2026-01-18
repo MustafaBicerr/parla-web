@@ -1,0 +1,105 @@
+/* assets/css/blog.css */
+
+/* Blog Liste Sayfası (Grid Yapısı) */
+.blog-container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.blog-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+}
+
+.blog-card:hover {
+    transform: translateY(-5px);
+}
+
+.blog-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+}
+
+.blog-content {
+    padding: 20px;
+}
+
+.blog-date {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.blog-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.blog-excerpt {
+    font-size: 0.95rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+/* Blog Detay Sayfası */
+.blog-detail-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.detail-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 30px;
+}
+
+.detail-title {
+    font-size: 2.5rem;
+    color: #222;
+    margin-bottom: 10px;
+}
+
+.detail-meta {
+    color: #777;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 20px;
+}
+
+/* Rich Text İçerik Stilleri (Contentful'dan gelen veri için) */
+.rich-text-content {
+    line-height: 1.8;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.rich-text-content h2 { margin-top: 30px; margin-bottom: 15px; color: #222; }
+.rich-text-content h3 { margin-top: 25px; margin-bottom: 10px; }
+.rich-text-content p { margin-bottom: 20px; }
+.rich-text-content ul, .rich-text-content ol { margin-bottom: 20px; padding-left: 20px; }
+.rich-text-content img { max-width: 100%; height: auto; border-radius: 5px; margin: 20px 0; }
+.rich-text-content blockquote {
+    border-left: 4px solid #007bff;
+    padding-left: 15px;
+    font-style: italic;
+    color: #555;
+}
