@@ -5,7 +5,7 @@ function initChatWidget() {
     // --- Configuration ---
     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzL_coGc0SwmH3KqFEOot0DTzmpSjOk4wDf7jAj0IpOoKZX0bQLz3J3iSpGJ5ky1JU0/exec";
     const WHATSAPP_NUMBER = "905302267798"; // Using the number from your contact info
-    const PHONE_NUMBER = "+905302267798"; 
+    const PHONE_NUMBER = "+905352130735"; 
     
     // WhatsApp Menu Options
     const whatsappOptions = [
