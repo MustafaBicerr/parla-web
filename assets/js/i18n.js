@@ -2,6 +2,8 @@
    - Place translation JSON files in `assets/locales/{lang}.json`
    - Mark elements with `data-i18n="path.to.key"` to replace innerText
    - For placeholders use `data-i18n-placeholder="path.to.key"`
+   - For image alt text use `data-i18n-alt="path.to.key"`
+   - For aria-label use `data-i18n-aria-label="path.to.key"`
    - Add buttons with class `lang-switch` and `data-lang="en"|"tr"` to switch language
 
    This is intentionally small and dependency-free. For larger sites consider
@@ -38,6 +40,19 @@
       if (val !== null && val !== undefined) el.setAttribute('placeholder', val);
     });
 
+    // img[alt] and other attributes
+    document.querySelectorAll('[data-i18n-alt]').forEach(el => {
+      const key = el.getAttribute('data-i18n-alt');
+      const val = getKey(key, translations);
+      if (val !== null && val !== undefined) el.setAttribute('alt', val);
+    });
+
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+      const key = el.getAttribute('data-i18n-aria-label');
+      const val = getKey(key, translations);
+      if (val !== null && val !== undefined) el.setAttribute('aria-label', val);
+    });
+
     // document title: prefer a <title data-i18n="..."> element, fallback to translations.site.title
     try {
       const titleEl = document.querySelector('title[data-i18n]');
@@ -57,6 +72,9 @@
     fetchTranslations(lang).then(json => {
       translations = json;
       applyTranslations();
+      try {
+        document.dispatchEvent(new CustomEvent('parla-i18n-applied', { detail: { lang } }));
+      } catch (e) { /* ignore */ }
       localStorage.setItem(STORAGE_KEY, lang);
       // set lang attribute on html element for accessibility
       document.documentElement.setAttribute('lang', lang);

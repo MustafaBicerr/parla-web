@@ -17,12 +17,30 @@
         "demo": "Teklif / Demo Talep Edin"
       },
       "carousel": [
-        { "title": "SAP Kurulumu" },
-        { "title": "SAP S/4HANA Dönüşümü" },
-        { "title": "SAP Ek Modüller & Özel Geliştirmeler" },
-        { "title": "SAP Destek ve Süreklilik Danışmanlığı" },
-        { "title": "Yarım Kalan Projelerinizi Bitirin" }
-      ]
+        { "title": "SAP Kurulumu", "imageAlt": "SAP kurulum ve geçiş görseli" },
+        { "title": "SAP S/4HANA Dönüşümü", "imageAlt": "SAP S/4HANA dijital dönüşüm görseli" },
+        { "title": "SAP Ek Modüller & Özel Geliştirmeler", "imageAlt": "SAP ek modül ve entegrasyon görseli" },
+        { "title": "SAP Destek ve Süreklilik Danışmanlığı", "imageAlt": "SAP destek ve danışmanlık görseli" },
+        { "title": "Yarım Kalan Projelerinizi Bitirin", "imageAlt": "SAP projelerini tamamlama görseli" },
+        { "title": "DİA: Bütçe, Kapanış ve Vergi", "imageAlt": "Bütçe ve vergi çözümleri görseli" },
+        { "title": "DİA: Hazine ve Risk (TRM)", "imageAlt": "Hazine ve risk yönetimi görseli" },
+        { "title": "DİA: Mobil ve Otomasyon", "imageAlt": "Mobil ve otomasyon çözümleri görseli" },
+        { "title": "DİA: E-Dönüşüm Paketleri", "imageAlt": "E-dönüşüm çözümleri görseli" }
+      ],
+      "spotlights": {
+        "sap": {
+          "text": "Kurumsal ölçekte SAP S/4HANA, FI/CO, TRM ve özel geliştirmelerle süreçlerinizi uçtan uca dijitalleştiriyor; dönüşüm, entegrasyon ve canlı destekte yanınızdayız.",
+          "btn": "SAP çözümlerini inceleyin"
+        },
+        "dia": {
+          "text": "KOBİ ve büyüyen işletmeler için DİA ile ön muhasebeden e-dönüşüme, stoktan üretime kadar pratik ve uygun maliyetli ERP çözümleri sunuyoruz.",
+          "btn": "DİA hakkında bilgi alın"
+        }
+      },
+      "carousel_nav": {
+        "prev": "Önceki tanıtım",
+        "next": "Sonraki tanıtım"
+      }
     },
     "about": {
       "title": "Hakkımızda",
@@ -122,6 +140,59 @@
         "trm": "Hazine ve Risk Yönetimi (TRM) Çözümleri",
         "insurance": "Sigorta Çözümleri",
         "mobile": "Mobil ve Otomasyon Çözümleri"
+      },
+      "solutions_categories": {
+        "sap": "SAP ÇÖZÜMLERİ",
+        "dia": "DİA ÇÖZÜMLER"
+      },
+      "dia": {
+        "erp_title": "ERP",
+        "erp": [
+          "Ön Muhasebe Yönetimi",
+          "Stok & Depo Yönetimi",
+          "Genel Muhasebe Yönetimi",
+          "Personel ve Bordro Yönetimi",
+          "Demirbaş Yönetimi",
+          "Talep Yönetimi",
+          "Proje Yönetimi",
+          "Dış Ticaret Yönetimi",
+          "Üretim Yönetimi",
+          "İş Zekası - BI Çözümleri",
+          "İnsan Kaynakları Yönetimi",
+          "Süreç Yönetimi"
+        ],
+        "crm_title": "CRM",
+        "crm": [
+          "CRM – Müşteri İlişkileri Yönetimi",
+          "Mobil Saha Satış",
+          "İş Takip Yönetimi",
+          "Satın Alma Yönetimi",
+          "Sipariş Yönetimi",
+          "Teklif Yönetimi"
+        ],
+        "e_donusum_title": "E-Dönüşüm",
+        "e_donusum": [
+          "E-Fatura",
+          "E-İrsaliye",
+          "E-Defter",
+          "E-SMM",
+          "E-MM",
+          "E-Mutabakat",
+          "E-Banka"
+        ],
+        "e_ticaret_title": "E-Ticaret",
+        "e_ticaret": [
+          "B2B",
+          "B2C",
+          "Pazaryeri"
+        ],
+        "sektorel_title": "Sektörel",
+        "sektorel": [
+          "Mağaza Yönetimi",
+          "Restoran Yönetimi",
+          "Otel Yönetimi",
+          "Servis Yönetimi"
+        ]
       },
       "academy": {
         "workshops": "Kuruma Özel Atölye Eğitimleri",
@@ -500,6 +571,104 @@
       }
     },
     "solutions": {
+      "s4hana_transformation": {
+        "pageTitle": "SAP S/4HANA Dönüşümü - Parla BT",
+        "heroTitle": "SAP S/4HANA Dönüşümü",
+        "title": "SAP S/4HANA Dönüşümü",
+        "p1": "Dijital dönüşüm süreçlerinde işletmelerin rekabet gücünü artırabilmesi için güçlü ve modern sistemlere geçiş büyük önem taşımaktadır. SAP tarafından geliştirilen SAP S/4HANA platformuna dönüşüm süreçlerinde; mevcut sistemlerin analizini gerçekleştiriyor, en uygun dönüşüm stratejisini belirliyor ve veri migrasyonundan canlı kullanım sürecine kadar tüm adımları uçtan uca yönetiyoruz.",
+        "p2": "Bu sayede kurumların finansal ve operasyonel süreçlerini daha hızlı, şeffaf ve verimli şekilde yönetmelerini sağlıyor; gerçek zamanlı raporlama ve güçlü analitik yeteneklerle daha doğru ve hızlı karar almalarına destek oluyoruz.",
+        "imageAlt": "SAP S/4HANA dijital dönüşüm görseli"
+      },
+      "sap_extra_modules": {
+        "pageTitle": "SAP Ek Modüller ve Özel Geliştirmeler - Parla BT",
+        "heroTitle": "SAP Ek Modüller ve Özel Geliştirmeler",
+        "title": "SAP Ek Modüller ve Özel Geliştirmeler",
+        "intro": {
+          "p1": "İşletmelerin SAP platformunu kendi ihtiyaçlarına tam uyumlu hale getirmesi için ek modüller ve özel geliştirmeler sunuyoruz. Standart SAP çözümlerinin sunduğu fonksiyonların ötesine geçerek, şirketlerin iş süreçlerini optimize etmelerine, verimliliği artırmalarına ve operasyonel esnekliği güçlendirmelerine olanak tanıyoruz.",
+          "p2": "Ek modüller ile finans, lojistik, satış, insan kaynakları ve üretim gibi kritik alanlarda süreçleri genişletiyor, iş akışlarını özelleştiriyoruz. Özel geliştirmeler sayesinde ise kullanıcı deneyimini iyileştiriyor, raporlama ve analiz yeteneklerini şirketin ihtiyaçlarına göre şekillendiriyor ve sistemin benzersiz iş gereksinimlerine tam uyum sağlamasını sağlıyoruz.",
+          "p3": "Projelerimizde sadece teknolojik çözümler sunmakla kalmıyor, aynı zamanda süreç danışmanlığı ve uygulama desteği ile kurumların SAP ek modüller ve özel geliştirmeleri etkin ve güvenli şekilde kullanmasını sağlıyoruz. Böylece işletmeler, kendi iş modellerine uygun, esnek ve sürdürülebilir bir SAP altyapısına sahip oluyor ve dijital dönüşüm hedeflerine hızlıca ulaşıyor."
+        },
+        "images": {
+          "alt1": "SAP bulut ve modül entegrasyonu görseli",
+          "alt2": "SAP ERP ve operasyon görseli",
+          "alt3": "SAP analitik ve otomasyon görseli"
+        },
+        "capabilities_heading": "Öne çıkan süreç ve modül alanları",
+        "highlights": {
+          "general_ledger": {
+            "title": "Defteri Kebir Muhasebesi",
+            "desc": "Şirket içindeki tüm muhasebe hareketlerinin hesap bazında detaylı olarak izlenmesini ve finansal kayıtların düzenli şekilde raporlanmasını sağlayan temel muhasebe kayıt sistemidir."
+          },
+          "vendor_payment": {
+            "title": "Satıcılar Ortalama Ödeme Süresi Raporu",
+            "desc": "Şirketin tedarikçilere yaptığı ödemelerin ortalama süresini analiz ederek nakit yönetimi ve ödeme süreçlerinin daha etkin planlanmasına yardımcı olan finansal rapordur."
+          },
+          "phone_bills": {
+            "title": "Telefon Faturaları Yönetimi",
+            "desc": "Şirket bünyesindeki telefon hatlarına ait faturaların merkezi olarak takip edilmesini, kontrol edilmesini ve maliyetlerin etkin şekilde yönetilmesini sağlayan süreç yönetimidir."
+          },
+          "payment_integration": {
+            "title": "Ödeme Süreçleri ile İlgili Entegrasyon (Fatura/Fiş Bazlı)",
+            "desc": "Fatura ve fiş bazlı ödeme işlemlerinin finansal sistemlerle entegre şekilde yönetilmesini sağlayarak ödeme süreçlerinin hızlı, doğru ve izlenebilir biçimde yürütülmesini sağlar."
+          },
+          "collateral": {
+            "title": "Teminat Yönetimi",
+            "desc": "Şirketin aldığı veya verdiği teminatların kayıt altına alınmasını, takip edilmesini ve raporlanmasını sağlayarak finansal risklerin etkin şekilde yönetilmesine yardımcı olur."
+          },
+          "credit_risk": {
+            "title": "Kredibilite Risk Yönetimi",
+            "desc": "Müşteri ve iş ortaklarının finansal güvenilirliğini analiz ederek kredi limitlerinin belirlenmesini ve olası finansal risklerin etkin şekilde yönetilmesini sağlayan süreçtir."
+          },
+          "tax_declaration": {
+            "title": "Vergi Beyannameleri Süreçleri",
+            "desc": "Şirketlerin vergi beyannamelerinin doğru, zamanında ve mevzuata uygun şekilde hazırlanması, kontrol edilmesi ve ilgili kurumlara iletilmesi süreçlerini kapsayan çözümler sunar."
+          },
+          "inflation_accounting": {
+            "title": "Enflasyon Muhasebesi",
+            "desc": "Yüksek enflasyon ortamında finansal tabloların gerçeğe uygun değerleri yansıtabilmesi için mali verilerin enflasyon etkisine göre düzeltilmesini sağlayan muhasebe süreçlerini kapsar."
+          },
+          "credit_processes": {
+            "title": "Kredi Süreçleri (Tahvil Vade Hatırlatma ve Otomatik Mail)",
+            "desc": "Tahvil ve kredi işlemlerinde yaklaşan vade tarihlerinin sistem tarafından otomatik olarak takip edilmesini ve ilgili kişilere hatırlatma e-postalarının gönderilmesini sağlayan süreç yönetimini kapsar."
+          },
+          "collateral_reminder": {
+            "title": "Teminat Vade Hatırlatma Mail Gönderimi",
+            "desc": "Teminatların vade tarihlerini sistem üzerinden takip ederek süresi yaklaşan teminatlar için ilgili kullanıcılara otomatik hatırlatma e-postaları gönderilmesini sağlar."
+          },
+          "smart_invoice": {
+            "title": "Akıllı Fatura Girişi (SAP Entegre, Mobil)",
+            "desc": "Faturaların mobil cihazlar üzerinden hızlı ve kolay şekilde sisteme girilmesini sağlayarak verilerin otomatik olarak SAP sistemine entegre edilmesini mümkün kılar."
+          },
+          "mobile_docs": {
+            "title": "Ödeme Süreci ile Entegre Mobil Doküman Yönetimi",
+            "desc": "Ödeme süreçlerine ait belgelerin mobil cihazlar üzerinden güvenli şekilde görüntülenmesini, yönetilmesini ve ilgili ödeme işlemleriyle entegre biçimde takip edilmesini sağlar."
+          },
+          "reconciliation": {
+            "title": "Otomatik Denkleştirme ve Hatırlatma Mekanizmaları",
+            "desc": "Finansal işlemlerin sistem tarafından otomatik olarak eşleştirilmesini ve yaklaşan işlem veya ödeme tarihleri için kullanıcıların zamanında bilgilendirilmesini sağlar."
+          }
+        }
+      },
+      "sap_support_continuity": {
+        "pageTitle": "SAP Destek ve Süreklilik Danışmanlığı - Parla BT",
+        "heroTitle": "SAP Destek ve Süreklilik Danışmanlığı",
+        "title": "SAP Destek ve Süreklilik Danışmanlığı",
+        "p1": "SAP sistemlerinin kesintisiz ve verimli çalışması için kapsamlı destek ve sürekli danışmanlık hizmetleri sunuyoruz. Sistem izleme, performans optimizasyonu, güncelleme yönetimi ve kullanıcı desteği ile kurumların SAP yatırımlarını güvence altına alıyoruz.",
+        "p2": "Süreklilik danışmanlığımız sayesinde, iş süreçlerinizin her zaman sorunsuz çalışmasını sağlıyor, olası aksaklıkları proaktif olarak önlüyor ve SAP sistemlerinizi geleceğe hazır hale getiriyoruz. Böylece kurumlar, operasyonel verimlilikten ödün vermeden, güvenli ve sürdürülebilir bir SAP deneyimi yaşıyor.",
+        "workshops": {
+          "title": "Şirketinize özel atölyeler",
+          "p": "Destek ve süreklilik kapsamında, ekiplerinizin günlük operasyonlarına uygun kısa atölye oturumları planlayabiliyoruz. Bu oturumlar, kullanım sorularını sahadaki örneklerle netleştirir ve Parla Akademi ile birlikte yapılandırılabilir.",
+          "btn": "Atölye eğitimlerini inceleyin"
+        }
+      },
+      "unfinished_projects": {
+        "pageTitle": "Yarım Kalan Projelerinizi Bitirin - Parla BT",
+        "heroTitle": "Yarım Kalan Projelerinizi Bitirin",
+        "title": "Yarım Kalan Projelerinizi Bitirin",
+        "p1": "Projeler yarım kaldığında hem zaman hem de kaynak kaybı yaşanır; biz, kurumların SAP projelerini planlanan hedeflere ulaştıracak şekilde tamamlamalarını sağlıyoruz. Mevcut durum analizi yapıyor, eksik kalan adımları belirliyor ve proje sürecini hızlı, güvenli ve etkin bir şekilde sonlandırıyoruz.",
+        "p2": "Bu sayede kurumlar, zamanında ve doğru çözümlerle projelerini tamamlayarak verimliliklerini artırıyor, iş süreçlerini kesintisiz şekilde yönetiyor ve dijital dönüşüm yolculuklarını başarıyla sonuçlandırıyor.",
+        "imageAlt": "SAP projelerini tamamlama ve iş ortaklığı görseli"
+      },
       "e_transformation": {
         "pageTitle": "E-Dönüşüm Çözümleri - Parla BT",
         "heroTitle": "E-Dönüşüm Çözümleri",

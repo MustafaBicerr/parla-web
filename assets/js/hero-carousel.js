@@ -4,32 +4,69 @@
  */
 
 (function() {
-    // Data Structure
     const carouselData = [
         {
-            titleKey: "home.hero.carousel.0.title",
-            image: "assets/img/sap/sap-1.png", // Using existing assets as placeholders
-            link: "/pages/organisation/sap-implementation.html"
+            titleKey: 'home.hero.carousel.0.title',
+            imageAltKey: 'home.hero.carousel.0.imageAlt',
+            image: '/assets/img/sap/sap-1.png',
+            link: '/pages/organisation/sap-implementation.html',
+            placeholder: false
         },
         {
-            titleKey: "home.hero.carousel.1.title",
-            image: "assets/img/sap/sap-2.png",
-            link: "/pages/solutions/e-transformation.html"
+            titleKey: 'home.hero.carousel.1.title',
+            imageAltKey: 'home.hero.carousel.1.imageAlt',
+            image: '/assets/img/sap/sap-7.png',
+            link: '/pages/solutions/s4hana-transformation.html',
+            placeholder: false
         },
         {
-            titleKey: "home.hero.carousel.2.title",
-            image: "assets/img/sap/sap-3.png",
-            link: "/pages/solutions/financial-accounting.html"
+            titleKey: 'home.hero.carousel.2.title',
+            imageAltKey: 'home.hero.carousel.2.imageAlt',
+            image: '/assets/img/sap/sap-10.png',
+            link: '/pages/solutions/sap-extra-modules.html',
+            placeholder: false
         },
         {
-            titleKey: "home.hero.carousel.3.title",
-            image: "assets/img/sap/sap-4.png",
-            link: "/pages/academy/corporate-workshops.html"
+            titleKey: 'home.hero.carousel.3.title',
+            imageAltKey: 'home.hero.carousel.3.imageAlt',
+            image: '/assets/img/sap/sap-4.png',
+            link: '/pages/solutions/sap-support-continuity.html',
+            placeholder: false
         },
         {
-            titleKey: "home.hero.carousel.4.title",
-            image: "assets/img/sap/sap-5.png",
-            link: "/pages/solutions/mobile-automation.html"
+            titleKey: 'home.hero.carousel.4.title',
+            imageAltKey: 'home.hero.carousel.4.imageAlt',
+            image: '/assets/img/sap/sap-13.png',
+            link: '/pages/solutions/unfinished-projects.html',
+            placeholder: false
+        },
+        {
+            titleKey: 'home.hero.carousel.5.title',
+            imageAltKey: 'home.hero.carousel.5.imageAlt',
+            image: '/assets/img/sap/sap-11.png',
+            link: '#',
+            placeholder: true
+        },
+        {
+            titleKey: 'home.hero.carousel.6.title',
+            imageAltKey: 'home.hero.carousel.6.imageAlt',
+            image: '/assets/img/sap/sap-12.png',
+            link: '#',
+            placeholder: true
+        },
+        {
+            titleKey: 'home.hero.carousel.7.title',
+            imageAltKey: 'home.hero.carousel.7.imageAlt',
+            image: '/assets/img/sap/sap-9.png',
+            link: '#',
+            placeholder: true
+        },
+        {
+            titleKey: 'home.hero.carousel.8.title',
+            imageAltKey: 'home.hero.carousel.8.imageAlt',
+            image: '/assets/img/sap/sap-8.png',
+            link: '#',
+            placeholder: true
         }
     ];
 
@@ -37,44 +74,73 @@
     let autoPlayInterval;
     const AUTO_PLAY_DELAY = 3000;
 
+    function getByPath(path, obj) {
+        if (!path || !obj) return null;
+        return path.split('.').reduce((o, k) => (o && o[k] !== undefined) ? o[k] : null, obj);
+    }
+
+    function applyCarouselAccessibility() {
+        const container = document.getElementById('hero-3d-carousel');
+        if (!container || !window.__i18n || !window.__i18n.t) return;
+        const t = window.__i18n.t;
+        container.querySelectorAll('.carousel-card').forEach((card, index) => {
+            const item = carouselData[index];
+            if (!item) return;
+            const img = card.querySelector('img');
+            if (img && item.imageAltKey) {
+                const alt = getByPath(item.imageAltKey, t);
+                if (alt) img.setAttribute('alt', alt);
+            }
+        });
+    }
+
     function initCarousel() {
         const container = document.getElementById('hero-3d-carousel');
         const prevBtn = document.getElementById('hero-prev');
         const nextBtn = document.getElementById('hero-next');
 
         if (!container) return;
+        if (container.dataset.carouselInited === '1') return;
+        container.dataset.carouselInited = '1';
 
-        // Render Items
         container.innerHTML = carouselData.map((item, index) => `
-            <a href="${item.link}" class="carousel-card" data-index="${index}">
-                <img src="${item.image}" alt="Icon">
+            <a href="${item.placeholder ? '#' : item.link}" class="carousel-card${item.placeholder ? ' carousel-card-placeholder' : ''}" data-index="${index}">
+                <img src="${item.image}" alt="">
                 <h3 data-i18n="${item.titleKey}">Loading...</h3>
             </a>
         `).join('');
 
-        // Initial Update
+        container.querySelectorAll('.carousel-card').forEach((card, index) => {
+            const item = carouselData[index];
+            if (item && item.placeholder) {
+                card.addEventListener('click', (e) => e.preventDefault());
+                card.setAttribute('aria-disabled', 'true');
+            }
+        });
+
         updateCarousel();
 
-        // Event Listeners
-        prevBtn.addEventListener('click', () => {
-            movePrev();
-            resetAutoPlay();
-        });
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                movePrev();
+                resetAutoPlay();
+            });
+        }
 
-        nextBtn.addEventListener('click', () => {
-            moveNext();
-            resetAutoPlay();
-        });
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                moveNext();
+                resetAutoPlay();
+            });
+        }
 
-        // Start Auto Play
         startAutoPlay();
 
-        // Trigger translation update if i18n is available
         if (window.__i18n && typeof window.__i18n.setLanguage === 'function') {
-             // Re-apply current language to translate new elements
-             const currentLang = localStorage.getItem('site_lang') || 'tr';
-             window.__i18n.setLanguage(currentLang);
+            const currentLang = localStorage.getItem('site_lang') || 'tr';
+            window.__i18n.setLanguage(currentLang);
         }
+        applyCarouselAccessibility();
     }
 
     function updateCarousel() {
@@ -82,7 +148,10 @@
         const total = cards.length;
 
         cards.forEach((card, index) => {
-            card.className = 'carousel-card'; // Reset classes
+            card.className = 'carousel-card';
+            if (carouselData[index] && carouselData[index].placeholder) {
+                card.classList.add('carousel-card-placeholder');
+            }
 
             if (index === currentIndex) {
                 card.classList.add('center');
@@ -115,7 +184,10 @@
         startAutoPlay();
     }
 
-    // Observer to detect when hero.html is loaded into the DOM
+    document.addEventListener('parla-i18n-applied', () => {
+        applyCarouselAccessibility();
+    });
+
     const observer = new MutationObserver((mutations) => {
         if (document.getElementById('hero-3d-carousel')) {
             initCarousel();
@@ -125,7 +197,6 @@
 
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // Fallback in case it's already there
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             if (document.getElementById('hero-3d-carousel')) initCarousel();

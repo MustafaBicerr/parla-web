@@ -9,6 +9,7 @@ async function loadComponent(id, file) {
         // If we just injected the header, wire up header-specific events
         if (id === 'header-placeholder') {
             initHeaderEvents();
+            initDiaPlaceholderLinks();
             initHeaderScroll(); // Add scroll handling after header loads
         }
 
@@ -26,6 +27,12 @@ async function loadComponent(id, file) {
             }
         } catch (err) { /* ignore */ }
     } catch (error) { console.error("Component Yükleme Hatası:", error); }
+}
+
+function initDiaPlaceholderLinks() {
+    document.querySelectorAll('a.dia-solutions-link').forEach((a) => {
+        a.addEventListener('click', (e) => e.preventDefault());
+    });
 }
 
 function initHeaderEvents() {
@@ -238,7 +245,7 @@ function initCareerForm() {
                 fileInput.value = '';
                 fileInfoDiv.style.display = 'none';
                 dropArea.style.display = 'flex';
-            });s
+            });
         }
     });
 

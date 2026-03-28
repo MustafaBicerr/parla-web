@@ -17,12 +17,30 @@
         "demo": "Request Quote / Demo"
       },
       "carousel": [
-        { "title": "SAP Installation" },
-        { "title": "SAP S/4HANA Conversion" },
-        { "title": "SAP Additional Modules & Custom Developments" },
-        { "title": "SAP Support and Continuity Consulting" },
-        { "title": "Finish Your Unfinished Projects" }
-      ]
+        { "title": "SAP Installation", "imageAlt": "SAP implementation and migration visual" },
+        { "title": "SAP S/4HANA Transformation", "imageAlt": "SAP S/4HANA digital transformation visual" },
+        { "title": "SAP Add-on Modules & Custom Development", "imageAlt": "SAP add-on modules and integration visual" },
+        { "title": "SAP Support & Continuity Consulting", "imageAlt": "SAP support and consulting visual" },
+        { "title": "Complete Your Unfinished Projects", "imageAlt": "Completing SAP projects visual" },
+        { "title": "DİA: Budget, Closing & Tax", "imageAlt": "Budget and tax solutions visual" },
+        { "title": "DİA: Treasury & Risk (TRM)", "imageAlt": "Treasury and risk management visual" },
+        { "title": "DİA: Mobile & Automation", "imageAlt": "Mobile and automation solutions visual" },
+        { "title": "DİA: E-Transformation Packages", "imageAlt": "E-transformation solutions visual" }
+      ],
+      "spotlights": {
+        "sap": {
+          "text": "For enterprise-scale organizations we digitize end-to-end processes with SAP S/4HANA, FI/CO, TRM and tailored developments—supporting transformation, integration and post go-live operations.",
+          "btn": "Explore SAP solutions"
+        },
+        "dia": {
+          "text": "For SMEs and growing businesses we offer practical, cost-effective DİA ERP coverage—from pre-accounting and e-transformation to inventory and manufacturing.",
+          "btn": "Learn more about DİA"
+        }
+      },
+      "carousel_nav": {
+        "prev": "Previous slide",
+        "next": "Next slide"
+      }
     },
     "about": {
       "title": "About",
@@ -122,6 +140,59 @@
         "trm": "Treasury & Risk Management (TRM) Solutions",
         "insurance": "Insurance Solutions",
         "mobile": "Mobile & Automation Solutions"
+      },
+      "solutions_categories": {
+        "sap": "SAP SOLUTIONS",
+        "dia": "DİA SOLUTIONS"
+      },
+      "dia": {
+        "erp_title": "ERP",
+        "erp": [
+          "Pre-Accounting Management",
+          "Inventory & Warehouse Management",
+          "General Ledger Management",
+          "Payroll Management",
+          "Fixed Assets Management",
+          "Request Management",
+          "Project Management",
+          "Foreign Trade Management",
+          "Production Management",
+          "Business Intelligence – BI Solutions",
+          "Human Resources Management",
+          "Process Management"
+        ],
+        "crm_title": "CRM",
+        "crm": [
+          "CRM – Customer Relationship Management",
+          "Mobile Field Sales",
+          "Work Tracking Management",
+          "Procurement Management",
+          "Order Management",
+          "Quotation Management"
+        ],
+        "e_donusum_title": "E-Transformation",
+        "e_donusum": [
+          "E-Invoice",
+          "E-Waybill",
+          "E-Ledger",
+          "E-SMM",
+          "E-MM",
+          "E-Reconciliation",
+          "E-Banking"
+        ],
+        "e_ticaret_title": "E-Commerce",
+        "e_ticaret": [
+          "B2B",
+          "B2C",
+          "Marketplace"
+        ],
+        "sektorel_title": "Industry-Specific",
+        "sektorel": [
+          "Retail Store Management",
+          "Restaurant Management",
+          "Hotel Management",
+          "Service Management"
+        ]
       },
       "academy": {
         "workshops": "Corporate Workshops",
@@ -500,6 +571,104 @@
       }
     },
     "solutions": {
+      "s4hana_transformation": {
+        "pageTitle": "SAP S/4HANA Transformation - Parla BT",
+        "heroTitle": "SAP S/4HANA Transformation",
+        "title": "SAP S/4HANA Transformation",
+        "p1": "Moving to strong, modern systems is essential for competitiveness in digital transformation. For migrations to SAP S/4HANA we analyze your current landscape, define the right transformation strategy and manage every step end to end—from data migration to productive use.",
+        "p2": "This helps organizations run financial and operational processes faster, with greater transparency and efficiency, and supports better, faster decisions with real-time reporting and advanced analytics.",
+        "imageAlt": "SAP S/4HANA digital transformation visual"
+      },
+      "sap_extra_modules": {
+        "pageTitle": "SAP Add-on Modules & Custom Development - Parla BT",
+        "heroTitle": "SAP Add-on Modules & Custom Development",
+        "title": "SAP Add-on Modules & Custom Development",
+        "intro": {
+          "p1": "We deliver add-on modules and custom developments so your SAP platform fits your business precisely. Beyond standard SAP capabilities, we help you optimize processes, raise productivity and strengthen operational flexibility.",
+          "p2": "Add-ons extend finance, logistics, sales, HR and manufacturing; custom developments improve user experience and shape reporting and analytics around your needs so the system meets unique requirements.",
+          "p3": "We combine technology with process consulting and implementation support so you can use SAP add-ons and custom solutions effectively and safely—building a flexible, sustainable SAP foundation and reaching digital goals faster."
+        },
+        "images": {
+          "alt1": "SAP cloud and module integration visual",
+          "alt2": "SAP ERP and operations visual",
+          "alt3": "SAP analytics and automation visual"
+        },
+        "capabilities_heading": "Highlighted process and module areas",
+        "highlights": {
+          "general_ledger": {
+            "title": "General Ledger Accounting",
+            "desc": "Core accounting that tracks all postings by account in detail and supports regular financial reporting."
+          },
+          "vendor_payment": {
+            "title": "Vendor Average Payment Time Report",
+            "desc": "Financial report that analyzes how long you take to pay suppliers, supporting cash management and payment planning."
+          },
+          "phone_bills": {
+            "title": "Telephone Bill Management",
+            "desc": "Central tracking and control of corporate line invoices and more effective cost management."
+          },
+          "payment_integration": {
+            "title": "Payment Process Integration (Invoice/Document Based)",
+            "desc": "Integrates invoice- and document-based payments with financial systems for fast, accurate and traceable payment execution."
+          },
+          "collateral": {
+            "title": "Collateral Management",
+            "desc": "Registers, tracks and reports collateral received or given to help manage financial risk effectively."
+          },
+          "credit_risk": {
+            "title": "Credit Risk Management",
+            "desc": "Analyzes the financial reliability of customers and partners to set credit limits and manage exposure."
+          },
+          "tax_declaration": {
+            "title": "Tax Declaration Processes",
+            "desc": "Covers preparation, review and submission of tax filings on time and in line with regulations."
+          },
+          "inflation_accounting": {
+            "title": "Inflation Accounting",
+            "desc": "Adjusts financial data for inflation so statements better reflect economic reality in high-inflation environments."
+          },
+          "credit_processes": {
+            "title": "Credit Processes (Bond Maturity Reminders & Automated Mail)",
+            "desc": "Tracks upcoming maturities for bonds and credit transactions and sends reminder e-mails automatically."
+          },
+          "collateral_reminder": {
+            "title": "Collateral Maturity Reminder E-mails",
+            "desc": "Monitors collateral due dates and sends automatic reminders to the right users before maturity."
+          },
+          "smart_invoice": {
+            "title": "Smart Invoice Entry (SAP-Integrated, Mobile)",
+            "desc": "Enters invoices quickly on mobile devices and integrates data automatically into SAP."
+          },
+          "mobile_docs": {
+            "title": "Mobile Document Management Integrated with Payments",
+            "desc": "Securely views and manages payment-related documents on mobile, aligned with payment workflows."
+          },
+          "reconciliation": {
+            "title": "Automatic Reconciliation & Reminder Mechanisms",
+            "desc": "Automatically matches financial transactions and keeps users informed about upcoming postings or payment dates."
+          }
+        }
+      },
+      "sap_support_continuity": {
+        "pageTitle": "SAP Support & Continuity Consulting - Parla BT",
+        "heroTitle": "SAP Support & Continuity Consulting",
+        "title": "SAP Support & Continuity Consulting",
+        "p1": "We provide comprehensive support and ongoing consulting so SAP systems run without disruption and at peak efficiency. Through monitoring, performance tuning, update management and user assistance we protect your SAP investment.",
+        "p2": "Continuity consulting keeps processes running smoothly, addresses issues proactively and prepares your SAP landscape for the future—so you gain a secure, sustainable SAP experience without sacrificing operational efficiency.",
+        "workshops": {
+          "title": "Company-specific workshops",
+          "p": "Within support and continuity engagements we can plan short workshop sessions aligned with your teams’ daily work. They clarify usage questions with real examples and can be structured together with Parla Academy.",
+          "btn": "View workshop trainings"
+        }
+      },
+      "unfinished_projects": {
+        "pageTitle": "Complete Your Unfinished Projects - Parla BT",
+        "heroTitle": "Complete Your Unfinished Projects",
+        "title": "Complete Your Unfinished Projects",
+        "p1": "Paused projects waste time and resources. We help organizations finish SAP projects to the originally planned outcomes. We assess the current state, identify missing steps and close the project quickly, safely and effectively.",
+        "p2": "Organizations complete projects on time with the right solutions, run business without interruption and finish their digital transformation journeys successfully.",
+        "imageAlt": "Completing SAP projects and partnership visual"
+      },
       "e_transformation": {
         "pageTitle": "E-Transformation Solutions - Parla IT",
         "heroTitle": "E-Transformation Solutions",
