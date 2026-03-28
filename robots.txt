@@ -1,0 +1,7 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# İsteğe bağlı: yönetim veya taslak klasörleriniz varsa burada Disallow ekleyin.
+
+Sitemap: https://www.parlabilgiteknolojileri.net/sitemap.xml

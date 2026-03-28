@@ -4,6 +4,7 @@
    - For placeholders use `data-i18n-placeholder="path.to.key"`
    - For image alt text use `data-i18n-alt="path.to.key"`
    - For aria-label use `data-i18n-aria-label="path.to.key"`
+   - For <meta content> / <link href> use `data-i18n-content="path.to.key"` (sets the `content` attribute)
    - Add buttons with class `lang-switch` and `data-lang="en"|"tr"` to switch language
 
    This is intentionally small and dependency-free. For larger sites consider
@@ -53,6 +54,18 @@
       if (val !== null && val !== undefined) el.setAttribute('aria-label', val);
     });
 
+    document.querySelectorAll('[data-i18n-content]').forEach(el => {
+      const key = el.getAttribute('data-i18n-content');
+      const val = getKey(key, translations);
+      if (val !== null && val !== undefined) el.setAttribute('content', val);
+    });
+
+    document.querySelectorAll('[data-i18n-href]').forEach(el => {
+      const key = el.getAttribute('data-i18n-href');
+      const val = getKey(key, translations);
+      if (val !== null && val !== undefined) el.setAttribute('href', val);
+    });
+
     // document title: prefer a <title data-i18n="..."> element, fallback to translations.site.title
     try {
       const titleEl = document.querySelector('title[data-i18n]');
@@ -63,7 +76,7 @@
       } else if (translations && translations.site && translations.site.title) {
         document.title = translations.site.title;
       }
-    } catch (e) {
+      } catch (e) {
       // ignore in environments without document.title
     }
   }

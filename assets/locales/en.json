@@ -1,6 +1,13 @@
 {
   "site": {
-    "title": "Parla Information Technologies | Your SAP Solution Partner"
+    "title": "Parla Information Technologies | Your SAP Solution Partner",
+    "meta_description": "Parla Information Technologies (Parla BT) — SAP consultancy and SAP solutions in Kayseri and across Turkey: S/4HANA, SAP FI/CO, TRM and e-transformation. Your Parla SAP partner for enterprise ERP and digital finance processes.",
+    "meta_keywords": "parla, parla technology, parla information technologies, parla bt, parla sap, sap, sap solutions, sap partner, sap fi, sap co, sap trm, sap s4hana, s4hana migration, sap consulting turkey, kayseri sap, kayseri sap consulting, turkey sap consultant, sap implementation, sap support, e-invoice sap, cloud erp, sap btp, parla kayseri, financial accounting sap, treasury risk sap",
+    "canonical_url": "https://www.parlabilgiteknolojileri.net/",
+    "og_locale": "en_US",
+    "og_image": "https://www.parlabilgiteknolojileri.net/assets/img/parla-logo/parla-logo.png",
+    "twitter_card": "summary_large_image",
+    "og_type": "website"
   },
   "home": {
     "announcements": {

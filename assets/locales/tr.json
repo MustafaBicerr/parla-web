@@ -1,6 +1,13 @@
 {
   "site": {
-    "title": "Parla Bilgi Teknolojileri | SAP Çözüm Ortağınız"
+    "title": "Parla Bilgi Teknolojileri | SAP Çözüm Ortağınız",
+    "meta_description": "Parla Bilgi Teknolojileri (Parla BT) — Kayseri ve Türkiye genelinde Parla SAP danışmanlığı, SAP çözümleri, S/4HANA dönüşümü, SAP FI/CO ve TRM. Parla teknoloji ekibiyle e-dönüşüm ve kurumsal ERP projelerinizi güvenle dijitalleştirin.",
+    "meta_keywords": "parla, parla teknoloji, parla bilgi teknolojileri, parla bt, parla sap, parla danışmanlık, sap, sap çözümleri, sap çözüm ortağı, sap fi, sap fi çözümleri, sap co, sap trm, sap s4hana, s4hana, s4hana dönüşümü, sap danışmanlık, sap danışmanlığı, kayseri sap, kayseri sap danışmanlığı, kayseri sap danışmanı, türkiye sap, türkiye sap danışmanlığı, sap kurulumu, sap destek, sap e-fatura, sap e dönüşüm, bulut erp, sap btp, parla kayseri, parla erp, finansal muhasebe sap, hazine risk sap, mobil sap, dia erp, parla bilgi teknolojileri kayseri",
+    "canonical_url": "https://www.parlabilgiteknolojileri.net/",
+    "og_locale": "tr_TR",
+    "og_image": "https://www.parlabilgiteknolojileri.net/assets/img/parla-logo/parla-logo.png",
+    "twitter_card": "summary_large_image",
+    "og_type": "website"
   },
   "home": {
     "announcements": {
