@@ -1,0 +1,85 @@
+<section id="idea-contest" style="padding: 70px 0; background: #fff;">
+  <div class="container">
+    <div class="section-title anim-block" data-animate="true" data-anim-type="fade-up">
+      <h2 data-i18n="idea_contest.title">Ödüllü Fikir Yarışması</h2>
+      <p data-i18n="idea_contest.subtitle" style="max-width: 720px; margin-left: auto; margin-right: auto;">
+        Yenilikçi fikirlerinizi bizimle paylaşın; en ilham veren öneriler ödüllendirilebilir.
+      </p>
+    </div>
+
+    <p class="idea-contest-lead anim-block" data-animate="true" data-anim-type="fade-up" data-i18n="idea_contest.lead">
+      Dereceye giren fikirler arasında Bluetooth kulaklıklar, powerbank, mekanik klavye veya oyuncu faresi,
+      taşınabilir hoparlör gibi teknoloji hediyeleri yer almaktadır.
+    </p>
+
+    <div class="idea-prizes-row anim-block" data-animate="true" data-anim-type="fade-up" data-i18n-aria-label="idea_contest.prizes_aria" role="region">
+      <figure class="idea-prize-card">
+        <div class="idea-prize-img-wrap">
+          <img src="/assets/img/idea-contest-prizes/headphones.jpg" alt="" data-i18n-alt="idea_contest.prize_headphones_alt" loading="lazy">
+        </div>
+        <figcaption data-i18n="idea_contest.prize_headphones">Bluetooth kulaklık</figcaption>
+      </figure>
+      <figure class="idea-prize-card">
+        <div class="idea-prize-img-wrap">
+          <img src="/assets/img/idea-contest-prizes/powerbank.jpg" alt="" data-i18n-alt="idea_contest.prize_powerbank_alt" loading="lazy">
+        </div>
+        <figcaption data-i18n="idea_contest.prize_powerbank">Powerbank</figcaption>
+      </figure>
+      <figure class="idea-prize-card">
+        <div class="idea-prize-img-wrap">
+          <img src="/assets/img/idea-contest-prizes/keyboard-mouse.jpg" alt="" data-i18n-alt="idea_contest.prize_keyboard_alt" loading="lazy">
+        </div>
+        <figcaption data-i18n="idea_contest.prize_keyboard">Mekanik klavye veya oyuncu faresi</figcaption>
+      </figure>
+      <figure class="idea-prize-card">
+        <div class="idea-prize-img-wrap">
+          <img src="/assets/img/idea-contest-prizes/speaker.jpg" alt="" data-i18n-alt="idea_contest.prize_speaker_alt" loading="lazy">
+        </div>
+        <figcaption data-i18n="idea_contest.prize_speaker">Taşınabilir hoparlör</figcaption>
+      </figure>
+    </div>
+
+    <div class="idea-contest-grid">
+      <div class="idea-contest-copy anim-block" data-animate="true" data-anim-type="fade-left">
+        <h3 data-i18n="idea_contest.how_title">Nasıl katılırım?</h3>
+        <p data-i18n="idea_contest.how_p1">Formu doldurarak fikrinizi paylaşın. Ekibimiz başvuruları değerlendirir ve uygun gördüğü önerileri ödüllendirir.</p>
+      </div>
+
+      <div class="anim-block" data-animate="true" data-anim-type="fade-right">
+        <form id="idea-contest-form">
+          <div class="idea-form-grid">
+            <div>
+              <label for="idea-first-name" data-i18n="idea_contest.form.first_name">Ad</label>
+              <input type="text" id="idea-first-name" name="first_name" required autocomplete="given-name" data-i18n-placeholder="idea_contest.form.first_name_ph">
+            </div>
+            <div>
+              <label for="idea-last-name" data-i18n="idea_contest.form.last_name">Soyad</label>
+              <input type="text" id="idea-last-name" name="last_name" required autocomplete="family-name" data-i18n-placeholder="idea_contest.form.last_name_ph">
+            </div>
+            <div class="idea-form-full">
+              <label for="idea-phone" data-i18n="idea_contest.form.phone">Telefon</label>
+              <input type="tel" id="idea-phone" name="phone" required autocomplete="tel" data-i18n-placeholder="idea_contest.form.phone_ph">
+            </div>
+            <div class="idea-form-full">
+              <label for="idea-email" data-i18n="idea_contest.form.email">E-posta</label>
+              <input type="email" id="idea-email" name="email" required autocomplete="email" data-i18n-placeholder="idea_contest.form.email_ph">
+            </div>
+            <div class="idea-form-full">
+              <label for="idea-title" data-i18n="idea_contest.form.idea_title">Fikir başlığı</label>
+              <input type="text" id="idea-title" name="idea_title" required data-i18n-placeholder="idea_contest.form.idea_title_ph">
+            </div>
+            <div class="idea-form-full">
+              <label for="idea-details" data-i18n="idea_contest.form.idea_details">Fikir detayları</label>
+              <textarea id="idea-details" name="idea_details" rows="8" required data-i18n-placeholder="idea_contest.form.idea_details_ph"></textarea>
+            </div>
+            <div class="idea-form-full">
+              <label for="idea-problem" data-i18n="idea_contest.form.problem">Bu fikir hangi problemi çözüyor? <span class="idea-optional" data-i18n="idea_contest.form.optional">(isteğe bağlı)</span></label>
+              <textarea id="idea-problem" name="problem_solved" rows="4" data-i18n-placeholder="idea_contest.form.problem_ph"></textarea>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%; border: none; margin-top: 6px;" data-i18n="idea_contest.form.submit">Gönder</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>

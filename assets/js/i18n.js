@@ -129,9 +129,10 @@
     init();
   }
 
-  // expose for debugging
+  // expose for debugging / dinamik enjekte edilen içerik sonrası çeviri tazeleme
   window.__i18n = {
     setLanguage,
+    refreshTranslations: applyTranslations,
     get t() { return translations; }
   };
 

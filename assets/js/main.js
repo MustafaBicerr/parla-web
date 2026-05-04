@@ -209,10 +209,19 @@ function openSolutionModal(jsonKey) {
 // Expose the function to the global scope to be callable from HTML onclick
 window.openSolutionModal = openSolutionModal;
 
+function getGoogleScriptUrl() {
+    var c = (typeof window !== 'undefined' && window.__PARLA_SITE_CONFIG) || {};
+    return c.GOOGLE_SCRIPT_URL || '';
+}
 
-
-// İletişim ve Kariyer Formları için ortak Google Apps Script URL'si
-const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzL_coGc0SwmH3KqFEOot0DTzmpSjOk4wDf7jAj0IpOoKZX0bQLz3J3iSpGJ5ky1JU0/exec";
+function parlaTranslate(path, fallback) {
+    try {
+        var parts = path.split('.');
+        var o = window.__i18n && window.__i18n.t;
+        for (var i = 0; i < parts.length && o; i++) { o = o[parts[i]]; }
+        return (typeof o === 'string' && o) ? o : fallback;
+    } catch (e) { return fallback; }
+}
 
 function initCareerForm() {
     const dropArea = document.querySelector('.file-drop-area');
@@ -306,7 +315,7 @@ function initCareerForm() {
 
             
             // mode: 'no-cors' KALDIRILDI. Hata varsa görelim.
-            fetch(GOOGLE_SCRIPT_URL, {
+            fetch(getGoogleScriptUrl(), {
                 method: 'POST',
                 body: JSON.stringify(payload)
             })
@@ -335,6 +344,68 @@ function initCareerForm() {
     });
 }
 
+function initIdeaContestForm() {
+    document.body.addEventListener('submit', function (event) {
+        const form = event.target;
+        if (!form || form.id !== 'idea-contest-form') return;
+        event.preventDefault();
+
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonText = submitButton ? submitButton.innerText : '';
+
+        const problemEl = document.getElementById('idea-problem');
+        const payload = {
+            type: 'idea',
+            first_name: document.getElementById('idea-first-name').value.trim(),
+            last_name: document.getElementById('idea-last-name').value.trim(),
+            phone: document.getElementById('idea-phone').value.trim(),
+            email: document.getElementById('idea-email').value.trim(),
+            idea_title: document.getElementById('idea-title').value.trim(),
+            idea_details: document.getElementById('idea-details').value.trim(),
+            problem_solved: problemEl ? problemEl.value.trim() : ''
+        };
+
+        if (!payload.first_name || !payload.last_name || !payload.phone || !payload.email ||
+            !payload.idea_title || !payload.idea_details) {
+            alert(parlaTranslate('idea_contest.form.validation_required', 'Lütfen zorunlu alanları doldurun.'));
+            return;
+        }
+
+        const scriptUrl = getGoogleScriptUrl();
+        if (!scriptUrl) {
+            alert(parlaTranslate('idea_contest.form.config_error', 'Teknik bir hata oluştu. Lütfen daha sonra tekrar deneyin.'));
+            return;
+        }
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerText = parlaTranslate('idea_contest.form.submitting', 'Gönderiliyor...');
+        }
+
+        fetch(scriptUrl, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+            .then(() => {
+                alert(parlaTranslate('idea_contest.form.success', 'Fikriniz alındı. Teşekkür ederiz!'));
+                form.reset();
+            })
+            .catch((error) => {
+                console.error('Fikir formu gönderme hatası:', error);
+                alert(parlaTranslate('idea_contest.form.error', 'Gönderim sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyin.'));
+            })
+            .finally(() => {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerText = originalButtonText;
+                    if (window.__i18n && typeof window.__i18n.refreshTranslations === 'function') {
+                        window.__i18n.refreshTranslations();
+                    }
+                }
+            });
+    });
+}
+
 function initContactForm() {
     const form = document.getElementById('contact-form');
     if (!form) return;
@@ -359,7 +430,7 @@ function initContactForm() {
 
         
 
-        fetch(GOOGLE_SCRIPT_URL, {
+        fetch(getGoogleScriptUrl(), {
             method: 'POST',
             body: JSON.stringify(payload)
         })
@@ -400,6 +471,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize contact form interactions if the form exists on the page
     initContactForm();
+
+    // Fikir formu bazen bileşen yüklemesi sonrası gelir — event delegation
+    initIdeaContestForm();
 
     // Initialize the floating action buttons and chatbot widget
     if (typeof initChatWidget === 'function') initChatWidget();

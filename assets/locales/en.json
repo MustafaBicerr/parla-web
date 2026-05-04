@@ -405,6 +405,45 @@
       "subject_placeholder": "Subject"
     }
   },
+  "idea_contest": {
+    "title": "Award-Winning Idea Contest",
+    "subtitle": "Share your ideas with us; selected proposals may be rewarded with tech gifts.",
+    "lead": "Among the rewards are Bluetooth headphones (in-ear or over-ear), power banks, mechanical keyboards or gaming mice, and portable speakers.",
+    "prizes_aria": "Sample prize product images",
+    "prize_headphones": "Bluetooth headphones",
+    "prize_headphones_alt": "Bluetooth headphones product photo",
+    "prize_powerbank": "Power bank",
+    "prize_powerbank_alt": "Power bank product photo",
+    "prize_keyboard": "Mechanical keyboard or gaming mouse",
+    "prize_keyboard_alt": "Mechanical keyboard and computer mouse photo",
+    "prize_speaker": "Portable speaker",
+    "prize_speaker_alt": "Portable wireless speaker photo",
+    "how_title": "How do I take part?",
+    "how_p1": "Fill out the form to share your idea. Our team reviews submissions and may reward those that stand out.",
+    "form": {
+      "first_name": "First name",
+      "first_name_ph": "Your first name",
+      "last_name": "Last name",
+      "last_name_ph": "Your last name",
+      "phone": "Phone",
+      "phone_ph": "e.g. +90…",
+      "email": "Email",
+      "email_ph": "you@example.com",
+      "idea_title": "Idea title",
+      "idea_title_ph": "Short, clear title",
+      "idea_details": "Idea details",
+      "idea_details_ph": "Describe your idea in as much detail as you can…",
+      "problem": "What problem does this idea solve?",
+      "optional": "(optional)",
+      "problem_ph": "If applicable, briefly describe the problem…",
+      "submit": "Submit",
+      "submitting": "Sending…",
+      "success": "Your idea was received. Thank you!",
+      "error": "Something went wrong while sending. Please try again later.",
+      "validation_required": "Please fill in all required fields.",
+      "config_error": "A technical error occurred. Please try again later."
+    }
+  },
   "career": {
     "title": "Career Opportunities",
     "text": "Are you a talented SAP consultant or developer? Send us your CV!"

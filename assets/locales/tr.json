@@ -405,6 +405,45 @@
       "subject_placeholder": "Konu"
     }
   },
+  "idea_contest": {
+    "title": "Ödüllü Fikir Yarışması",
+    "subtitle": "Fikirlerinizi paylaşın; seçilen öneriler teknoloji hediyeleriyle ödüllendirilebilir.",
+    "lead": "Ödüllenen fikirler arasında Bluetooth kulaklıklar (kulak içi veya kulak üstü), powerbank, mekanik klavye veya oyuncu faresi ile taşınabilir hoparlör gibi ürünler yer alır.",
+    "prizes_aria": "Örnek ödül ürün görselleri",
+    "prize_headphones": "Bluetooth kulaklık",
+    "prize_headphones_alt": "Bluetooth kulaklık ürün görseli",
+    "prize_powerbank": "Powerbank",
+    "prize_powerbank_alt": "Powerbank ürün görseli",
+    "prize_keyboard": "Mekanik klavye veya oyuncu faresi",
+    "prize_keyboard_alt": "Mekanik klavye ve bilgisayar faresi görseli",
+    "prize_speaker": "Taşınabilir hoparlör",
+    "prize_speaker_alt": "Taşınabilir kablosuz hoparlör görseli",
+    "how_title": "Nasıl katılırım?",
+    "how_p1": "Formu doldurarak fikrinizi paylaşın. Ekibimiz başvuruları değerlendirir ve uygun gördüğü önerileri ödüllendirir.",
+    "form": {
+      "first_name": "Ad",
+      "first_name_ph": "Adınız",
+      "last_name": "Soyad",
+      "last_name_ph": "Soyadınız",
+      "phone": "Telefon",
+      "phone_ph": "05xx…",
+      "email": "E-posta",
+      "email_ph": "ornek@eposta.com",
+      "idea_title": "Fikir başlığı",
+      "idea_title_ph": "Kısa ve net bir başlık",
+      "idea_details": "Fikir detayları",
+      "idea_details_ph": "Fikrinizi mümkün olduğunca ayrıntılı anlatın…",
+      "problem": "Bu fikir hangi problemi çözüyor?",
+      "optional": "(isteğe bağlı)",
+      "problem_ph": "Varsa çözdüğünüz problemi kısaca yazın…",
+      "submit": "Gönder",
+      "submitting": "Gönderiliyor…",
+      "success": "Fikriniz başarıyla alındı. Teşekkür ederiz!",
+      "error": "Gönderim sırasında bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+      "validation_required": "Lütfen tüm zorunlu alanları doldurun.",
+      "config_error": "Teknik bir hata oluştu. Lütfen daha sonra tekrar deneyin."
+    }
+  },
   "career": {
     "title": "Kariyer Fırsatları",
     "text": "Yetenekli bir SAP danışmanı veya yazılımcı mısın? CV'ni bekliyoruz!"

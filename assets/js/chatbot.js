@@ -2,10 +2,11 @@ function initChatWidget() {
     // Prevent multiple initializations
     if (document.getElementById('fab-container')) return;
 
-    // --- Configuration ---
-    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzL_coGc0SwmH3KqFEOot0DTzmpSjOk4wDf7jAj0IpOoKZX0bQLz3J3iSpGJ5ky1JU0/exec";
-    const WHATSAPP_NUMBER = "905302267798"; // Using the number from your contact info
-    const PHONE_NUMBER = "+905302267798"; 
+    // --- Configuration (merkezi: assets/js/site-config.js) ---
+    var cfg = (typeof window !== 'undefined' && window.__PARLA_SITE_CONFIG) || {};
+    var GOOGLE_SCRIPT_URL = cfg.GOOGLE_SCRIPT_URL || '';
+    var WHATSAPP_NUMBER = cfg.PHONE_WHATSAPP_DIGITS || '905302267798';
+    var PHONE_NUMBER = cfg.PHONE_TEL_HREF || '+905302267798'; 
     
     // WhatsApp Menu Options
     const whatsappOptions = [

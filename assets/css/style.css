@@ -426,6 +426,89 @@ form input:focus, form textarea:focus { border-color: var(--primary-color); outl
     .contact-card { padding: 12px; }
 }
 
+/* --- IDEA CONTEST --- */
+.idea-contest-lead {
+    text-align: center;
+    max-width: 820px;
+    margin: 0 auto 42px;
+    color: #555;
+    line-height: 1.75;
+    font-size: 1.05rem;
+}
+.idea-prizes-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px;
+    margin-bottom: 48px;
+    align-items: stretch;
+}
+.idea-prize-card {
+    margin: 0;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.08);
+    border-left: 4px solid var(--primary-color);
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.idea-prize-card:hover {
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.11);
+    transform: translateY(-3px);
+}
+.idea-prize-img-wrap {
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+.idea-prize-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+}
+.idea-prize-card:hover img { transform: scale(1.04); }
+.idea-prize-card figcaption {
+    padding: 14px 14px 16px;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.92rem;
+    text-align: center;
+    line-height: 1.35;
+}
+.idea-contest-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.12fr;
+    gap: 48px;
+    align-items: start;
+    margin-top: 8px;
+}
+.idea-contest-copy h3 {
+    font-size: 1.48rem;
+    margin-bottom: 16px;
+    color: #222;
+}
+.idea-contest-copy p { color: #666; line-height: 1.75; margin-bottom: 14px; }
+.idea-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 18px;
+}
+.idea-form-full { grid-column: 1 / -1; }
+.idea-optional { font-weight: 400; color: #888; font-size: 0.86rem; }
+#idea-contest-form textarea { min-height: 0; resize: vertical; }
+@media (max-width: 992px) {
+    .idea-prizes-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+    .idea-contest-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+    .idea-prizes-row { grid-template-columns: 1fr; }
+    .idea-form-grid { grid-template-columns: 1fr; }
+}
 
 /* --- BUTTONS --- */
 .btn { display: inline-block; padding: 14px 35px; border-radius: 50px; font-weight: 600; text-decoration: none; transition: 0.3s; cursor: pointer; border: 2px solid transparent; font-size: 1rem; }
