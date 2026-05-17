@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Müşteri Paneli | SAP Destek — Parla BT</title>
+  <link rel="stylesheet" href="/assets/css/support-portal.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="sp-body">
+  <div id="sp-header"></div>
+  <main class="sp-main" id="sp-dashboard-content"></main>
+
+  <div class="sp-modal-overlay" id="sp-create-ticket-modal" aria-hidden="true">
+    <div class="sp-modal" role="dialog" aria-labelledby="sp-modal-title">
+      <div class="sp-modal-header">
+        <h3 id="sp-modal-title">Yeni Destek Talebi</h3>
+        <button type="button" class="sp-modal-close" id="sp-modal-close" aria-label="Kapat">&times;</button>
+      </div>
+      <form id="sp-create-ticket-form">
+        <div class="sp-modal-body">
+          <div class="sp-form-group">
+            <label for="sp-ticket-title">Ticket Başlığı</label>
+            <input type="text" id="sp-ticket-title" required minlength="3" placeholder="Kısa özet">
+          </div>
+          <div class="sp-form-row">
+            <div class="sp-form-group">
+              <label for="sp-ticket-priority">Öncelik</label>
+              <select id="sp-ticket-priority" required>
+                <option value="Low">Low</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
+              </select>
+            </div>
+            <div class="sp-form-group">
+              <label for="sp-ticket-module">SAP Modülü</label>
+              <select id="sp-ticket-module" required>
+                <option value="MM">MM</option>
+                <option value="SD">SD</option>
+                <option value="FI">FI</option>
+                <option value="CO">CO</option>
+                <option value="PP">PP</option>
+                <option value="WM">WM</option>
+                <option value="Basis">Basis</option>
+                <option value="ABAP">ABAP</option>
+                <option value="Diğer">Diğer</option>
+              </select>
+            </div>
+          </div>
+          <div class="sp-form-group">
+            <label for="sp-ticket-description">Açıklama</label>
+            <textarea id="sp-ticket-description" rows="5" required minlength="10" placeholder="Sorunu detaylı açıklayın"></textarea>
+          </div>
+          <div class="sp-form-group">
+            <label for="sp-ticket-file">Dosya Ekle (opsiyonel)</label>
+            <input type="file" id="sp-ticket-file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.txt,.zip">
+            <p class="sp-file-hint">Maks. 5 MB — PDF, görsel, Office, ZIP</p>
+          </div>
+        </div>
+        <div class="sp-modal-footer">
+          <button type="button" class="sp-btn sp-btn-secondary" id="sp-modal-cancel">İptal</button>
+          <button type="submit" class="sp-btn sp-btn-primary sp-btn-sm">Oluştur</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/assets/js/site-config.js"></script>
+  <script src="/assets/js/support/config.js"></script>
+  <script src="/assets/js/support/api.js"></script>
+  <script src="/assets/js/support/auth.js"></script>
+  <script src="/assets/js/support/ui.js"></script>
+  <script src="/assets/js/support/dashboard.js"></script>
+</body>
+</html>

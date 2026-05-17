@@ -41,6 +41,13 @@
 
 .fab-item.fab-whatsapp { background-color: var(--whatsapp-green); }
 .fab-item.fab-phone { background-color: var(--phone-blue); }
+.fab-item.fab-support {
+    background-color: #0a1628;
+    font-size: 22px;
+}
+.fab-item.fab-support:hover {
+    background-color: #132a4a;
+}
 
 /* Wrapper for chatbot FAB and its badge */
 .fab-chatbot-wrapper {

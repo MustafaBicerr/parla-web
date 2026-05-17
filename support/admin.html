@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Admin Paneli | SAP Destek — Parla BT</title>
+  <link rel="stylesheet" href="/assets/css/support-portal.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="sp-body">
+  <div id="sp-header"></div>
+  <main class="sp-main">
+    <div id="sp-admin-stats"></div>
+    <div class="sp-section">
+      <div class="sp-section-header">
+        <h3>Tüm Ticketlar</h3>
+        <div class="sp-filters">
+          <div class="sp-form-group">
+            <label for="sp-filter-search">Ara</label>
+            <input type="search" id="sp-filter-search" placeholder="Ticket, firma, e-posta...">
+          </div>
+          <div class="sp-form-group">
+            <label for="sp-filter-status">Durum</label>
+            <select id="sp-filter-status">
+              <option value="">Tümü</option>
+              <option value="OPEN">OPEN</option>
+              <option value="IN PROGRESS">IN PROGRESS</option>
+              <option value="WAITING CUSTOMER">WAITING CUSTOMER</option>
+              <option value="RESOLVED">RESOLVED</option>
+              <option value="CLOSED">CLOSED</option>
+            </select>
+          </div>
+          <div class="sp-form-group">
+            <label for="sp-filter-priority">Öncelik</label>
+            <select id="sp-filter-priority">
+              <option value="">Tümü</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="sp-section-body" id="sp-admin-tickets"></div>
+    </div>
+  </main>
+
+  <script src="/assets/js/site-config.js"></script>
+  <script src="/assets/js/support/config.js"></script>
+  <script src="/assets/js/support/api.js"></script>
+  <script src="/assets/js/support/auth.js"></script>
+  <script src="/assets/js/support/ui.js"></script>
+  <script src="/assets/js/support/admin.js"></script>
+</body>
+</html>

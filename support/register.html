@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Kayıt | SAP Destek Portalı — Parla BT</title>
+  <link rel="stylesheet" href="/assets/css/support-portal.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="sp-body">
+  <div class="sp-auth-wrap">
+    <section class="sp-auth-brand">
+      <a href="/index.html" class="sp-auth-logo-link"><img src="/assets/img/parla-logo/parla-logo.png" alt="Parla SAP" class="sp-site-logo"></a>
+      <h1>Müşteri Kaydı</h1>
+      <p>Parla BT SAP destek hizmeti alan müşterilerimiz bu portal üzerinden destek talebi oluşturabilir. Kayıt sonrası rolünüz otomatik olarak müşteri olarak atanır.</p>
+    </section>
+    <section class="sp-auth-panel">
+      <div class="sp-card" style="max-width:520px">
+        <h2>Kayıt Ol</h2>
+        <p class="sp-subtitle">Tüm alanlar zorunludur</p>
+        <form id="sp-register-form" novalidate>
+          <div class="sp-form-row">
+            <div class="sp-form-group">
+              <label for="sp-first-name">Ad</label>
+              <input type="text" id="sp-first-name" required autocomplete="given-name">
+            </div>
+            <div class="sp-form-group">
+              <label for="sp-last-name">Soyad</label>
+              <input type="text" id="sp-last-name" required autocomplete="family-name">
+            </div>
+          </div>
+          <div class="sp-form-group">
+            <label for="sp-company">Firma Adı</label>
+            <input type="text" id="sp-company" required autocomplete="organization">
+          </div>
+          <div class="sp-form-group">
+            <label for="sp-phone">Telefon</label>
+            <input type="tel" id="sp-phone" required autocomplete="tel" placeholder="05XX XXX XX XX">
+          </div>
+          <div class="sp-form-group">
+            <label for="sp-email">İş Mail Adresi</label>
+            <input type="email" id="sp-email" required autocomplete="email">
+          </div>
+          <div class="sp-form-group">
+            <label for="sp-password">Şifre</label>
+            <input type="password" id="sp-password" required autocomplete="new-password" minlength="8">
+          </div>
+          <div class="sp-form-group">
+            <label for="sp-password-confirm">Şifre Tekrar</label>
+            <input type="password" id="sp-password-confirm" required autocomplete="new-password">
+          </div>
+          <button type="submit" class="sp-btn sp-btn-primary">Kayıt Ol</button>
+        </form>
+        <p class="sp-text-center sp-mt-1">
+          Zaten hesabınız var mı? <a class="sp-link" href="/support/login.html">Giriş yapın</a>
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <script src="/assets/js/site-config.js"></script>
+  <script src="/assets/js/support/config.js"></script>
+  <script src="/assets/js/support/api.js"></script>
+  <script src="/assets/js/support/auth.js"></script>
+  <script src="/assets/js/support/ui.js"></script>
+  <script src="/assets/js/support/validators.js"></script>
+  <script src="/assets/js/support/register.js"></script>
+</body>
+</html>
