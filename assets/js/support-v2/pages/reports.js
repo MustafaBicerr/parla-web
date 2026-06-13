@@ -13,6 +13,7 @@ import {
   renderEmptyState,
 } from "../ui-shell.js";
 import { SAP_MODULE_LABELS, formatPriorityLabel } from "../ticket-utils.js";
+import { downloadCsv, downloadExcel } from "../export-utils.js";
 
 const PIE_COLORS = [
   "#2563eb",
@@ -31,6 +32,7 @@ let session = null;
 let allTickets = [];
 let allCompanies = [];
 let allPersonnel = [];
+let allEfforts = [];
 let datePreset = "month";
 let customFrom = "";
 let customTo = "";
@@ -93,10 +95,11 @@ async function init() {
 init();
 
 async function loadData() {
-  [allTickets, allCompanies, allPersonnel] = await Promise.all([
+  [allTickets, allCompanies, allPersonnel, allEfforts] = await Promise.all([
     ParlaDb.getAllTickets(),
     ParlaDb.getAllCompanies(),
     ParlaDb.getAllPersonnel(),
+    ParlaDb.getAllTicketEfforts(),
   ]);
 }
 
@@ -151,6 +154,19 @@ function filteredTickets() {
   });
 }
 
+function filteredEfforts() {
+  const { start, end } = getDateRange();
+  const ticketMap = Object.fromEntries(allTickets.map((t) => [t.id || t.ticket_id, t]));
+  return allEfforts.filter((e) => {
+    const d = new Date(e.work_date || e.created_at);
+    if (Number.isNaN(d.getTime())) return false;
+    return d >= start && d <= end;
+  }).map((e) => ({
+    ...e,
+    ticket: ticketMap[e.ticket_id] || {},
+  }));
+}
+
 function groupCount(items, keyFn) {
   const map = {};
   for (const item of items) {
@@ -202,21 +218,8 @@ function renderPieChart(data) {
     <div class="sv2-pie-legend">${legend}</div>`;
 }
 
-function downloadCsv(filename, headers, rows) {
-  const bom = "\ufeff";
-  const lines = [
-    headers.join(";"),
-    ...rows.map((r) =>
-      r.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(";")
-    ),
-  ];
-  const blob = new Blob([bom + lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+function downloadCsvLocal(filename, headers, rows) {
+  downloadCsv(filename, headers, rows);
 }
 
 function reportCard(id, title, bodyHtml) {
@@ -224,9 +227,14 @@ function reportCard(id, title, bodyHtml) {
     <div class="sv2-report-card" data-report="${id}">
       <div class="sv2-report-card-header">
         <h4>${escapeHtml(title)}</h4>
-        <button type="button" class="sv2-btn sv2-btn-sm sv2-btn-outline btn-csv" data-report="${id}">
-          <i class="fas fa-download"></i> CSV
-        </button>
+        <div style="display:flex;gap:0.35rem">
+          <button type="button" class="sv2-btn sv2-btn-sm sv2-btn-outline btn-csv" data-report="${id}">
+            <i class="fas fa-download"></i> CSV
+          </button>
+          <button type="button" class="sv2-btn sv2-btn-sm sv2-btn-outline btn-excel" data-report="${id}">
+            <i class="fas fa-file-excel"></i> Excel
+          </button>
+        </div>
       </div>
       <div class="sv2-report-card-body">${bodyHtml}</div>
     </div>`;
@@ -357,8 +365,45 @@ function renderReports() {
     .map(([k, v]) => [formatPriorityLabel(k), Math.round(v.total / v.count)])
     .sort((a, b) => b[1] - a[1]);
 
+  const rangeEfforts = filteredEfforts();
+  const companyEffortMap = {};
+  for (const e of rangeEfforts) {
+    const name = e.ticket?.company_name || "Bilinmiyor";
+    companyEffortMap[name] = (companyEffortMap[name] || 0) + (parseFloat(e.hours) || 0);
+  }
+  const companyEffortData = Object.entries(companyEffortMap)
+    .map(([name, hours]) => [name, Math.round(hours * 100) / 100])
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15);
+
+  const consultantEffortRows = rangeEfforts.map((e) => ({
+    id: e.effort_id || e.id,
+    work_date: e.work_date,
+    ticket_number: e.ticket?.ticket_number || e.ticket_id,
+    title: e.ticket?.title || "",
+    status: e.ticket?.status || "",
+    consultant: e.personnel_name || "",
+    hours: e.hours || 0,
+    note: e.note || "",
+  }));
+
+  const consultantEffortTable = renderDataTable({
+    columns: [
+      { key: "work_date", label: "TARİH" },
+      { key: "ticket_number", label: "TICKET NO" },
+      { key: "title", label: "KONU" },
+      { key: "consultant", label: "DANIŞMAN" },
+      { key: "hours", label: "SAAT" },
+      { key: "note", label: "NOT" },
+    ],
+    rows: consultantEffortRows.slice(0, 50),
+    emptyMessage: "Seçili dönemde efor kaydı yok.",
+  });
+
   el.innerHTML =
     noDataBanner +
+    reportCard("company-effort", "Aylık Firma Eforu", renderBarChart(companyEffortData)) +
+    reportCard("consultant-effort", "Danışman Efor Detayı", consultantEffortTable) +
     reportCard("modules", "Modül Bazlı Dağılım", renderPieChart(moduleData)) +
     reportCard("types", "Tip Bazlı Dağılım", renderPieChart(typeData)) +
     reportCard("consultants", "Danışman Performansı", consultantTable) +
@@ -377,7 +422,7 @@ function renderReports() {
     reportCard("priority", "Çözüm Süreleri (Öncelik)", renderBarChart(priorityData));
 
   el.querySelectorAll(".btn-csv").forEach((btn) => {
-    btn.addEventListener("click", () => exportReport(btn.dataset.report, {
+    btn.addEventListener("click", () => exportReport(btn.dataset.report, "csv", {
       moduleData,
       typeData,
       consultantRows,
@@ -385,44 +430,115 @@ function renderReports() {
       arzStats,
       trendData,
       priorityData,
+      companyEffortData,
+      consultantEffortRows,
+    }));
+  });
+
+  el.querySelectorAll(".btn-excel").forEach((btn) => {
+    btn.addEventListener("click", () => exportReport(btn.dataset.report, "excel", {
+      moduleData,
+      typeData,
+      consultantRows,
+      companyData,
+      arzStats,
+      trendData,
+      priorityData,
+      companyEffortData,
+      consultantEffortRows,
     }));
   });
 }
 
-function exportReport(id, data) {
+async function exportReport(id, format, data) {
   const ts = new Date().toISOString().slice(0, 10);
-  switch (id) {
-    case "modules":
-      downloadCsv(`modul-dagilim-${ts}.csv`, ["Modül", "Adet"], data.moduleData);
-      break;
-    case "types":
-      downloadCsv(`tip-dagilim-${ts}.csv`, ["Tip", "Adet"], data.typeData);
-      break;
-    case "consultants":
-      downloadCsv(
-        `danisman-performans-${ts}.csv`,
-        ["Danışman", "Atanan", "Çözülen", "Ort.Süre(sa)"],
-        data.consultantRows.map((r) => [
-          r.name,
-          r.assigned,
-          r.resolved,
-          r.resolvedCount ? (r.totalHours / r.resolvedCount).toFixed(1) : "—",
-        ])
-      );
-      break;
-    case "companies":
-      downloadCsv(`aktif-firmalar-${ts}.csv`, ["Firma", "Ticket"], data.companyData);
-      break;
-    case "arz":
-      downloadCsv(`arizi-istatistik-${ts}.csv`, ["Metrik", "Değer"], data.arzStats);
-      break;
-    case "trend":
-      downloadCsv(`aylik-trend-${ts}.csv`, ["Ay", "Ticket"], data.trendData);
-      break;
-    case "priority":
-      downloadCsv(`cozum-sureleri-${ts}.csv`, ["Öncelik", "Ort.Saat"], data.priorityData);
-      break;
-    default:
-      break;
+  const isExcel = format === "excel";
+
+  const exportMap = {
+    modules: {
+      headers: ["Modül", "Adet"],
+      rows: data.moduleData,
+      name: "Modul",
+      file: `modul-dagilim-${ts}`,
+    },
+    types: {
+      headers: ["Tip", "Adet"],
+      rows: data.typeData,
+      name: "Tip",
+      file: `tip-dagilim-${ts}`,
+    },
+    consultants: {
+      headers: ["Danışman", "Atanan", "Çözülen", "Ort.Süre(sa)"],
+      rows: data.consultantRows.map((r) => [
+        r.name,
+        r.assigned,
+        r.resolved,
+        r.resolvedCount ? (r.totalHours / r.resolvedCount).toFixed(1) : "—",
+      ]),
+      name: "Danisman",
+      file: `danisman-performans-${ts}`,
+    },
+    companies: {
+      headers: ["Firma", "Ticket"],
+      rows: data.companyData,
+      name: "Firmalar",
+      file: `aktif-firmalar-${ts}`,
+    },
+    "company-effort": {
+      headers: ["Firma", "Toplam Saat"],
+      rows: data.companyEffortData,
+      name: "FirmaEfor",
+      file: `firma-efor-${ts}`,
+    },
+    "consultant-effort": {
+      headers: ["Tarih", "Ticket No", "Konu", "Durum", "Danışman", "Saat", "Not"],
+      rows: data.consultantEffortRows.map((r) => [
+        r.work_date,
+        r.ticket_number,
+        r.title,
+        r.status,
+        r.consultant,
+        r.hours,
+        r.note,
+      ]),
+      name: "DanismanEfor",
+      file: `danisman-efor-${ts}`,
+    },
+    arz: {
+      headers: ["Metrik", "Değer"],
+      rows: data.arzStats,
+      name: "Arz",
+      file: `arizi-istatistik-${ts}`,
+    },
+    trend: {
+      headers: ["Ay", "Ticket"],
+      rows: data.trendData,
+      name: "Trend",
+      file: `aylik-trend-${ts}`,
+    },
+    priority: {
+      headers: ["Öncelik", "Ort.Saat"],
+      rows: data.priorityData,
+      name: "Oncelik",
+      file: `cozum-sureleri-${ts}`,
+    },
+  };
+
+  const item = exportMap[id];
+  if (!item) return;
+
+  if (isExcel) {
+    showLoading(true);
+    try {
+      await downloadExcel(`${item.file}.xlsx`, [
+        { name: item.name, headers: item.headers, rows: item.rows },
+      ]);
+    } catch (err) {
+      handleError(err, "Excel export");
+    } finally {
+      showLoading(false);
+    }
+  } else {
+    downloadCsvLocal(`${item.file}.csv`, item.headers, item.rows);
   }
 }

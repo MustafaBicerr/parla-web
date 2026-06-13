@@ -30,6 +30,7 @@ import {
 } from "../ticket-utils.js";
 import { validateUserForm } from "../validators.js";
 import ParlaEmailService from "../email-service.js";
+import { initPhoneInput, normalizePhone, formatPhoneDisplay } from "../phone-utils.js";
 
 let session = null;
 let allUsers = [];
@@ -106,6 +107,7 @@ function buildPageContent() {
     id: u.uid || u.id,
     name: fullName(u),
     email: u.email || "—",
+    phone: u.phone || "",
     company: u.company_name || "—",
     company_id: u.company_id,
     role: u.role,
@@ -166,6 +168,11 @@ function renderUsersTable(rows) {
         render: (_, row) => linkUser(row.id, row.name),
       },
       { key: "email", label: "E-POSTA" },
+      {
+        key: "phone",
+        label: "TELEFON",
+        render: (v) => escapeHtml(formatPhoneDisplay(v)),
+      },
       {
         key: "company",
         label: "FİRMA",
@@ -298,6 +305,8 @@ function openNewUserModal() {
   });
   openModal("modal-new-user");
 
+  initPhoneInput(document.getElementById("nu-phone"));
+
   const pwdInput = document.getElementById("nu-temp-password");
   pwdInput.value = generateTempPassword();
 
@@ -371,7 +380,7 @@ async function submitNewUser() {
     first_name: form.first_name.value.trim(),
     last_name: form.last_name.value.trim(),
     email: form.email.value.trim(),
-    phone: form.phone.value.trim(),
+    phone: normalizePhone(form.phone) || form.phone.value.trim(),
     role: form.role.value,
     company_id: companyId,
     temp_password: form.temp_password.value,
@@ -533,6 +542,7 @@ function bindEvents() {
         id: u.uid || u.id,
         name: fullName(u),
         email: u.email || "—",
+        phone: u.phone || "",
         company: u.company_name || "—",
         company_id: u.company_id,
         role: u.role,

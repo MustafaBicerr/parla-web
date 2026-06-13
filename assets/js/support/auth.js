@@ -58,9 +58,9 @@ var ParlaSupportAuth = (function () {
   function redirectByRole() {
     var p = paths();
     if (isAdmin()) {
-      window.location.href = p.admin || "/support/admin.html";
+      window.location.href = p.admin || "/support-v2/admin/dashboard.html";
     } else {
-      window.location.href = p.dashboard || "/support/dashboard.html";
+      window.location.href = p.dashboard || "/support-v2/customer/dashboard.html";
     }
   }
 
@@ -71,14 +71,14 @@ var ParlaSupportAuth = (function () {
   function requireAuth(requiredRole) {
     var session = getSession();
     if (!session || !session.token) {
-      window.location.href = paths().login || "/support/login.html";
+      window.location.href = paths().login || "/support-v2/login.html";
       return Promise.reject(new Error("no_session"));
     }
 
     return ParlaSupportApi.verifySession(session.token).then(function (res) {
       if (!res.success || !res.data || !res.data.user) {
         clearSession();
-        window.location.href = paths().login || "/support/login.html";
+        window.location.href = paths().login || "/support-v2/login.html";
         return Promise.reject(new Error("invalid_session"));
       }
 
@@ -89,12 +89,12 @@ var ParlaSupportAuth = (function () {
       });
 
       if (requiredRole === "admin" && String(res.data.user.role).toLowerCase() !== "admin") {
-        window.location.href = paths().dashboard || "/support/dashboard.html";
+        window.location.href = paths().dashboard || "/support-v2/customer/dashboard.html";
         return Promise.reject(new Error("not_admin"));
       }
 
       if (requiredRole === "customer" && String(res.data.user.role).toLowerCase() === "admin") {
-        window.location.href = paths().admin || "/support/admin.html";
+        window.location.href = paths().admin || "/support-v2/admin/dashboard.html";
         return Promise.reject(new Error("not_customer"));
       }
 
@@ -106,7 +106,7 @@ var ParlaSupportAuth = (function () {
     var token = getToken();
     var done = function () {
       clearSession();
-      window.location.href = paths().login || "/support/login.html";
+      window.location.href = paths().login || "/support-v2/login.html";
     };
     if (token) {
       ParlaSupportApi.logout(token).finally(done);

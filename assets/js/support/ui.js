@@ -106,8 +106,8 @@ var ParlaSupportUI = (function () {
     var roleLabel =
       user && String(user.role).toLowerCase() === "admin" ? "Admin" : "Müşteri";
     var panelHref = ParlaSupportAuth.isAdmin()
-      ? "/support/admin.html"
-      : "/support/dashboard.html";
+      ? "/support-v2/admin/dashboard.html"
+      : "/support-v2/customer/dashboard.html";
     return (
       '<header class="sp-portal-header">' +
       '<a href="/index.html" class="sp-logo-link">' +

@@ -232,9 +232,15 @@ function openAssignModal(ticket) {
 
     showLoading(true);
     try {
-      const updated = await ParlaDb.updateTicket(
+      const updated = await ParlaDb.assignConsultants(
         ticket.ticket_id || ticket.id,
-        { assigned_to_id: pid, assigned_to_name: name },
+        [
+          {
+            personnel_id: pid,
+            personnel_name: name,
+            is_primary: true,
+          },
+        ],
         session
       );
       await ParlaDb.logActivity(

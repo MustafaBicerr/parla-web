@@ -21,6 +21,7 @@ const ADMIN_NAV = [
   { id: "tickets", label: "Ticketlar", href: PATHS.adminTickets, icon: "fa-ticket-alt" },
   { id: "activities", label: "Aktiviteler", href: PATHS.adminActivities, icon: "fa-history" },
   { id: "users", label: "Muhataplar", href: PATHS.adminUsers, icon: "fa-users" },
+  { id: "companies", label: "Müşteriler", href: PATHS.adminCompanies, icon: "fa-building" },
   { id: "contracts", label: "Sözleşmeler", href: PATHS.adminContracts, icon: "fa-file-contract" },
   { id: "projects", label: "Projeler", href: PATHS.adminProjects, icon: "fa-folder-open" },
   { id: "divider-mgmt", divider: true, label: "YÖNETİM" },
@@ -404,9 +405,11 @@ function renderModal(id, options) {
     btn.addEventListener("click", () => closeModal(id));
   });
 
-  overlay?.addEventListener("click", (e) => {
-    if (e.target === overlay) closeModal(id);
-  });
+  if (options.closeOnBackdrop) {
+    overlay?.addEventListener("click", (e) => {
+      if (e.target === overlay) closeModal(id);
+    });
+  }
 }
 
 function openModal(id) {
@@ -444,6 +447,7 @@ function renderStatusBadge(status) {
   const key = String(status || "open").toLowerCase();
   const clsMap = {
     open: "open",
+    assigned: "assigned",
     in_progress: "in-progress",
     waiting_customer: "waiting",
     resolved: "resolved",

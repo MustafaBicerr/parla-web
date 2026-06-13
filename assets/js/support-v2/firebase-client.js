@@ -350,6 +350,8 @@ const ParlaDb = {
       status: data.status || "open",
       assigned_to_id: data.assigned_to_id || "",
       assigned_to_name: data.assigned_to_name || "",
+      assigned_at: data.assigned_at || null,
+      started_at: data.started_at || null,
       attachment_url: data.attachment_url || "",
       total_work_hours: data.total_work_hours || 0,
       project_id: data.project_id || "",
@@ -448,17 +450,190 @@ const ParlaDb = {
     };
     await fb.db.set(ref, payload);
 
-    const ticketUpdates = { updated_at: ts };
-    if (data.work_hours && data.work_hours > 0) {
-      const ticket = await this.getTicket(ticketId);
-      if (ticket) {
-        ticketUpdates.total_work_hours =
-          (parseFloat(ticket.total_work_hours) || 0) + parseFloat(data.work_hours);
+    if (data.work_hours && parseFloat(data.work_hours) > 0) {
+      let personnelId = data.personnel_id || "";
+      let personnelName = data.personnel_name || data.author_name || "";
+      if (!personnelId && data.author_email) {
+        const person = await this.findPersonnelByEmail(data.author_email);
+        if (person) {
+          personnelId = person.personnel_id || person.id;
+          personnelName =
+            [person.first_name, person.last_name].filter(Boolean).join(" ") || personnelName;
+        }
       }
+      await this.addTicketEffort(
+        ticketId,
+        {
+          personnel_id: personnelId,
+          personnel_name: personnelName,
+          hours: parseFloat(data.work_hours),
+          work_date: ts.slice(0, 10),
+          note: data.message ? `Mesaj: ${String(data.message).slice(0, 120)}` : "",
+        },
+        { uid: data.user_id, name: data.author_name, email: data.author_email }
+      );
+    } else {
+      await fb.db.update(v2Ref(`tickets/${ticketId}`), { updated_at: ts });
     }
-    await fb.db.update(v2Ref(`tickets/${ticketId}`), ticketUpdates);
 
     return { id, ...payload };
+  },
+
+  async findPersonnelByEmail(email) {
+    const q = String(email || "").trim().toLowerCase();
+    if (!q) return null;
+    const all = await this.getAllPersonnel();
+    return (
+      all.find((p) => String(p.email || "").trim().toLowerCase() === q) || null
+    );
+  },
+
+  async getTicketAssignments(ticketId) {
+    const fb = getFirebase();
+    const snap = await fb.db.get(v2Ref(`ticket_assignments/${ticketId}`));
+    let items = snapshotToArray(snap).map((a) => ({
+      ...a,
+      personnel_id: a.personnel_id || a.id,
+    }));
+
+    if (!items.length) {
+      const ticket = await this.getTicket(ticketId);
+      if (ticket?.assigned_to_id) {
+        items = [
+          {
+            id: ticket.assigned_to_id,
+            personnel_id: ticket.assigned_to_id,
+            personnel_name: ticket.assigned_to_name || "",
+            is_primary: true,
+            assigned_at: ticket.assigned_at || ticket.updated_at,
+          },
+        ];
+      }
+    }
+
+    return items.sort(
+      (a, b) => Number(b.is_primary) - Number(a.is_primary) || (a.personnel_name || "").localeCompare(b.personnel_name || "", "tr")
+    );
+  },
+
+  async setTicketAssignments(ticketId, assignments, actor) {
+    const fb = getFirebase();
+    const ts = nowIso();
+    const af = actorFields(actor);
+    const assignRef = v2Ref(`ticket_assignments/${ticketId}`);
+
+    const existingSnap = await fb.db.get(assignRef);
+    if (existingSnap.exists()) {
+      await fb.db.remove(assignRef);
+    }
+
+    for (const a of assignments || []) {
+      const pid = a.personnel_id || a.id;
+      if (!pid) continue;
+      await fb.db.set(v2Ref(`ticket_assignments/${ticketId}/${pid}`), {
+        personnel_id: pid,
+        personnel_name: a.personnel_name || a.name || "",
+        is_primary: !!a.is_primary,
+        assigned_at: a.assigned_at || ts,
+        assigned_by_uid: af.created_by,
+        assigned_by_name: af.created_by_name,
+      });
+    }
+  },
+
+  async assignConsultants(ticketId, assignments, actor) {
+    if (!assignments?.length) {
+      throw new Error("En az bir danışman seçilmelidir.");
+    }
+
+    const primary =
+      assignments.find((a) => a.is_primary) || assignments[0];
+    const ts = nowIso();
+    const existing = await this.getTicket(ticketId);
+
+    await this.setTicketAssignments(ticketId, assignments, actor);
+
+    const updates = {
+      assigned_to_id: primary.personnel_id || primary.id || "",
+      assigned_to_name: primary.personnel_name || primary.name || "",
+      assigned_at: ts,
+    };
+
+    const closed = ["resolved", "closed"].includes(String(existing?.status || "").toLowerCase());
+    if (!closed && ["open", "assigned", ""].includes(String(existing?.status || "").toLowerCase())) {
+      updates.status = "assigned";
+    }
+
+    return this.updateTicket(ticketId, updates, actor);
+  },
+
+  async getTicketEfforts(ticketId) {
+    const fb = getFirebase();
+    const snap = await fb.db.get(v2Ref(`ticket_efforts/${ticketId}`));
+    return snapshotToArray(snap)
+      .map((e) => ({ ...e, effort_id: e.effort_id || e.id }))
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  },
+
+  async recalculateTicketEffort(ticketId) {
+    const efforts = await this.getTicketEfforts(ticketId);
+    const total = efforts.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
+    const fb = getFirebase();
+    await fb.db.update(v2Ref(`tickets/${ticketId}`), {
+      total_work_hours: Math.round(total * 100) / 100,
+    });
+    return total;
+  },
+
+  async addTicketEffort(ticketId, data, actor) {
+    const fb = getFirebase();
+    const ts = nowIso();
+    const af = actorFields(actor);
+    const ref = fb.db.push(v2Ref(`ticket_efforts/${ticketId}`));
+    const id = ref.key;
+    const hours = parseFloat(data.hours) || 0;
+    if (hours <= 0) throw new Error("Efor saati 0'dan büyük olmalıdır.");
+
+    const payload = {
+      effort_id: id,
+      personnel_id: data.personnel_id || "",
+      personnel_name: data.personnel_name || af.created_by_name || "",
+      hours,
+      work_date: data.work_date || ts.slice(0, 10),
+      note: data.note || "",
+      created_at: ts,
+      created_by_uid: af.created_by,
+      created_by_name: af.created_by_name,
+    };
+    await fb.db.set(ref, payload);
+    await this.recalculateTicketEffort(ticketId);
+    await fb.db.update(v2Ref(`tickets/${ticketId}`), { updated_at: ts });
+    return { id, ...payload };
+  },
+
+  async deleteTicketEffort(ticketId, effortId) {
+    const fb = getFirebase();
+    await fb.db.remove(v2Ref(`ticket_efforts/${ticketId}/${effortId}`));
+    await this.recalculateTicketEffort(ticketId);
+  },
+
+  async getAllTicketEfforts() {
+    const fb = getFirebase();
+    const snap = await fb.db.get(v2Ref("ticket_efforts"));
+    if (!snap.exists()) return [];
+    const val = snap.val();
+    const items = [];
+    for (const ticketId of Object.keys(val || {})) {
+      for (const effortId of Object.keys(val[ticketId] || {})) {
+        items.push({
+          id: effortId,
+          effort_id: effortId,
+          ticket_id: ticketId,
+          ...val[ticketId][effortId],
+        });
+      }
+    }
+    return items;
   },
 
   async addTicketHistory(ticketId, entry) {

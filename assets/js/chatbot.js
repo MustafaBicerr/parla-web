@@ -93,7 +93,7 @@ function initChatWidget() {
             <a href="tel:${PHONE_NUMBER}" class="fab-item fab-phone" title="Bizi Arayın">
                 <i class="fas fa-phone"></i>
             </a>
-            <a href="/support/login.html" class="fab-item fab-support" title="SAP Destek Portalı">
+            <a href="/support-v2/login.html" class="fab-item fab-support" title="SAP Destek Portalı">
                 <i class="fas fa-headset"></i>
             </a>
         </div>

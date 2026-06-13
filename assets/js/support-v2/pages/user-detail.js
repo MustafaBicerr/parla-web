@@ -25,6 +25,7 @@ import {
 } from "../ui-shell.js";
 import { ROLE_LABELS, formatRoleLabel, STATUSES } from "../ticket-utils.js";
 import { validateUserForm } from "../validators.js";
+import { initPhoneInput, normalizePhone, formatPhoneDisplay, setPhoneValue } from "../phone-utils.js";
 
 let session = null;
 let user = null;
@@ -104,7 +105,7 @@ function buildContent() {
             <h2 style="margin:0 0 0.5rem;color:var(--sv2-navy);">${escapeHtml(name)}</h2>
             <p style="margin:0 0 0.75rem;color:var(--sv2-gray-500);">${escapeHtml(user.email || "")}</p>
             <div class="sv2-meta-grid">
-              <div class="sv2-meta-item"><label>Telefon</label><span>${escapeHtml(user.phone || "—")}</span></div>
+              <div class="sv2-meta-item"><label>Telefon</label><span>${escapeHtml(formatPhoneDisplay(user.phone))}</span></div>
               <div class="sv2-meta-item"><label>Firma</label><span>${user.company_id ? linkCompany(user.company_id, user.company_name) : escapeHtml(user.company_name || "—")}</span></div>
               <div class="sv2-meta-item"><label>Rol</label><div>${renderRoleBadge(user.role)}</div></div>
               <div class="sv2-meta-item"><label>Durum</label><span>${active ? '<span class="sv2-badge sv2-badge-resolved">Aktif</span>' : '<span class="sv2-badge sv2-badge-closed">Pasif</span>'}</span></div>
@@ -197,6 +198,8 @@ function openEditModal() {
       <button type="button" class="sv2-btn sv2-btn-primary" id="edit-user-save">Kaydet</button>`,
   });
   openModal("modal-edit-user");
+  const phoneInput = document.querySelector('#edit-user-form [name="phone"]');
+  initPhoneInput(phoneInput).then(() => setPhoneValue(phoneInput, user.phone || ""));
 
   document.getElementById("edit-user-save")?.addEventListener("click", async () => {
     const form = document.getElementById("edit-user-form");
@@ -204,7 +207,7 @@ function openEditModal() {
       first_name: form.first_name.value.trim(),
       last_name: form.last_name.value.trim(),
       email: user.email,
-      phone: form.phone.value.trim(),
+      phone: normalizePhone(form.phone) || form.phone.value.trim(),
       role: form.role.value,
       company_id: user.company_id || "",
     };

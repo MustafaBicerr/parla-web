@@ -72,7 +72,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         ParlaSupportUI.toast("Kayıt tamamlandı. Giriş yapabilirsiniz.", "success");
         setTimeout(function () {
-          window.location.href = "/support/login.html";
+          window.location.href = "/support-v2/login.html";
         }, 1200);
       })
       .catch(function (err) {

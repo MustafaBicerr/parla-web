@@ -11,8 +11,11 @@ export function email(value) {
 }
 
 export function phone(value) {
-  const v = String(value || "").replace(/\s/g, "");
-  return v.length >= 10 && /^[\d+()-]+$/.test(v);
+  const v = String(value || "").replace(/[\s()-]/g, "");
+  if (v.startsWith("+")) {
+    return v.length >= 11 && /^\+[\d]+$/.test(v);
+  }
+  return v.length >= 10 && /^[\d]+$/.test(v);
 }
 
 export function password(value) {

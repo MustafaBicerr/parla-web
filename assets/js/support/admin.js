@@ -73,7 +73,7 @@ document.addEventListener("DOMContentLoaded", function () {
       .map(function (t) {
         return (
           "<tr>" +
-          '<td><a href="/support/ticket.html?id=' +
+          '<td><a href="/support-v2/admin/ticket-detail.html?id=' +
           encodeURIComponent(t.ticket_id) +
           '">' +
           ParlaSupportUI.escapeHtml(t.ticket_number) +

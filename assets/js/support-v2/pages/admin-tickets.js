@@ -39,6 +39,7 @@ import {
 } from "../ticket-utils.js";
 import { validateTicketForm } from "../validators.js";
 import ParlaEmailService from "../email-service.js";
+import { downloadExcel } from "../export-utils.js";
 
 const ADMIN_ROLES = ["super_admin", "service_admin", "project_manager", "consultant"];
 const PAGE_SIZE = 25;
@@ -48,6 +49,7 @@ let allTickets = [];
 let allCompanies = [];
 let allPersonnel = [];
 let allUsers = [];
+let selectedCompany = null;
 
 const state = {
   search: "",
@@ -71,6 +73,15 @@ function actorPayload() {
     name: [session.first_name, session.last_name].filter(Boolean).join(" ") || session.email,
     email: session.email,
   };
+}
+
+function suggestNextCode(type) {
+  const prefix = String(type || "CUS").toUpperCase();
+  const nums = allCompanies
+    .filter((c) => String(c.customer_code || "").startsWith(prefix))
+    .map((c) => parseInt(String(c.customer_code).slice(3), 10) || 0);
+  const next = (nums.length ? Math.max(...nums) : 0) + 1;
+  return `${prefix}${String(next).padStart(4, "0")}`;
 }
 
 function isOpenStatus(status) {
@@ -353,6 +364,7 @@ function buildPageContent(paged) {
       <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
         <button type="button" class="sv2-btn sv2-btn-primary" id="sv2-new-ticket"><i class="fas fa-plus"></i> Yeni Ticket</button>
         <button type="button" class="sv2-btn sv2-btn-secondary" id="sv2-export-csv"><i class="fas fa-file-csv"></i> CSV Dışa Aktar</button>
+        <button type="button" class="sv2-btn sv2-btn-secondary" id="sv2-export-excel"><i class="fas fa-file-excel"></i> Excel Dışa Aktar</button>
       </div>
     </div>
     <div class="sv2-mb-1">
@@ -556,6 +568,7 @@ function bindEvents() {
 
   document.getElementById("sv2-new-ticket")?.addEventListener("click", openCreateModal);
   document.getElementById("sv2-export-csv")?.addEventListener("click", exportCsv);
+  document.getElementById("sv2-export-excel")?.addEventListener("click", exportExcel);
   bindTableActions();
 }
 
@@ -697,7 +710,58 @@ function exportCsv() {
   toast(`${filtered.length} kayıt CSV olarak indirildi.`, "success");
 }
 
+async function exportExcel() {
+  const filtered = filterTickets(allTickets);
+  if (!filtered.length) {
+    toast("Dışa aktarılacak kayıt yok.", "error");
+    return;
+  }
+
+  showLoading(true);
+  try {
+    await downloadExcel(`parla-tickets-${new Date().toISOString().slice(0, 10)}.xlsx`, [
+      {
+        name: "Ticketlar",
+        headers: [
+          "NO",
+          "KONU",
+          "MÜŞTERİ NO",
+          "MÜŞTERİ UNVAN",
+          "DANIŞMAN",
+          "EFOR",
+          "ONAY",
+          "TARİH",
+          "DURUM",
+          "ÖNCELİK",
+          "TİP",
+          "SAP MODÜL",
+        ],
+        rows: filtered.map((t) => [
+          t.ticket_number,
+          t.title,
+          t.customer_code,
+          t.company_name,
+          t.assigned_to_name,
+          t.total_work_hours,
+          t.is_approved ? "Evet" : "Hayır",
+          formatDate(t.created_at),
+          formatStatusLabel(t.status),
+          formatPriorityLabel(t.priority),
+          t.ticket_type,
+          t.sap_module,
+        ]),
+      },
+    ]);
+    toast(`${filtered.length} kayıt Excel olarak indirildi.`, "success");
+  } catch (err) {
+    handleError(err, "Excel export");
+  } finally {
+    showLoading(false);
+  }
+}
+
 function openCreateModal() {
+  selectedCompany = null;
   const typeOpts = Object.values(TICKET_TYPES)
     .map(
       (t) =>
@@ -746,6 +810,21 @@ function openCreateModal() {
           <select id="sv2-create-user"><option value="">— Seçiniz —</option>${userOpts}</select>
         </div>
       </div>
+      <div id="sv2-create-new-company-fields" hidden>
+        <div class="sv2-form-row">
+          <div class="sv2-form-group">
+            <label for="sv2-create-company-type">Müşteri Tipi</label>
+            <select id="sv2-create-company-type">
+              <option value="CUS">CUS — Destek Anlaşmalı</option>
+              <option value="ARC">ARC — Arızi Müşteri</option>
+            </select>
+          </div>
+          <div class="sv2-form-group">
+            <label for="sv2-create-company-code">Müşteri Kodu</label>
+            <input type="text" id="sv2-create-company-code" placeholder="CUS0001">
+          </div>
+        </div>
+      </div>
       <div class="sv2-form-group">
         <label for="sv2-create-sap">SAP Modülü *</label>
         <select id="sv2-create-sap">${sapOpts}</select>
@@ -774,24 +853,49 @@ function openCreateModal() {
       name: c.name,
       customer_code: c.customer_code,
     })),
-    (selected) => {
-      if (selected?.id) {
-        document.getElementById("sv2-create-company-id").value = selected.id;
-        document.getElementById("sv2-create-customer-code").value =
-          selected.customer_code || "";
-        document.getElementById("sv2-create-company").value = selected.name || selected.label;
+    (item) => {
+      const newFields = document.getElementById("sv2-create-new-company-fields");
+      if (item?.create) {
+        selectedCompany = { create: true, name: item.term };
+        document.getElementById("sv2-create-company-id").value = "";
+        document.getElementById("sv2-create-customer-code").value = "";
+        newFields.hidden = false;
+        const type = document.getElementById("sv2-create-company-type").value;
+        document.getElementById("sv2-create-company-code").value = suggestNextCode(type);
+        return;
+      }
+      selectedCompany = item;
+      document.getElementById("sv2-create-company-id").value = item?.id || "";
+      document.getElementById("sv2-create-customer-code").value = item?.customer_code || "";
+      document.getElementById("sv2-create-company").value = item?.name || item?.label || "";
+      newFields.hidden = true;
 
-        const userSelect = document.getElementById("sv2-create-user");
-        if (userSelect) {
-          [...userSelect.options].forEach((opt) => {
-            if (!opt.value) return;
-            opt.hidden = opt.dataset.company && opt.dataset.company !== selected.id;
-          });
-        }
+      const userSelect = document.getElementById("sv2-create-user");
+      if (userSelect) {
+        [...userSelect.options].forEach((opt) => {
+          if (!opt.value) return;
+          opt.hidden = opt.dataset.company && opt.dataset.company !== item.id;
+        });
       }
     },
-    { minChars: 1, labelKey: "label", valueKey: "id" }
+    {
+      minChars: 1,
+      labelKey: "label",
+      valueKey: "id",
+      nameKey: "name",
+      createLabel: '"{term}" — Yeni firma kaydet',
+      onTyping: () => {
+        selectedCompany = null;
+        document.getElementById("sv2-create-company-id").value = "";
+        document.getElementById("sv2-create-customer-code").value = "";
+        document.getElementById("sv2-create-new-company-fields").hidden = true;
+      },
+    }
   );
+
+  document.getElementById("sv2-create-company-type")?.addEventListener("change", (e) => {
+    document.getElementById("sv2-create-company-code").value = suggestNextCode(e.target.value);
+  });
 
   document.getElementById("sv2-create-user")?.addEventListener("change", (e) => {
     const opt = e.target.selectedOptions[0];
@@ -806,9 +910,9 @@ function openCreateModal() {
 }
 
 async function saveNewTicket() {
-  const companyId = document.getElementById("sv2-create-company-id")?.value;
-  const companyName = document.getElementById("sv2-create-company")?.value;
-  const customerCode = document.getElementById("sv2-create-customer-code")?.value;
+  let companyId = document.getElementById("sv2-create-company-id")?.value;
+  let companyName = document.getElementById("sv2-create-company")?.value?.trim();
+  let customerCode = document.getElementById("sv2-create-customer-code")?.value;
   const userId = document.getElementById("sv2-create-user")?.value;
   const user = allUsers.find((u) => u.uid === userId);
 
@@ -823,9 +927,9 @@ async function saveNewTicket() {
   const validation = validateTicketForm(formData);
   const errEl = document.getElementById("sv2-create-errors");
 
-  if (!companyId || !customerCode) {
+  if (!companyId && !selectedCompany?.create) {
     validation.valid = false;
-    validation.errors.company_id = "Firma seçimi zorunludur.";
+    validation.errors.company_id = "Firma seçimi zorunludur. Listeden seçin veya yeni firma kaydedin.";
   }
 
   if (!validation.valid) {
@@ -840,6 +944,31 @@ async function saveNewTicket() {
 
   showLoading(true);
   try {
+    if (!companyId && selectedCompany?.create) {
+      const type = document.getElementById("sv2-create-company-type")?.value || "CUS";
+      const code =
+        document.getElementById("sv2-create-company-code")?.value.trim() || suggestNextCode(type);
+      const company = await ParlaDb.createCompany({
+        name: companyName,
+        customer_code: code,
+        customer_type: type,
+        created_by: session.uid,
+        updated_by: session.uid,
+      });
+      companyId = company.id;
+      companyName = company.name;
+      customerCode = company.customer_code;
+      allCompanies.push(company);
+      await ParlaDb.logActivity(
+        "company_created",
+        "company",
+        company.id,
+        company.name,
+        "Ticket oluşturma sırasında yeni firma eklendi",
+        session
+      );
+    }
+
     const ticket = await ParlaDb.createTicket(
       {
         ...formData,

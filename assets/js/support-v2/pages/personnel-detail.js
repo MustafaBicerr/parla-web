@@ -23,6 +23,7 @@ import {
 } from "../ui-shell.js";
 import { validatePersonnelForm } from "../validators.js";
 import { STATUSES, SAP_MODULE_LABELS } from "../ticket-utils.js";
+import { initPhoneInput, normalizePhone, formatPhoneDisplay, setPhoneValue } from "../phone-utils.js";
 
 let session = null;
 let person = null;
@@ -124,7 +125,7 @@ function buildContent() {
             <h2 style="margin:0 0 0.5rem;color:var(--sv2-navy);">${escapeHtml(fullName(person))}</h2>
             <p style="margin:0 0 0.75rem;color:var(--sv2-gray-500);">${escapeHtml(person.email || "")}</p>
             <div class="sv2-meta-grid">
-              <div class="sv2-meta-item"><label>Telefon</label><span>${escapeHtml(person.phone || "—")}</span></div>
+              <div class="sv2-meta-item"><label>Telefon</label><span>${escapeHtml(formatPhoneDisplay(person.phone))}</span></div>
               <div class="sv2-meta-item"><label>Departman</label><span>${escapeHtml(person.department_name || "—")}</span></div>
               <div class="sv2-meta-item"><label>Rol Ünvanı</label><span>${escapeHtml(person.role_title || "—")}</span></div>
               <div class="sv2-meta-item"><label>Durum</label><span>${active ? '<span class="sv2-badge sv2-badge-resolved">Aktif</span>' : '<span class="sv2-badge sv2-badge-closed">Pasif</span>'}</span></div>
@@ -239,6 +240,8 @@ function openEditModal() {
       <button type="button" class="sv2-btn sv2-btn-primary" id="edit-person-save">Kaydet</button>`,
   });
   openModal("modal-edit-person");
+  const phoneInput = document.querySelector('#edit-person-form [name="phone"]');
+  initPhoneInput(phoneInput).then(() => setPhoneValue(phoneInput, person.phone || ""));
 
   document.getElementById("edit-person-save")?.addEventListener("click", async () => {
     const form = document.getElementById("edit-person-form");
@@ -247,7 +250,7 @@ function openEditModal() {
       first_name: form.first_name.value.trim(),
       last_name: form.last_name.value.trim(),
       email: form.email.value.trim(),
-      phone: form.phone.value.trim(),
+      phone: normalizePhone(form.phone) || form.phone.value.trim(),
       department_id: form.department_id.value,
       role_title: form.role_title.value.trim(),
     };

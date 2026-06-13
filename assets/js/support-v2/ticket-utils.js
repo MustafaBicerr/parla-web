@@ -63,6 +63,7 @@ export const PRIORITY_LABELS = {
 
 export const STATUSES = {
   OPEN: "open",
+  ASSIGNED: "assigned",
   IN_PROGRESS: "in_progress",
   WAITING_CUSTOMER: "waiting_customer",
   RESOLVED: "resolved",
@@ -71,11 +72,17 @@ export const STATUSES = {
 
 export const STATUS_LABELS = {
   open: "Açık",
+  assigned: "Atandı",
   in_progress: "İşlemde",
   waiting_customer: "Müşteri Bekleniyor",
   resolved: "Çözüldü",
   closed: "Kapandı",
 };
+
+export function isOpenStatus(status) {
+  const s = String(status || "").toLowerCase();
+  return s !== "closed" && s !== "resolved";
+}
 
 export const SAP_MODULES = [
   "FI",

@@ -74,6 +74,21 @@
           ".write": "!data.exists()"
         }
       },
+      "ticket_assignments": {
+        "$ticketId": {
+          ".read": "auth != null",
+          ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant')"
+        }
+      },
+      "ticket_efforts": {
+        "$ticketId": {
+          ".read": "auth != null",
+          ".indexOn": ["work_date", "personnel_id", "created_at"],
+          "$effortId": {
+            ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant')"
+          }
+        }
+      },
       "counters": {
         ".read": "auth != null",
         ".write": "auth != null"

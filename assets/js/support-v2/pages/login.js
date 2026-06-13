@@ -55,9 +55,6 @@ function renderLoginPage() {
               Şifremi Unuttum
             </button>
           </p>
-          <p style="text-align:center;margin:1.5rem 0 0;padding-top:1.25rem;border-top:1px solid var(--sv2-gray-100)">
-            <a href="/support/login.html" class="sv2-link"><i class="fas fa-arrow-left"></i> Eski sisteme dön</a>
-          </p>
         </div>
       </div>
     </div>

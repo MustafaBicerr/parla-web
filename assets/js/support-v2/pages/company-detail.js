@@ -20,11 +20,14 @@ import {
   linkProject,
   escapeHtml,
   formatDate,
+  formatDateTime,
   renderStatusBadge,
   renderTypeBadge,
 } from "../ui-shell.js";
 import { CUSTOMER_TYPES } from "../ticket-utils.js";
 import { validateCompanyForm } from "../validators.js";
+import { downloadExcel, monthOptions, filterEffortsByMonth } from "../export-utils.js";
+import { initPhoneInput, normalizePhone, formatPhoneDisplay, setPhoneValue } from "../phone-utils.js";
 
 let session = null;
 let company = null;
@@ -32,6 +35,8 @@ let users = [];
 let tickets = [];
 let contracts = [];
 let projects = [];
+let ticketEfforts = [];
+let effortMonth = new Date().toISOString().slice(0, 7);
 let activeTab = "tickets";
 
 function getId() {
@@ -39,7 +44,87 @@ function getId() {
 }
 
 function openStatuses() {
-  return ["open", "in_progress", "waiting_customer"];
+  return ["open", "assigned", "in_progress", "waiting_customer"];
+}
+
+function effortsForCompanyTickets() {
+  const ticketMap = Object.fromEntries(
+    tickets.map((t) => [t.id || t.ticket_id, t])
+  );
+  return ticketEfforts
+    .filter((e) => ticketMap[e.ticket_id])
+    .map((e) => ({
+      ...e,
+      ticket: ticketMap[e.ticket_id],
+    }));
+}
+
+function renderEffortTab() {
+  const monthEfforts = filterEffortsByMonth(effortsForCompanyTickets(), effortMonth);
+  const totalHours = monthEfforts.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
+  const ticketIds = new Set(monthEfforts.map((e) => e.ticket_id));
+  const monthOpts = monthOptions(12)
+    .map(
+      (o) =>
+        `<option value="${o.value}"${o.value === effortMonth ? " selected" : ""}>${o.label}</option>`
+    )
+    .join("");
+
+  const rows = tickets
+    .map((t) => {
+      const id = t.id || t.ticket_id;
+      const ticketMonthEfforts = monthEfforts.filter((e) => e.ticket_id === id);
+      const monthHours = ticketMonthEfforts.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
+      const consultants = [
+        ...new Set(ticketMonthEfforts.map((e) => e.personnel_name).filter(Boolean)),
+      ].join(", ");
+      return {
+        id,
+        ticket_number: t.ticket_number,
+        title: t.title,
+        created_at: t.created_at,
+        status: t.status,
+        total_hours: parseFloat(t.total_work_hours) || 0,
+        month_hours: monthHours,
+        consultants: consultants || t.assigned_to_name || "—",
+      };
+    })
+    .filter((r) => r.month_hours > 0 || filterEffortsByMonth([], effortMonth).length === 0);
+
+  const displayRows =
+    monthEfforts.length > 0 ? rows.filter((r) => r.month_hours > 0) : rows;
+
+  return `
+    <div class="sv2-filters sv2-mb-1">
+      <div class="sv2-form-group">
+        <label for="effort-month">Ay</label>
+        <select id="effort-month">${monthOpts}</select>
+      </div>
+      <button type="button" class="sv2-btn sv2-btn-outline" id="btn-export-effort-excel">
+        <i class="fas fa-file-excel"></i> Excel İndir
+      </button>
+    </div>
+    ${renderStatsGrid([
+      { label: "Seçili Ay Toplam Efor", value: `${Math.round(totalHours * 100) / 100} sa`, variant: "open" },
+      { label: "Efor Girilen Ticket", value: ticketIds.size, variant: "success" },
+      {
+        label: "Ortalama / Ticket",
+        value: ticketIds.size ? `${(totalHours / ticketIds.size).toFixed(1)} sa` : "0 sa",
+      },
+    ])}
+    ${renderDataTable({
+      emptyMessage: "Seçili ayda efor kaydı bulunamadı.",
+      columns: [
+        { key: "ticket_number", label: "NO", render: (v, r) => linkTicket(r.id, v) },
+        { key: "title", label: "KONU" },
+        { key: "created_at", label: "TALEP TARİHİ", render: (v) => escapeHtml(formatDate(v)) },
+        { key: "status", label: "DURUM", render: (v) => renderStatusBadge(v) },
+        { key: "month_hours", label: "AY EFOR (SAAT)" },
+        { key: "total_hours", label: "TOPLAM EFOR" },
+        { key: "consultants", label: "DANIŞMAN(LAR)" },
+      ],
+      rows: displayRows,
+    })}`;
 }
 
 function buildContent() {
@@ -49,7 +134,7 @@ function buildContent() {
 
   const id = company.id || company.company_id;
   const activeUsers = users.filter((u) => u.is_active !== false).length;
-  const openTickets = tickets.filter((t) => openStatuses().includes(t.status)).length;
+  const openTickets = tickets.filter((t) => openStatuses().includes(String(t.status).toLowerCase())).length;
   const activeContracts = contracts.filter((c) => c.status === "active").length;
   const active = company.is_active !== false;
 
@@ -62,7 +147,7 @@ function buildContent() {
 
   return `
     <nav class="sv2-breadcrumb" aria-label="Breadcrumb">
-      <a href="${PATHS.adminCompanies}" class="sv2-breadcrumb-link">Firmalar</a>
+      <a href="${PATHS.adminCompanies}" class="sv2-breadcrumb-link">Müşteriler</a>
       <span class="sv2-breadcrumb-sep">›</span>
       <span class="sv2-breadcrumb-current">${escapeHtml(company.name)}</span>
     </nav>
@@ -78,7 +163,7 @@ function buildContent() {
             </p>
             <div class="sv2-meta-grid">
               <div class="sv2-meta-item"><label>E-posta</label><span>${escapeHtml(company.primary_contact_email || "—")}</span></div>
-              <div class="sv2-meta-item"><label>Telefon</label><span>${escapeHtml(company.phone || "—")}</span></div>
+              <div class="sv2-meta-item"><label>Telefon</label><span>${escapeHtml(formatPhoneDisplay(company.phone))}</span></div>
               <div class="sv2-meta-item"><label>Adres</label><span>${escapeHtml(company.address || "—")}</span></div>
               <div class="sv2-meta-item"><label>Durum</label><span>${active ? '<span class="sv2-badge sv2-badge-resolved">Aktif</span>' : '<span class="sv2-badge sv2-badge-closed">Pasif</span>'}</span></div>
               <div class="sv2-meta-item"><label>Oluşturma</label><span>${escapeHtml(formatDate(company.created_at))}</span></div>
@@ -102,6 +187,7 @@ function buildContent() {
         <div id="company-tabs">${renderTabs(
           [
             { id: "tickets", label: "Ticketlar" },
+            { id: "effort", label: "Efor" },
             { id: "users", label: "Kullanıcılar" },
             { id: "contracts", label: "Sözleşmeler" },
             { id: "projects", label: "Projeler" },
@@ -119,6 +205,8 @@ function buildContent() {
 
 function renderTabContent() {
   switch (activeTab) {
+    case "effort":
+      return renderEffortTab();
     case "users":
       return renderDataTable({
         emptyMessage: "Bu firmaya kayıtlı kullanıcı yok.",
@@ -195,6 +283,11 @@ function renderTabContent() {
           { key: "title", label: "KONU" },
           { key: "ticket_type", label: "TİP", render: (v) => renderTypeBadge(v) },
           { key: "status", label: "DURUM", render: (v) => renderStatusBadge(v) },
+          {
+            key: "total_work_hours",
+            label: "TOPLAM EFOR",
+            render: (v) => escapeHtml(String(parseFloat(v) || 0)),
+          },
           { key: "created_at", label: "TARİH", render: (v) => escapeHtml(formatDate(v)) },
         ],
         rows: tickets.map((t) => ({ ...t, id: t.id || t.ticket_id })),
@@ -245,6 +338,8 @@ function openEditModal() {
       <button type="button" class="sv2-btn sv2-btn-primary" id="edit-company-save">Kaydet</button>`,
   });
   openModal("modal-edit-company");
+  const phoneInput = document.querySelector('#edit-company-form [name="phone"]');
+  initPhoneInput(phoneInput).then(() => setPhoneValue(phoneInput, company.phone || ""));
 
   document.getElementById("edit-company-save")?.addEventListener("click", async () => {
     const form = document.getElementById("edit-company-form");
@@ -253,7 +348,7 @@ function openEditModal() {
       customer_type: form.customer_type.value,
       customer_code: form.customer_code.value.trim().toUpperCase(),
       primary_contact_email: form.primary_contact_email.value.trim(),
-      phone: form.phone.value.trim(),
+      phone: normalizePhone(form.phone) || form.phone.value.trim(),
       address: form.address.value.trim(),
       has_contract: form.has_contract.checked,
     };
@@ -309,9 +404,62 @@ function bindEvents() {
     });
   });
 
-  const titles = { tickets: "Ticketlar", users: "Kullanıcılar", contracts: "Sözleşmeler", projects: "Projeler" };
+  const titles = {
+    tickets: "Ticketlar",
+    effort: "Efor",
+    users: "Kullanıcılar",
+    contracts: "Sözleşmeler",
+    projects: "Projeler",
+  };
   const tabTitle = document.getElementById("tab-title");
   if (tabTitle) tabTitle.textContent = titles[activeTab] || "Ticketlar";
+
+  document.getElementById("effort-month")?.addEventListener("change", (e) => {
+    effortMonth = e.target.value;
+    document.getElementById("tab-content").innerHTML = renderEffortTab();
+    bindEvents();
+  });
+
+  document.getElementById("btn-export-effort-excel")?.addEventListener("click", async () => {
+    const monthEfforts = filterEffortsByMonth(effortsForCompanyTickets(), effortMonth);
+    const rows = monthEfforts.map((e) => {
+      const t = e.ticket || {};
+      return [
+        formatDate(t.created_at),
+        t.ticket_number || "",
+        t.title || "",
+        t.status || "",
+        e.personnel_name || "",
+        e.hours || 0,
+        e.work_date || "",
+        e.note || "",
+      ];
+    });
+    showLoading(true);
+    try {
+      await downloadExcel(`musteri-efor-${company.customer_code || company.id}-${effortMonth}.xlsx`, [
+        {
+          name: "Efor",
+          headers: [
+            "Talep Tarihi",
+            "Ticket No",
+            "Konu",
+            "Durum",
+            "Danışman",
+            "Efor (saat)",
+            "İşlem Tarihi",
+            "Not",
+          ],
+          rows,
+        },
+      ]);
+      toast("Excel indirildi.", "success");
+    } catch (err) {
+      handleError(err, "Excel export");
+    } finally {
+      showLoading(false);
+    }
+  });
 }
 
 function refreshView() {
@@ -340,6 +488,10 @@ async function loadData(id) {
   tickets = companyTickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   contracts = allContracts.filter((c) => c.company_id === id);
   projects = allProjects.filter((p) => p.company_id === id);
+
+  const allEfforts = await ParlaDb.getAllTicketEfforts();
+  const ticketIds = new Set(tickets.map((t) => t.id || t.ticket_id));
+  ticketEfforts = allEfforts.filter((e) => ticketIds.has(e.ticket_id));
 }
 
 document.addEventListener("DOMContentLoaded", async () => {

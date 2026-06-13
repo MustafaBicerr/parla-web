@@ -9,11 +9,12 @@
     SESSION_KEY: "parla_support_session",
     MIN_PASSWORD: 8,
     PATHS: {
-      login: "/support/login.html",
-      register: "/support/register.html",
-      dashboard: "/support/dashboard.html",
-      admin: "/support/admin.html",
-      ticket: "/support/ticket.html"
-    }
+      login: "/support-v2/login.html",
+      register: "/support-v2/login.html",
+      dashboard: "/support-v2/customer/dashboard.html",
+      admin: "/support-v2/admin/dashboard.html",
+      ticket: "/support-v2/customer/ticket-detail.html",
+      ticketAdmin: "/support-v2/admin/ticket-detail.html",
+    },
   };
 })();

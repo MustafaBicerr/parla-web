@@ -19,6 +19,7 @@ import {
 } from "../ui-shell.js";
 import { validatePersonnelForm } from "../validators.js";
 import { STATUSES } from "../ticket-utils.js";
+import { initPhoneInput, normalizePhone, formatPhoneDisplay } from "../phone-utils.js";
 
 let session = null;
 let personnel = [];
@@ -67,7 +68,7 @@ function buildContent() {
       id,
       name: fullName(p),
       email: p.email || "—",
-      phone: p.phone || "—",
+      phone: formatPhoneDisplay(p.phone),
       department_name: p.department_name || "—",
       role_title: p.role_title || "—",
       open_tickets: openTicketCount(id),
@@ -196,6 +197,7 @@ function openNewPersonnelModal() {
       <button type="button" class="sv2-btn sv2-btn-primary" id="np-submit">Kaydet</button>`,
   });
   openModal("modal-new-personnel");
+  initPhoneInput(document.getElementById("np-phone"));
   document.getElementById("np-submit")?.addEventListener("click", submitNewPersonnel);
 }
 
@@ -225,7 +227,7 @@ async function submitNewPersonnel() {
     first_name: form.first_name.value.trim(),
     last_name: form.last_name.value.trim(),
     email: form.email.value.trim(),
-    phone: form.phone.value.trim(),
+    phone: normalizePhone(form.phone) || form.phone.value.trim(),
     department_id: deptSelect.value,
     role_title: form.role_title.value.trim(),
   };

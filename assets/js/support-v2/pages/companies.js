@@ -20,6 +20,7 @@ import {
 } from "../ui-shell.js";
 import { CUSTOMER_TYPES } from "../ticket-utils.js";
 import { validateCompanyForm } from "../validators.js";
+import { initPhoneInput, normalizePhone, formatPhoneDisplay } from "../phone-utils.js";
 
 let session = null;
 let companies = [];
@@ -81,11 +82,11 @@ function buildContent() {
     <nav class="sv2-breadcrumb" aria-label="Breadcrumb">
       <a href="${PATHS.adminDashboard}" class="sv2-breadcrumb-link">Genel Bakış</a>
       <span class="sv2-breadcrumb-sep">›</span>
-      <span class="sv2-breadcrumb-current">Firmalar</span>
+      <span class="sv2-breadcrumb-current">Müşteriler</span>
     </nav>
     <div class="sv2-section">
       <div class="sv2-section-header">
-        <h3>Firmalar</h3>
+        <h3>Müşteriler</h3>
         <button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-company">
           <i class="fas fa-plus"></i> Yeni Firma
         </button>
@@ -186,6 +187,7 @@ function openNewCompanyModal() {
       <button type="button" class="sv2-btn sv2-btn-primary" id="nc-submit">Kaydet</button>`,
   });
   openModal("modal-new-company");
+  initPhoneInput(document.getElementById("nc-phone"));
 
   document.getElementById("nc-type")?.addEventListener("change", (e) => {
     document.getElementById("nc-code").value = suggestNextCode(e.target.value);
@@ -218,7 +220,7 @@ async function submitNewCompany() {
     customer_type: form.customer_type.value,
     customer_code: form.customer_code.value.trim().toUpperCase(),
     primary_contact_email: form.primary_contact_email.value.trim(),
-    phone: form.phone.value.trim(),
+    phone: normalizePhone(form.phone) || form.phone.value.trim(),
     address: form.address.value.trim(),
   };
 
@@ -288,7 +290,7 @@ function bindEvents() {
 
 function refreshView() {
   renderShell("#sv2-app", {
-    title: "Firmalar",
+    title: "Müşteriler",
     activePage: "companies",
     profile: session,
     isAdmin: true,

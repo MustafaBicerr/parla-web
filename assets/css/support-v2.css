@@ -382,19 +382,81 @@
   flex-shrink: 0;
 }
 
-.sv2-topbar-toggle {
+.sv2-topbar-toggle,
+.sv2-menu-toggle,
+.sv2-sidebar-close {
   display: none;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
-  border: 1px solid var(--sv2-gray-200);
+  border: none;
   border-radius: var(--sv2-radius-sm);
-  background: var(--sv2-white);
-  color: var(--sv2-gray-600);
+  background: transparent;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 1.125rem;
+  flex-shrink: 0;
+  padding: 0;
   transition: background var(--sv2-duration) var(--sv2-ease);
+}
+
+.sv2-menu-toggle {
+  color: var(--sv2-gray-600);
+  border: 1px solid var(--sv2-gray-200);
+  background: var(--sv2-white);
+}
+
+.sv2-menu-toggle:hover {
+  background: var(--sv2-gray-100);
+}
+
+.sv2-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  min-height: var(--sv2-topbar-height);
+  flex-shrink: 0;
+}
+
+.sv2-logo-link {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.sv2-logo {
+  height: 36px;
+  width: auto;
+}
+
+.sv2-sidebar-close {
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.08);
+  margin-left: auto;
+}
+
+.sv2-sidebar-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--sv2-white);
+}
+
+.sv2-page-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--sv2-navy);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sv2-topbar-toggle {
+  color: var(--sv2-gray-600);
+  border: 1px solid var(--sv2-gray-200);
+  background: var(--sv2-white);
 }
 
 .sv2-topbar-toggle:hover {
@@ -866,6 +928,11 @@
 .sv2-badge-open {
   background: #dbeafe;
   color: #1d4ed8;
+}
+
+.sv2-badge-assigned {
+  background: #e0e7ff;
+  color: #4338ca;
 }
 
 .sv2-badge-in_progress {
@@ -1518,6 +1585,14 @@
   margin-right: 0.375rem;
 }
 
+.sv2-form-group .iti {
+  width: 100%;
+}
+
+.sv2-form-group .iti input {
+  width: 100%;
+}
+
 /* ─── Notification panel ──────────────────────────────────────────────────── */
 .sv2-notif-panel {
   position: absolute;
@@ -2090,7 +2165,9 @@
     margin-left: 0 !important;
   }
 
-  .sv2-topbar-toggle {
+  .sv2-topbar-toggle,
+  .sv2-menu-toggle,
+  .sv2-sidebar-close {
     display: flex;
   }
 
