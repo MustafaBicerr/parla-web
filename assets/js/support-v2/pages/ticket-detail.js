@@ -25,6 +25,7 @@ import {
   formatStatusLabel,
   formatPriorityLabel,
   formatSapModuleLabel,
+  getTicketKey,
 } from "../ticket-utils.js";
 
 const app = document.getElementById("sv2-app");
@@ -294,7 +295,7 @@ function bindReply(isAdmin) {
         ? parseFloat(document.getElementById("sv2-reply-hours")?.value) || 0
         : 0;
 
-      await ParlaDb.addTicketMessage(ticket.ticket_id || ticket.id, {
+      await ParlaDb.addTicketMessage(getTicketKey(ticket), {
         user_id: session.uid,
         author_name: actor.name,
         author_email: session.email,
@@ -306,7 +307,7 @@ function bindReply(isAdmin) {
 
       if (!isAdmin && ticket.status === STATUSES.WAITING_CUSTOMER) {
         await ParlaDb.updateTicket(
-          ticket.ticket_id || ticket.id,
+          getTicketKey(ticket),
           { status: STATUSES.IN_PROGRESS },
           actor
         );
@@ -315,7 +316,7 @@ function bindReply(isAdmin) {
       await ParlaDb.logActivity(
         "ticket_message",
         "ticket",
-        ticket.ticket_id || ticket.id,
+        getTicketKey(ticket),
         ticket.ticket_number,
         isInternal ? "Dahili not eklendi" : "Yeni yanıt",
         actor
@@ -361,12 +362,12 @@ function bindAdminForm() {
         "";
 
       const updates = { status, priority, assigned_to_id: assignedId, assigned_to_name: assignedName };
-      const updated = await ParlaDb.updateTicket(ticket.ticket_id || ticket.id, updates, actor);
+      const updated = await ParlaDb.updateTicket(getTicketKey(ticket), updates, actor);
 
       await ParlaDb.logActivity(
         "ticket_updated",
         "ticket",
-        ticket.ticket_id || ticket.id,
+        getTicketKey(ticket),
         ticket.ticket_number,
         "Yönetici güncellemesi",
         actor
@@ -405,7 +406,7 @@ function bindAdminForm() {
 }
 
 async function reloadTicket() {
-  const id = ticket.ticket_id || ticket.id;
+  const id = getTicketKey(ticket);
   const [t, msgs, hist] = await Promise.all([
     ParlaDb.getTicket(id),
     ParlaDb.getTicketMessages(id),

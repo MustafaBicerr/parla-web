@@ -32,6 +32,7 @@ import {
   formatStatusLabel,
   formatPriorityLabel,
   formatSapModuleLabel,
+  getTicketKey,
 } from "../ticket-utils.js";
 import { minLength } from "../validators.js";
 import ParlaEmailService from "../email-service.js";
@@ -105,13 +106,18 @@ function personnelAssignmentCheckboxes() {
     .map((p) => {
       const id = p.personnel_id || p.id;
       const name = [p.first_name, p.last_name].filter(Boolean).join(" ");
-      const checked = assignedIds.has(id) ? " checked" : "";
-      const primary = id === primaryId ? " checked" : "";
-      return `<label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.375rem">
-        <input type="checkbox" class="sv2-assign-check" value="${escapeHtml(id)}" data-name="${escapeHtml(name)}"${checked}>
-        <span style="flex:1">${escapeHtml(name)}</span>
-        <input type="radio" name="sv2-primary-consultant" class="sv2-assign-primary" value="${escapeHtml(id)}"${primary} title="Birincil danışman">
-      </label>`;
+      const checked = assignedIds.has(id);
+      const isPrimary = id === primaryId;
+      return `<div class="sv2-assign-row${checked ? " is-assigned" : ""}" data-id="${escapeHtml(id)}">
+        <div class="sv2-assign-col sv2-assign-col-check">
+          <input type="checkbox" class="sv2-assign-check" id="sv2-assign-${escapeHtml(id)}" value="${escapeHtml(id)}" data-name="${escapeHtml(name)}"${checked ? " checked" : ""} aria-label="${escapeHtml(name)} — tickete ata">
+        </div>
+        <label class="sv2-assign-col sv2-assign-col-name" for="sv2-assign-${escapeHtml(id)}">${escapeHtml(name)}</label>
+        <div class="sv2-assign-col sv2-assign-col-primary">
+          <input type="radio" name="sv2-primary-consultant" class="sv2-assign-primary" id="sv2-primary-${escapeHtml(id)}" value="${escapeHtml(id)}"${isPrimary ? " checked" : ""}${checked ? "" : " disabled"} aria-label="${escapeHtml(name)} — birincil danışman">
+          <label class="sv2-assign-primary-label" for="sv2-primary-${escapeHtml(id)}" title="Birincil danışman">Birincil</label>
+        </div>
+      </div>`;
     })
     .join("");
 }
@@ -239,12 +245,34 @@ function renderAdminPanel() {
           <select id="sv2-admin-priority">${priorityOptions(ticket.priority)}</select>
         </div>
       </div>
-      <div class="sv2-form-group">
-        <label>Danışmanlar</label>
-        <div class="sv2-checkbox-list" style="max-height:180px;overflow-y:auto;border:1px solid var(--sv2-gray-200);border-radius:var(--sv2-radius-sm);padding:0.75rem">
-          ${personnelAssignmentCheckboxes() || '<span class="sv2-text-muted">Aktif danışman yok</span>'}
+      <div class="sv2-form-group sv2-assign-group">
+        <label>Danışman Ataması</label>
+        <div class="sv2-assign-help">
+          <div class="sv2-assign-help-item">
+            <span class="sv2-assign-help-icon" aria-hidden="true"><i class="fas fa-check-square"></i></span>
+            <div>
+              <strong>Sol — Tickete ata</strong>
+              <p>Bu ticket üzerinde çalışacak danışmanları işaretleyin. Birden fazla seçebilirsiniz.</p>
+            </div>
+          </div>
+          <div class="sv2-assign-help-item">
+            <span class="sv2-assign-help-icon sv2-assign-help-icon-primary" aria-hidden="true"><i class="fas fa-star"></i></span>
+            <div>
+              <strong>Sağ — Birincil danışman</strong>
+              <p>Sorumlu danışmanı belirleyin. Yalnızca atanmış danışmanlar arasından tek bir birincil seçilir.</p>
+            </div>
+          </div>
         </div>
-        <p class="sv2-text-muted" style="font-size:0.75rem;margin-top:0.35rem">Birincil danışman için sağdaki radio butonunu seçin.</p>
+        <div class="sv2-assign-panel">
+          <div class="sv2-assign-header" aria-hidden="true">
+            <span class="sv2-assign-col sv2-assign-col-check">Ata</span>
+            <span class="sv2-assign-col sv2-assign-col-name">Danışman</span>
+            <span class="sv2-assign-col sv2-assign-col-primary">Birincil</span>
+          </div>
+          <div class="sv2-assign-list">
+            ${personnelAssignmentCheckboxes() || '<p class="sv2-assign-empty">Aktif danışman yok</p>'}
+          </div>
+        </div>
       </div>
       <div class="sv2-form-group">
         <label for="sv2-admin-status-note">Durum Değişiklik Notu</label>
@@ -352,7 +380,7 @@ function renderInternalNotes() {
 }
 
 function buildContent() {
-  const id = ticket.ticket_id || ticket.id;
+  const id = getTicketKey(ticket);
   const consultantNames = assignments.map((a) => a.personnel_name).filter(Boolean).join(", ") || ticket.assigned_to_name || "—";
 
   return `
@@ -517,7 +545,7 @@ async function handleAdminUpdate() {
 
   showLoading(true);
   try {
-    const id = ticket.ticket_id || ticket.id;
+    const id = getTicketKey(ticket);
 
     if (assignmentChanged && selectedAssignments.length) {
       ticket = await ParlaDb.assignConsultants(id, selectedAssignments, session);
@@ -571,7 +599,7 @@ async function handleAdminUpdate() {
 async function handleStartWork() {
   showLoading(true);
   try {
-    const id = ticket.ticket_id || ticket.id;
+    const id = getTicketKey(ticket);
     ticket = await ParlaDb.updateTicket(
       id,
       { status: STATUSES.IN_PROGRESS, started_at: new Date().toISOString() },
@@ -612,7 +640,7 @@ async function handleAddEffort() {
 
   showLoading(true);
   try {
-    const id = ticket.ticket_id || ticket.id;
+    const id = getTicketKey(ticket);
     await ParlaDb.addTicketEffort(
       id,
       { personnel_id: personnelId, personnel_name: personnelName, hours, work_date: workDate, note },
@@ -632,7 +660,7 @@ async function handleDeleteEffort(effortId) {
   if (!canManageTicket()) return;
   showLoading(true);
   try {
-    const id = ticket.ticket_id || ticket.id;
+    const id = getTicketKey(ticket);
     await ParlaDb.deleteTicketEffort(id, effortId);
     [ticket, efforts] = await Promise.all([ParlaDb.getTicket(id), ParlaDb.getTicketEfforts(id)]);
     toast("Efor silindi.", "success");
@@ -656,7 +684,7 @@ async function handleReply() {
 
   showLoading(true);
   try {
-    const id = ticket.ticket_id || ticket.id;
+    const id = getTicketKey(ticket);
     const me = getMyPersonnel();
     await ParlaDb.addTicketMessage(id, {
       user_id: session.uid,
@@ -701,8 +729,42 @@ function bindEvents() {
   });
   document.querySelectorAll(".sv2-assign-check").forEach((cb) => {
     cb.addEventListener("change", () => {
-      if (cb.checked && !document.querySelector(".sv2-assign-primary:checked")) {
-        document.querySelector(`.sv2-assign-primary[value="${cb.value}"]`)?.click();
+      const row = cb.closest(".sv2-assign-row");
+      const radio = row?.querySelector(".sv2-assign-primary");
+      if (!radio) return;
+
+      if (cb.checked) {
+        row?.classList.add("is-assigned");
+        radio.disabled = false;
+        if (!document.querySelector(".sv2-assign-primary:checked")) {
+          radio.checked = true;
+        }
+      } else {
+        row?.classList.remove("is-assigned");
+        if (radio.checked) {
+          radio.checked = false;
+          const nextPrimary = document.querySelector(".sv2-assign-check:checked");
+          if (nextPrimary) {
+            const nextRadio = nextPrimary
+              .closest(".sv2-assign-row")
+              ?.querySelector(".sv2-assign-primary");
+            if (nextRadio) nextRadio.checked = true;
+          }
+        }
+        radio.disabled = true;
+      }
+    });
+  });
+
+  document.querySelectorAll(".sv2-assign-primary").forEach((radio) => {
+    radio.addEventListener("change", () => {
+      if (!radio.checked) return;
+      const row = radio.closest(".sv2-assign-row");
+      const checkbox = row?.querySelector(".sv2-assign-check");
+      if (checkbox && !checkbox.checked) {
+        checkbox.checked = true;
+        row?.classList.add("is-assigned");
+        radio.disabled = false;
       }
     });
   });

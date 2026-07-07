@@ -21,7 +21,7 @@ import {
   formatTicketTypeLabel,
   escapeHtml,
 } from "../ui-shell.js";
-import { TICKET_TYPE_LABELS } from "../ticket-utils.js";
+import { TICKET_TYPE_LABELS, getTicketKey } from "../ticket-utils.js";
 import ParlaEmailService from "../email-service.js";
 
 const ADMIN_ROLES = ["super_admin", "service_admin", "project_manager", "consultant"];
@@ -233,7 +233,7 @@ function openAssignModal(ticket) {
     showLoading(true);
     try {
       const updated = await ParlaDb.assignConsultants(
-        ticket.ticket_id || ticket.id,
+        getTicketKey(ticket),
         [
           {
             personnel_id: pid,
@@ -246,7 +246,7 @@ function openAssignModal(ticket) {
       await ParlaDb.logActivity(
         "ticket_assigned",
         "ticket",
-        ticket.ticket_id || ticket.id,
+        getTicketKey(ticket),
         ticket.ticket_number,
         `${name} atandı`,
         session
@@ -287,7 +287,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
   }));
 
   const unassignedRows = unassigned.slice(0, 10).map((t) => ({
-    id: t.ticket_id || t.id,
+    id: getTicketKey(t),
     number: t.ticket_number,
     title: t.title,
     priority: t.priority,
@@ -393,7 +393,7 @@ async function loadAndRender() {
     document.querySelectorAll(".sv2-quick-assign").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.dataset.id;
-        const ticket = allTickets.find((t) => (t.ticket_id || t.id) === id);
+        const ticket = allTickets.find((t) => getTicketKey(t) === id);
         if (ticket) openAssignModal(ticket);
       });
     });

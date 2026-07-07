@@ -1,7 +1,7 @@
 /**
  * Parla BT Ticket V2 — Firebase Realtime Database istemcisi
  */
-import { nowIso, generateTicketNumber } from "./ticket-utils.js";
+import { nowIso, generateTicketNumber, getTicketKey } from "./ticket-utils.js";
 
 const V2_PREFIX = "v2";
 
@@ -259,7 +259,7 @@ const ParlaDb = {
     const snap = await fb.db.get(v2Ref("tickets"));
     return snapshotToArray(snap).map((t) => ({
       ...t,
-      ticket_id: t.ticket_id || t.id,
+      ticket_id: getTicketKey(t),
     }));
   },
 
@@ -273,7 +273,7 @@ const ParlaDb = {
     const snap = await fb.db.get(q);
     return snapshotToArray(snap).map((t) => ({
       ...t,
-      ticket_id: t.ticket_id || t.id,
+      ticket_id: getTicketKey(t),
     }));
   },
 
@@ -287,7 +287,7 @@ const ParlaDb = {
     const snap = await fb.db.get(q);
     return snapshotToArray(snap).map((t) => ({
       ...t,
-      ticket_id: t.ticket_id || t.id,
+      ticket_id: getTicketKey(t),
     }));
   },
 
@@ -301,7 +301,7 @@ const ParlaDb = {
     const snap = await fb.db.get(q);
     return snapshotToArray(snap).map((t) => ({
       ...t,
-      ticket_id: t.ticket_id || t.id,
+      ticket_id: getTicketKey(t),
     }));
   },
 
@@ -520,25 +520,22 @@ const ParlaDb = {
     const fb = getFirebase();
     const ts = nowIso();
     const af = actorFields(actor);
-    const assignRef = v2Ref(`ticket_assignments/${ticketId}`);
-
-    const existingSnap = await fb.db.get(assignRef);
-    if (existingSnap.exists()) {
-      await fb.db.remove(assignRef);
-    }
+    const payload = {};
 
     for (const a of assignments || []) {
       const pid = a.personnel_id || a.id;
       if (!pid) continue;
-      await fb.db.set(v2Ref(`ticket_assignments/${ticketId}/${pid}`), {
+      payload[pid] = {
         personnel_id: pid,
         personnel_name: a.personnel_name || a.name || "",
         is_primary: !!a.is_primary,
         assigned_at: a.assigned_at || ts,
         assigned_by_uid: af.created_by,
         assigned_by_name: af.created_by_name,
-      });
+      };
     }
+
+    await fb.db.set(v2Ref(`ticket_assignments/${ticketId}`), payload);
   },
 
   async assignConsultants(ticketId, assignments, actor) {
@@ -619,21 +616,38 @@ const ParlaDb = {
 
   async getAllTicketEfforts() {
     const fb = getFirebase();
-    const snap = await fb.db.get(v2Ref("ticket_efforts"));
-    if (!snap.exists()) return [];
-    const val = snap.val();
-    const items = [];
-    for (const ticketId of Object.keys(val || {})) {
-      for (const effortId of Object.keys(val[ticketId] || {})) {
-        items.push({
-          id: effortId,
-          effort_id: effortId,
-          ticket_id: ticketId,
-          ...val[ticketId][effortId],
-        });
+    try {
+      const snap = await fb.db.get(v2Ref("ticket_efforts"));
+      if (!snap.exists()) return [];
+      const val = snap.val();
+      const items = [];
+      for (const ticketId of Object.keys(val || {})) {
+        for (const effortId of Object.keys(val[ticketId] || {})) {
+          items.push({
+            id: effortId,
+            effort_id: effortId,
+            ticket_id: ticketId,
+            ...val[ticketId][effortId],
+          });
+        }
       }
+      return items;
+    } catch (err) {
+      const code = String(err?.code || err?.message || "").toLowerCase();
+      if (!code.includes("permission")) throw err;
+
+      const tickets = await this.getAllTickets();
+      const batches = await Promise.all(
+        tickets.map((t) => {
+          const tid = getTicketKey(t);
+          return tid ? this.getTicketEfforts(tid) : Promise.resolve([]);
+        })
+      );
+      return batches.flat().map((e) => ({
+        ...e,
+        ticket_id: e.ticket_id || e.id,
+      }));
     }
-    return items;
   },
 
   async addTicketHistory(ticketId, entry) {

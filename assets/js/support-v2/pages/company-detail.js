@@ -24,7 +24,7 @@ import {
   renderStatusBadge,
   renderTypeBadge,
 } from "../ui-shell.js";
-import { CUSTOMER_TYPES } from "../ticket-utils.js";
+import { CUSTOMER_TYPES, getTicketKey } from "../ticket-utils.js";
 import { validateCompanyForm } from "../validators.js";
 import { downloadExcel, monthOptions, filterEffortsByMonth } from "../export-utils.js";
 import { initPhoneInput, normalizePhone, formatPhoneDisplay, setPhoneValue } from "../phone-utils.js";
@@ -49,7 +49,7 @@ function openStatuses() {
 
 function effortsForCompanyTickets() {
   const ticketMap = Object.fromEntries(
-    tickets.map((t) => [t.id || t.ticket_id, t])
+    tickets.map((t) => [getTicketKey(t), t])
   );
   return ticketEfforts
     .filter((e) => ticketMap[e.ticket_id])
@@ -72,7 +72,7 @@ function renderEffortTab() {
 
   const rows = tickets
     .map((t) => {
-      const id = t.id || t.ticket_id;
+      const id = getTicketKey(t);
       const ticketMonthEfforts = monthEfforts.filter((e) => e.ticket_id === id);
       const monthHours = ticketMonthEfforts.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
       const consultants = [
@@ -290,7 +290,7 @@ function renderTabContent() {
           },
           { key: "created_at", label: "TARİH", render: (v) => escapeHtml(formatDate(v)) },
         ],
-        rows: tickets.map((t) => ({ ...t, id: t.id || t.ticket_id })),
+        rows: tickets.map((t) => ({ ...t, id: getTicketKey(t) })),
       });
   }
 }
@@ -490,7 +490,7 @@ async function loadData(id) {
   projects = allProjects.filter((p) => p.company_id === id);
 
   const allEfforts = await ParlaDb.getAllTicketEfforts();
-  const ticketIds = new Set(tickets.map((t) => t.id || t.ticket_id));
+  const ticketIds = new Set(tickets.map((t) => getTicketKey(t)));
   ticketEfforts = allEfforts.filter((e) => ticketIds.has(e.ticket_id));
 }
 

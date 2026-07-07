@@ -12,7 +12,7 @@ import {
   formatTicketTypeLabel,
   renderEmptyState,
 } from "../ui-shell.js";
-import { SAP_MODULE_LABELS, formatPriorityLabel } from "../ticket-utils.js";
+import { SAP_MODULE_LABELS, formatPriorityLabel, getTicketKey } from "../ticket-utils.js";
 import { downloadCsv, downloadExcel } from "../export-utils.js";
 
 const PIE_COLORS = [
@@ -156,7 +156,7 @@ function filteredTickets() {
 
 function filteredEfforts() {
   const { start, end } = getDateRange();
-  const ticketMap = Object.fromEntries(allTickets.map((t) => [t.id || t.ticket_id, t]));
+  const ticketMap = Object.fromEntries(allTickets.map((t) => [getTicketKey(t), t]));
   return allEfforts.filter((e) => {
     const d = new Date(e.work_date || e.created_at);
     if (Number.isNaN(d.getTime())) return false;

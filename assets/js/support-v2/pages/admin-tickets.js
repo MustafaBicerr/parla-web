@@ -36,6 +36,7 @@ import {
   SAP_MODULE_LABELS,
   formatStatusLabel,
   formatPriorityLabel,
+  getTicketKey,
 } from "../ticket-utils.js";
 import { validateTicketForm } from "../validators.js";
 import ParlaEmailService from "../email-service.js";
@@ -273,7 +274,7 @@ function advancedFiltersHtml() {
 
 function buildTableRows(tickets) {
   return tickets.map((t) => {
-    const id = t.ticket_id || t.id;
+    const id = getTicketKey(t);
     return {
       id,
       ticket_number: t.ticket_number,
@@ -470,7 +471,7 @@ function bindSearchAutocomplete() {
     listEl.innerHTML = matches
       .map(
         (t) => `
-      <button type="button" class="sv2-ac-item" data-value="${escapeHtml(t.ticket_id || t.id)}">
+      <button type="button" class="sv2-ac-item" data-value="${escapeHtml(getTicketKey(t))}">
         <strong>${escapeHtml(t.ticket_number)}</strong> — ${escapeHtml(t.title || "")}
         <div class="sv2-autocomplete-meta">${escapeHtml(t.company_name || "")}</div>
       </button>`
@@ -480,7 +481,7 @@ function bindSearchAutocomplete() {
 
     listEl.querySelectorAll(".sv2-ac-item").forEach((btn) => {
       btn.addEventListener("click", () => {
-        const ticket = allTickets.find((t) => (t.ticket_id || t.id) === btn.dataset.value);
+        const ticket = allTickets.find((t) => getTicketKey(t) === btn.dataset.value);
         if (ticket) {
           input.value = ticket.ticket_number;
           state.search = ticket.ticket_number;
@@ -579,7 +580,7 @@ function bindTableActions() {
       showLoading(true);
       try {
         await ParlaDb.updateTicket(id, { is_approved: cb.checked }, session);
-        const t = allTickets.find((x) => (x.ticket_id || x.id) === id);
+        const t = allTickets.find((x) => getTicketKey(x) === id);
         if (t) t.is_approved = cb.checked;
         toast(cb.checked ? "Ticket onaylandı." : "Onay kaldırıldı.", "success");
       } catch (err) {
@@ -609,7 +610,7 @@ function bindTableActions() {
               "Admin listesinden silindi",
               session
             );
-            allTickets = allTickets.filter((t) => (t.ticket_id || t.id) !== id);
+            allTickets = allTickets.filter((t) => getTicketKey(t) !== id);
             toast("Ticket silindi.", "success");
             renderTableOnly();
           } catch (err) {

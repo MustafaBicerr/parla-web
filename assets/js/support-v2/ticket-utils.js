@@ -197,6 +197,13 @@ export function formatRoleLabel(role) {
   return ROLE_LABELS[key] || role || "—";
 }
 
+/** Firebase RTDB tickets/{key} — her zaman snapshot push key (id) kullan */
+export function getTicketKey(ticketOrId) {
+  if (!ticketOrId) return "";
+  if (typeof ticketOrId === "string") return ticketOrId;
+  return ticketOrId.id || ticketOrId.ticket_id || "";
+}
+
 export function isAdminRole(role) {
   return ADMIN_ROLES.includes(String(role || "").toLowerCase());
 }

@@ -17,7 +17,7 @@ function renderLoginPage() {
   app.innerHTML = `
     <div class="sv2-auth-wrap">
       <div class="sv2-auth-brand">
-        <img src="/assets/img/parla-logo/parla-logo.png" alt="Parla BT" style="height:48px;margin-bottom:2rem;position:relative;">
+        <img src="/assets/img/parla-logo/parla-logo.png" alt="Parla BT" class="sv2-auth-logo">
         <h1>Parla BT Destek Portalı</h1>
         <p>SAP destek taleplerinizi oluşturun, takip edin ve danışmanlarımızla iletişim kurun.</p>
         <ul>
