@@ -2,7 +2,8 @@
  * Parla BT Ticket V2 — Admin Muhataplar (Kullanıcı Yönetimi)
  */
 import ParlaDb from "../firebase-client.js";
-import { requireAuth, createUser, PATHS } from "../auth-guard.js";
+import { requirePage } from "../access-control.js";
+import { createUser, PATHS, resetPassword } from "../auth-guard.js";
 import {
   renderShell,
   toast,
@@ -27,6 +28,7 @@ import {
   ROLE_LABELS,
   generateTempPassword,
   formatRoleLabel,
+  matchesSearch,
 } from "../ticket-utils.js";
 import { validateUserForm } from "../validators.js";
 import ParlaEmailService from "../email-service.js";
@@ -78,7 +80,7 @@ function showFormErrors(form, errors) {
 }
 
 function filterUsers() {
-  const q = filters.search.trim().toLowerCase();
+  const q = filters.search.trim();
   return allUsers.filter((u) => {
     if (filters.role !== "all") {
       if (filters.role === "admin") {
@@ -87,18 +89,15 @@ function filterUsers() {
     }
     if (filters.status === "active" && u.is_active === false) return false;
     if (filters.status === "inactive" && u.is_active !== false) return false;
-    if (!q) return true;
-    const hay = [
+    return matchesSearch(q, [
       u.first_name,
       u.last_name,
       u.email,
       u.company_name,
       u.phone,
-    ]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-    return hay.includes(q);
+      u.contact_code,
+      u.customer_code,
+    ]);
   });
 }
 
@@ -110,6 +109,7 @@ function buildPageContent() {
     phone: u.phone || "",
     company: u.company_name || "—",
     company_id: u.company_id,
+    contact_code: u.contact_code || "—",
     role: u.role,
     created_at: u.created_at,
     last_login_at: u.last_login_at,
@@ -181,6 +181,7 @@ function renderUsersTable(rows) {
             ? linkCompany(row.company_id, row.company)
             : escapeHtml(row.company),
       },
+      { key: "contact_code", label: "MUHATAP KODU" },
       {
         key: "role",
         label: "ROL",
@@ -451,6 +452,13 @@ async function submitNewUser() {
     return;
   }
 
+  const conflict = await ParlaDb.emailHasConflictingRole(data.email, data.role);
+  if (conflict) {
+    showFormErrors(form, { email: conflict });
+    showLoading(false);
+    return;
+  }
+
   showLoading(true);
   try {
     const authUser = await createUser(data.email, data.temp_password);
@@ -464,9 +472,15 @@ async function submitNewUser() {
       company_name: companyName,
       customer_code: customerCode,
       is_active: true,
+      must_change_password: true,
       created_by: session.uid,
       updated_by: session.uid,
     });
+    try {
+      await resetPassword(data.email);
+    } catch {
+      /* davet maili opsiyonel */
+    }
     await ParlaDb.logActivity(
       "user_created",
       "user",
@@ -523,9 +537,15 @@ function showSuccessCredentials(email, password, name) {
   document.getElementById("cred-email-btn")?.addEventListener("click", async () => {
     showLoading(true);
     const res = await ParlaEmailService.send({
+      type: "user_credentials",
       to: email,
-      subject: "Parla BT Destek — Giriş Bilgileriniz",
-      body: `Merhaba,\n\nParla BT Destek sistemine hesabınız oluşturuldu.\n\nE-posta: ${email}\nGeçici Şifre: ${password}\n\nGiriş: ${window.location.origin}${PATHS.login}\n\nİlk girişten sonra şifrenizi değiştirmenizi öneririz.`,
+      ticketData: {
+        email,
+        password,
+        name,
+        loginUrl: `${window.location.origin}${PATHS.login}`,
+        portalUrl: window.location.origin,
+      },
     });
     showLoading(false);
     toast(res.success ? "E-posta gönderildi." : res.message || "E-posta gönderilemedi.", res.success ? "success" : "warning");
@@ -585,7 +605,7 @@ async function loadData() {
 async function init() {
   try {
     showLoading(true);
-    session = await requireAuth({ adminOnly: true });
+    session = await requirePage("adminUsers", { adminOnly: true });
     await ParlaDb.waitForFirebase();
     refreshView();
     try {

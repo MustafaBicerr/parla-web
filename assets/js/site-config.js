@@ -11,5 +11,8 @@
     /** tel: ve schema.org uyumlu */
     PHONE_TEL_HREF: "+905302267798",
     CONTACT_EMAIL: "info@parlabilgiteknolojileri.net",
+    EMAIL_API_URL: "/api/send-email",
+    AUTH_ACTION_URL: "/support-v2/auth-action.html",
+    FIREBASE_APPCHECK_SITE_KEY: "",
   };
 })();

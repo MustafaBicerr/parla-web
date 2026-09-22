@@ -1,13 +1,21 @@
 /**
- * Parla BT Ticket V2 — e-posta bildirim servisi (Google Apps Script)
+ * Parla BT Ticket V2 — e-posta bildirim servisi (Netlify Function + Resend)
  */
 
-function getScriptUrl() {
+function getEmailApiUrl() {
   const cfg = window.__PARLA_SITE_CONFIG || {};
-  return cfg.GOOGLE_SCRIPT_URL || "";
+  return cfg.EMAIL_API_URL || "/api/send-email";
 }
 
-function parseGasResponse(text) {
+function newRequestId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `req-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+async function parseResponse(res) {
+  const text = await res.text();
   if (!text) {
     return { success: false, message: "Boş yanıt" };
   }
@@ -26,55 +34,76 @@ function parseGasResponse(text) {
   return { success: false, message: "Sunucu yanıtı işlenemedi." };
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const STAFF_EVENTS = new Set(["ticket_assigned", "ticket_reopened"]);
+
+function inferAudience(eventType, to) {
+  const cfg = window.__PARLA_SITE_CONFIG || {};
+  const contact = String(cfg.CONTACT_EMAIL || "info@parlabilgiteknolojileri.net").toLowerCase();
+  const first = String(Array.isArray(to) ? to[0] : to || "").trim().toLowerCase();
+  if (first && first === contact) return "staff";
+  if (STAFF_EVENTS.has(eventType)) return "staff";
+  return "customer";
+}
+
 const ParlaEmailService = {
   /**
-   * @param {{ type?: string, to: string|string[], subject: string, body: string, ticketData?: object }} params
+   * @param {{ type: string, to: string|string[], ticketData?: object, extra?: object, requestId?: string }} params
    */
   async send(params) {
-    const url = getScriptUrl();
+    const url = getEmailApiUrl();
     if (!url) {
-      console.warn("ParlaEmailService: GOOGLE_SCRIPT_URL tanımlı değil.");
+      console.warn("ParlaEmailService: EMAIL_API_URL tanımlı değil.");
       return { success: false, message: "E-posta servisi yapılandırılmamış." };
     }
 
     const payload = {
-      type: params.type || "support_v2_notify",
+      type: params.type || "",
       to: params.to,
-      subject: params.subject || "",
-      body: params.body || "",
       ticketData: params.ticketData || null,
+      extra: params.extra || null,
+      requestId: params.requestId || newRequestId(),
     };
 
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        redirect: "follow",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify(payload),
-      });
+    let lastError = { success: false, message: "E-posta gönderilemedi." };
 
-      const text = await res.text();
-      const json = parseGasResponse(text);
-
-      if (json.success === false) {
-        return {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const json = await parseResponse(res);
+        if (json.success === false) {
+          lastError = {
+            success: false,
+            message: json.message || "E-posta gönderilemedi.",
+          };
+          if (res.status >= 400 && res.status < 500 && res.status !== 429) {
+            return lastError;
+          }
+        } else {
+          return {
+            success: true,
+            message: json.message || "E-posta gönderildi.",
+            data: json.data || null,
+          };
+        }
+      } catch (err) {
+        console.error("ParlaEmailService.send hatası:", err);
+        lastError = {
           success: false,
-          message: json.message || "E-posta gönderilemedi.",
+          message: "E-posta gönderilirken bağlantı hatası oluştu.",
         };
       }
-
-      return {
-        success: true,
-        message: json.message || "E-posta gönderildi.",
-        data: json.data || null,
-      };
-    } catch (err) {
-      console.error("ParlaEmailService.send hatası:", err);
-      return {
-        success: false,
-        message: "E-posta gönderilirken bağlantı hatası oluştu.",
-      };
+      await sleep(400 * 2 ** attempt);
     }
+
+    return lastError;
   },
 
   /**
@@ -84,33 +113,24 @@ const ParlaEmailService = {
     extra = extra || {};
     const number = ticket?.ticket_number || ticket?.id || "";
     const title = ticket?.title || "";
-
-    const subjects = {
-      ticket_created: `Yeni Destek Talebi: ${number}`,
-      ticket_assigned: `Size Atanan Görev: ${number}`,
-      ticket_status_changed: `Talep Durumu Güncellendi: ${number}`,
-      ticket_message: `Yeni Yanıt: ${number}`,
-      ticket_resolved: `Talebiniz Çözüldü: ${number}`,
-      ticket_closed: `Talep Kapatıldı: ${number}`,
-    };
-
-    const subject = extra.subject || subjects[eventType] || `Bildirim: ${number}`;
-    let body =
-      extra.body ||
-      `Ticket: ${number}\nKonu: ${title}\n\n${extra.note || ""}`.trim();
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
 
     return this.send({
-      type: "support_v2_notify",
+      type: eventType,
       to,
-      subject,
-      body,
       ticketData: {
         event: eventType,
+        audience: extra.audience || inferAudience(eventType, to),
+        ticket_id: ticket?.id || ticket?.ticket_id || extra.ticket_id || "",
         ticket_number: number,
         title,
         status: ticket?.status,
         priority: ticket?.priority,
-        ...extra,
+        company_name: ticket?.company_name || extra.company_name || "",
+        user_name: ticket?.user_name || extra.user_name || "",
+        user_email: ticket?.user_email || extra.user_email || "",
+        portalUrl: extra.portalUrl || origin,
+        note: extra.note || "",
       },
     });
   },

@@ -1,0 +1,47 @@
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# RESEND_API_KEY Netlify UI → Site settings → Environment variables
+# FROM: Parla BT Destek <info@parlabilgiteknolojileri.net>
+
+[[redirects]]
+  from = "/api/send-email"
+  to = "/.netlify/functions/send-email"
+  status = 200
+
+[[redirects]]
+  from = "/support"
+  to = "/support-v2/login.html"
+  status = 301
+
+[[redirects]]
+  from = "/support/*"
+  to = "/support-v2/login.html"
+  status = 301
+
+[[headers]]
+  for = "/assets/js/support-v2/*"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/assets/css/support-v2.css"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/assets/js/firebase-init.js"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/assets/js/site-config.js"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
