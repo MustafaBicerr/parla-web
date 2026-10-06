@@ -1,0 +1,37 @@
+name: Deploy RTDB rules
+
+# Yalnızca kurallar değiştiğinde ve FIREBASE_SERVICE_ACCOUNT secret'ı tanımlıysa çalışır.
+# Secret yoksa iş "atlandı" olarak biter (hata vermez); kurallar elle dağıtılır: firebase deploy --only database
+on:
+  push:
+    branches: [main]
+    paths:
+      - database.rules.json
+      - tests/rules/generate-rules.js
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Kurallar testten geçiyor mu?
+        working-directory: tests/rules
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+      - name: Dağıt
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::notice::FIREBASE_SERVICE_ACCOUNT tanımlı değil; kurallar otomatik dağıtılmadı (docs/yayin-kontrol-listesi.md §2)."
+            exit 0
+          fi
+          echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 deploy --only database --project parla-bt-web --non-interactive
+          rm -f "$RUNNER_TEMP/sa.json"

@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  unit-and-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Birim testleri (e-posta fonksiyonu + istemci)
+        run: |
+          node --test netlify/tests/send-email.test.js \
+                      netlify/tests/client-email-service.test.mjs \
+                      netlify/tests/client-firebase.test.mjs \
+                      netlify/tests/client-notifications.test.mjs \
+                      netlify/tests/client-utils.test.mjs
+      - name: RTDB kural testleri (database.rules.json üretecle eşit mi?)
+        working-directory: tests/rules
+        run: |
+          npm install --no-audit --no-fund
+          npm test

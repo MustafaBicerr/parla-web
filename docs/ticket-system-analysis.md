@@ -12,25 +12,28 @@ Tarih: 2026-10-06 · Kapsam: `support-v2/`, `assets/js/support-v2/`, `netlify/`,
 | E-posta | Tarayıcı → `POST /api/send-email` (Netlify Function) → Resend | Form mailleri ayrı: GAS (`yedek_kod.gs`) |
 | Auth e-postaları | Firebase Console SMTP (Resend) | Console işi, kodla yönetilmiyor |
 
-## 2. Hazırlık durumu (düzeltmelerden sonra)
+## 2. Hazırlık durumu
 
 | Modül | Durum | Not |
 |---|---|---|
-| Giriş / roller / yönlendirme | Hazır | `company_admin` rolü arayüzde tanımsız (bkz. §5) |
-| Talep açma (müşteri / yönetici) | Hazır | Numara üretimi (`TİP-MÜŞTERİ-MODÜL-YYAA-SIRA`) çalışıyor |
-| Atama (çoklu danışman, birincil) | Hazır | |
-| Mesajlaşma, efor kaydı, geçmiş | Hazır | İç notlar için bkz. §5 (P1) |
-| Durum akışı | Kısmi | `açık → atandı → işlemde → müşteri bekleniyor → çözüldü → kapandı`; **kapanış onayı / yeniden açma yok** |
-| E-posta bildirimleri | **Düzeltildi, dağıtım bekliyor** | §3 |
-| Muhataplar (kullanıcı yönetimi) | **Düzeltildi** | Sayfa hiç açılmıyordu (§3, madde 3) |
-| Firma / sözleşme / proje / personel / raporlar | Hazır | Raporlar tüm ticket'ı istemciye çeker (ölçek notu §5) |
-| Güvenlik (RTDB kuralları) | **Düzeltildi, dağıtım bekliyor** | §4 |
-| Şifre değiştirme / sıfırlama | **Eklendi** | `change-password.html`, `auth-action.html` |
-| SLA, uygulama içi bildirim, dosya yükleme | Yok | §5 |
+| Giriş / roller / yönlendirme | Hazır | `company_admin` dahil 7 rol; zorunlu şifre değişimi (`must_change_password`) |
+| Talep açma (müşteri / yönetici) | Hazır | Numara: `TİP-MÜŞTERİ-MODÜL-YYAA-SIRA`; dosya eki (≤3 dosya, ≤2 MB) |
+| Atama (çoklu danışman, birincil) | Hazır | Danışman e-postası atamaya kaydedilir (`personel_email`) |
+| Mesajlaşma, efor kaydı, geçmiş | Hazır | **Dahili notlar ayrı düğümde** (`ticket_internal_notes`), müşteri veritabanı düzeyinde okuyamaz |
+| Durum akışı | Hazır | `açık → atandı → işlemde → müşteri bekleniyor → onay bekleniyor → çözüldü → kapandı` (+ `yeniden açıldı`); müşteri kapanış onayı ve 14 günlük yeniden açma |
+| SLA / hedef süreler | Hazır | Önceliğe göre ilk yanıt/çözüm hedefi; `müşteri bekleniyor`da süre durur; listede ve ayrıntıda rozet; panoda "SLA Aşımı" |
+| Uygulama içi bildirim | Hazır | Türetilmiş bildirim zili (veritabanına yazmaz); okundu bilgisi tarayıcıda |
+| E-posta bildirimleri | Hazır, dağıtım bekliyor | §3; hatalar görünür (toast + aktivite), geçici hatalarda tarayıcı kuyruğu + otomatik yeniden deneme |
+| Muhataplar (kullanıcı yönetimi) | Hazır | Davet, geçici şifre e-postası, rol/firma atama |
+| Firma içi görünürlük | Hazır | `company_admin` firmanın tüm taleplerini görür/yanıtlar |
+| Firma / sözleşme / proje / personel / raporlar | Hazır | Raporlar tüm talepleri istemciye çeker (ölçek notu §5) |
+| Güvenlik (RTDB kuralları) | Hazır, dağıtım bekliyor | §4; 49 kural testi |
+| Şifre değiştirme / sıfırlama | Hazır | `change-password.html`, `auth-action.html` (şifre kuralı: ≥8, 1 büyük harf, 1 rakam) |
+| PDF kılavuzlar | Hazır | `support-v2/docs/` — giriş sayfasından ve menüden erişilir; kaynak: `docs/manuals/` |
+| Eski v1 portal | Kaldırıldı | `support/`, `assets/js/support/` silindi; `/support` → v2 girişine yönlenir |
 
-Genel değerlendirme: çekirdek akış (aç → ata → yanıtla → kapat) uçtan uca var. Bu çalışmadan önce
-üç şey üretime almayı engelliyordu: (1) mail zinciri, (2) kullanıcı yönetimi sayfasının açılmaması,
-(3) veritabanı kurallarındaki yetki yükseltme açığı. Üçü de bu branch'te kapatıldı; **dağıtım adımları §6'da**.
+Genel değerlendirme: uçtan uca akış (aç → ata → yanıtla → çöz → müşteri onayı → kapat / yeniden aç) tamam. Üretime almadan önce
+yalnızca **altyapı adımları** kalır; sıra ve kontroller `docs/yayin-kontrol-listesi.md` içindedir.
 
 ## 3. "Mailler neden gönderilmiyor?" — bulgular
 
@@ -83,45 +86,45 @@ Not: "invite-only" mimarisi kullanıcıları istemci tarafında oluşturduğu i�
 (kapatılırsa davet de çalışmaz). Yeni kurallar profili olmayan hesabı etkisiz bırakır; kalıcı çözüm kullanıcı oluşturmayı
 sunucuya (Cloud Function / Admin SDK) taşımaktır.
 
-## 5. Hâlâ eksik / sonraki adımlar (öncelik sırasıyla)
+## 5. Bilinen sınırlar ve sonraki adımlar (bilinçli olarak kapsam dışı)
 
-**P1 — kısa vadede**
-1. **İç notlar müşteriye veritabanı düzeyinde açık.** Mesajlar tek düğümde; "dahili not" yalnızca arayüzde filtreleniyor.
-   Çözüm: `ticket_internal_notes/$ticketId` (yalnızca personel) + mevcut kayıtlar için tek seferlik taşıma.
-2. **Kapanış onayı / yeniden açma akışı yok.** `pending_close` ve `reopened` durumları arayüzde tanımsız; `ticket_close_approval`,
-   `ticket_reopened` mail şablonları ve sunucu tipleri hazır ama hiçbir ekran tetiklemiyor.
-3. **E-posta tetiklemesi tarayıcıya bağlı:** sekme kapanırsa/ağ koparsa yeniden deneme yok (kuyruk yok). Kalıcı çözüm: `email_outbox`
-   + zamanlanmış Netlify function veya RTDB tetikleyici.
-4. Firebase Console işleri (§3-F) ve Netlify ortam değişkenleri.
-
-**P2**
-5. Firma içi görünürlük: `company_admin`/`customer` için "firma ticket'ları" planlanmış (00-master rol matrisi) ama müşteri yalnızca kendi
-   açtıklarını görüyor; `company_admin` rolü `ROLES`'ta yok (giriş sonrası yönlendirilemez).
-6. Uygulama içi bildirim zili boş: `addNotification` hiç çağrılmıyor.
-7. SLA / hedef süre / eskalasyon alanları yok.
-8. Dosya eki yalnızca URL; `firebase.json` olmayan `storage.rules`'a referans veriyor (tam `firebase deploy` hata verir).
-9. Ölçek: yönetici sayfaları `getAllTickets()` ile tüm koleksiyonu çekiyor; sayfalama istemci tarafında.
-10. Eski v1 portal (`support/`, `assets/js/support/`, `yedek_kod.gs` ticket kısımları) ölü kod; temizlenebilir.
+1. **Sunucu tarafı e-posta kuyruğu yok.** Yeniden deneme tarayıcıda (localStorage) yapılır; kullanıcı sekmeyi kapatırsa bekleyen e-posta bir sonraki
+   girişte gönderilir, 24 saat sonra düşer ve Aktiviteler'e `email_failed` yazılır. Kalıcı çözüm: Cloud Function / zamanlanmış Netlify function.
+2. **Kullanıcı oluşturma istemci tarafında** (ikincil Firebase app). Firebase'de genel e-posta kaydı kapatılamaz; kurallar profili olmayan hesabı etkisiz bırakır.
+   Kalıcı çözüm: Admin SDK ile sunucu tarafı kullanıcı oluşturma.
+3. **Dosya ekleri RTDB'de base64** (Firebase Storage kullanılmıyor): küçük dosyalar için uygundur (≤2 MB, ≤3 dosya, görseller istemcide sıkıştırılır).
+   Hacim büyürse Storage'a taşıyın.
+4. **Ölçek:** yönetici sayfaları ve raporlar `getAllTickets()` ile koleksiyonu çeker; sayfalama istemci tarafında. Binlerce talepten sonra sunucu tarafı sorgu/sayfalama gerekir.
+5. **SLA hedefleri sabit** (`ticket-utils.js` → `SLA_TARGETS_HOURS`); sözleşmeye özel hedef ve eskalasyon e-postası yok.
+6. Mevcut ("must_change_password" bayrağı olmayan) kullanıcılar zorunlu şifre değişimine tabi değildir; isterseniz Console'dan bayrağı ekleyin.
+7. Eski dahili notlar (kural değişikliğinden önce `ticket_messages` içine yazılmış olanlar) için süper admin → Genel Bakış → **Veri Bakımı** → "İç Notları Taşı".
 
 ## 6. Dağıtım sırası
 
-1. Branch'i `main`'e birleştirin (PR) → Netlify siteyi ve function'ı yayınlar. (Önce site, sonra kurallar.)
-2. Netlify → Environment variables: `RESEND_API_KEY` (zorunlu). İsteğe bağlı: `CONTACT_EMAIL`, `ALLOWED_ORIGINS`. Yeniden deploy.
-3. Kontrol: `curl -s https://<site>/api/send-email` → `configured:true`. Süper admin ile girin → Genel Bakış → **E-posta Servisi** kartı:
-   "Durumu Kontrol Et" ve "Test E-postası Gönder".
-4. Kurallar: `firebase deploy --only database`. Hemen ardından duman testi: müşteri girişi → talep aç → yanıtla; yönetici → ata → yanıtla.
-   Sorun olursa geri alma: `git show 1d537a6:database.rules.json > database.rules.json && firebase deploy --only database`.
-5. Firebase Console SMTP + action URL (§3-F).
-6. Mevcut geçici şifreli kullanıcılar `must_change_password` taşımaz (bayrak yeni oluşturulanlar için); isterseniz Console'dan ekleyin.
+Ayrıntılı, işaretlenebilir liste: **`docs/yayin-kontrol-listesi.md`**. Özet:
+
+1. `main` güncel → Netlify'dan yayınlayın (site + `/api/send-email` function).
+2. **Hemen ardından** RTDB kurallarını dağıtın: `firebase deploy --only database` (iç notlar, ekler, kapanış/yeniden açma ve `company_admin` kuralları yeni kurallara bağlıdır;
+   kurallar dağıtılmadan yeni özellikler `PERMISSION_DENIED` verir).
+3. Süper admin → Genel Bakış → **E-posta Servisi**: "Durumu Kontrol Et" + "Test E-postası Gönder".
+4. Firebase Console: SMTP + action URL (§3-F).
+5. Duman testi (müşteri + danışman), ardından Veri Bakımı (isteğe bağlı).
+
+Geri alma: `git show 1d537a6:database.rules.json > database.rules.json && firebase deploy --only database` (eski, **güvensiz** kurallar — yalnızca acil durumda).
 
 ## 7. Testler
 
 ```
-node --test netlify/tests/send-email.test.js            # sunucu: yetkilendirme, alıcı, şablon, Resend hataları
-node --test netlify/tests/client-email-service.test.mjs # istemci servisi
-node --test netlify/tests/client-utils.test.mjs         # arama yardımcıları
-cd tests/rules && npm install && npm test                # RTDB kuralları (targaryen)
+node --test netlify/tests/send-email.test.js netlify/tests/client-email-service.test.mjs \
+            netlify/tests/client-firebase.test.mjs netlify/tests/client-notifications.test.mjs \
+            netlify/tests/client-utils.test.mjs        # sunucu + istemci birim testleri (53)
+cd tests/rules && npm install && npm test              # RTDB kuralları (targaryen, 49) + üretecin database.rules.json ile eşitliği
+node tests/e2e/lifecycle.e2e.cjs                       # tarayıcı: talep yaşam döngüsü (34)
+node tests/e2e/bell-sla.e2e.cjs                        # bildirim zili, SLA, e-posta kuyruğu (22)
+node tests/e2e/attachments.e2e.cjs                     # dosya ekleri (22)
+node tests/e2e/guides.e2e.cjs                          # PDF kılavuz bağlantıları
+node tests/e2e/smoke-all.e2e.cjs                       # tüm roller × tüm sayfalar (75)
 ```
 
-Tarayıcı duman testleri (Playwright + sahte Firebase) bu çalışmada elle çalıştırıldı: tüm 21 portal sayfası hatasız yükleniyor;
-auth-action, muhataplar (oluşturma + credentials e-postası), zorunlu şifre akışı ve dashboard e-posta kartı doğrulandı.
+E2E testleri Playwright + Chromium ister (`PLAYWRIGHT_PATH` ile yol verilebilir). Tarayıcıda gerçek RTDB kuralları (targaryen) ve gerçek
+`send-email` fonksiyonu çalışır; yalnızca Google sertifikaları, RTDB REST ve Resend taklit edilir. Kılavuzları yeniden üretmek için `docs/manuals/README.md`.
