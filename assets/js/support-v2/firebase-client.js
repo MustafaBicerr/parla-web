@@ -1,7 +1,7 @@
 /**
  * Parla BT Ticket V2 — Firebase Realtime Database istemcisi
  */
-import { nowIso, generateTicketNumber, getTicketKey } from "./ticket-utils.js";
+import { nowIso, generateTicketNumber, getTicketKey, isCustomerRole } from "./ticket-utils.js";
 
 const V2_PREFIX = "v2";
 
@@ -292,6 +292,14 @@ const ParlaDb = {
     }));
   },
 
+  /** Müşteri tarafı liste: firma yöneticisi firmanın tüm talepleri, diğerleri yalnızca kendi talepleri. */
+  async getTicketsForSession(session) {
+    if (session?.role === "company_admin" && session.company_id) {
+      return this.getTicketsForCompany(session.company_id);
+    }
+    return this.getTicketsForUser(session.uid);
+  },
+
   async getPersonnelTickets(personnelId) {
     const fb = getFirebase();
     const q = fb.db.query(
@@ -415,6 +423,16 @@ const ParlaDb = {
       patch.closed_at = ts;
     }
 
+    // Müşterinin gördüğü değişiklikler (durum/öncelik/atama) "son herkese açık hareket" olarak işaretlenir;
+    // bildirim zili bu alanlardan türetilir (dahili notlar hariç).
+    const customerVisible = ["status", "priority", "assigned_to_id", "assigned_to_name"].some(
+      (field) => patch[field] !== undefined && String(patch[field]) !== String(existing[field] || "")
+    );
+    if (customerVisible) {
+      patch.public_updated_at = ts;
+      patch.public_updated_by = af.updated_by;
+    }
+
     await fb.db.update(v2Ref(`tickets/${id}`), patch);
     return this.getTicket(id);
   },
@@ -498,6 +516,22 @@ const ParlaDb = {
     };
     await fb.db.set(ref, payload);
 
+    // Talep üzerindeki "son hareket" alanları. Dahili notlar yalnızca updated_at'i değiştirir;
+    // herkese açık mesajlar ayrıca public_updated_* ve (personel için) ilk yanıt zamanını yazar.
+    const isStaffAuthor = !["customer", "company_admin", "arizi_customer"].includes(
+      String(payload.author_role || "").toLowerCase()
+    );
+    const ticketPatch = { updated_at: ts, updated_by: payload.user_id };
+    if (!payload.is_internal) {
+      ticketPatch.public_updated_at = ts;
+      ticketPatch.public_updated_by = payload.user_id;
+      if (isStaffAuthor) {
+        const firstSnap = await fb.db.get(v2Ref(`tickets/${ticketId}/first_response_at`));
+        if (!firstSnap.exists()) ticketPatch.first_response_at = ts;
+      }
+    }
+    await fb.db.update(v2Ref(`tickets/${ticketId}`), ticketPatch);
+
     if (data.work_hours && parseFloat(data.work_hours) > 0) {
       let personnelId = data.personnel_id || "";
       let personnelName = data.personnel_name || data.author_name || "";
@@ -520,8 +554,6 @@ const ParlaDb = {
         },
         { uid: data.user_id, name: data.author_name, email: data.author_email }
       );
-    } else {
-      await fb.db.update(v2Ref(`tickets/${ticketId}`), { updated_at: ts });
     }
 
     return { id, ...payload };
@@ -534,18 +566,17 @@ const ParlaDb = {
   async emailHasConflictingRole(email, role) {
     const e = String(email || "").trim().toLowerCase();
     if (!e) return "";
-    const isCustomerRole = role === "customer" || role === "arizi_customer";
+    const wantsCustomer = isCustomerRole(role);
 
     const personnel = await this.findPersonnelByEmail(e);
-    if (personnel && isCustomerRole) {
+    if (personnel && wantsCustomer) {
       return "Bu e-posta adresi bir danışman (personel) kaydına ait; müşteri kullanıcısı olarak eklenemez.";
     }
 
     const users = await this.getAllUsers();
     const existing = users.find((u) => String(u.email || "").trim().toLowerCase() === e);
     if (existing) {
-      const wasCustomer = existing.role === "customer" || existing.role === "arizi_customer";
-      if (wasCustomer !== isCustomerRole) {
+      if (isCustomerRole(existing.role) !== wantsCustomer) {
         return `Bu e-posta adresi farklı türde bir kullanıcıya (${existing.role}) ait.`;
       }
     }

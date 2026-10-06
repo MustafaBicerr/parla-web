@@ -18,7 +18,7 @@ import {
   escapeHtml,
 } from "../ui-shell.js";
 import { validatePersonnelForm } from "../validators.js";
-import { STATUSES } from "../ticket-utils.js";
+import { STATUSES, isOpenStatus } from "../ticket-utils.js";
 import { initPhoneInput, normalizePhone, formatPhoneDisplay } from "../phone-utils.js";
 
 let session = null;
@@ -32,9 +32,8 @@ function fullName(p) {
 }
 
 function openTicketCount(personnelId) {
-  const open = [STATUSES.OPEN, STATUSES.IN_PROGRESS, STATUSES.WAITING_CUSTOMER];
   return allTickets.filter(
-    (t) => t.assigned_to_id === personnelId && open.includes(t.status)
+    (t) => t.assigned_to_id === personnelId && isOpenStatus(t.status)
   ).length;
 }
 

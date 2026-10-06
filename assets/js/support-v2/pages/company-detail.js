@@ -24,7 +24,7 @@ import {
   renderStatusBadge,
   renderTypeBadge,
 } from "../ui-shell.js";
-import { CUSTOMER_TYPES, getTicketKey } from "../ticket-utils.js";
+import { CUSTOMER_TYPES, getTicketKey, OPEN_STATUSES } from "../ticket-utils.js";
 import { validateCompanyForm } from "../validators.js";
 import { downloadExcel, monthOptions, filterEffortsByMonth } from "../export-utils.js";
 import { initPhoneInput, normalizePhone, formatPhoneDisplay, setPhoneValue } from "../phone-utils.js";
@@ -44,7 +44,7 @@ function getId() {
 }
 
 function openStatuses() {
-  return ["open", "assigned", "in_progress", "waiting_customer"];
+  return OPEN_STATUSES;
 }
 
 function effortsForCompanyTickets() {

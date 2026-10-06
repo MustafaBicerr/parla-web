@@ -12,6 +12,7 @@ import {
   escapeHtml,
 } from "../ui-shell.js";
 import {
+  OPEN_STATUSES,
   STATUSES,
   formatRoleLabel,
 } from "../ticket-utils.js";
@@ -19,7 +20,7 @@ import {
 const app = document.getElementById("sv2-app");
 let session = null;
 
-const ACTIVE_STATUSES = ["open", "in_progress", "waiting_customer"];
+const ACTIVE_STATUSES = OPEN_STATUSES;
 
 function computeTicketStats(tickets) {
   const active = tickets.filter((t) =>
@@ -107,7 +108,7 @@ async function init() {
 
     const [company, tickets] = await Promise.all([
       session.company_id ? ParlaDb.getCompany(session.company_id) : Promise.resolve(null),
-      ParlaDb.getTicketsForUser(session.uid),
+      ParlaDb.getTicketsForSession(session),
     ]);
 
     renderPage(company, tickets);

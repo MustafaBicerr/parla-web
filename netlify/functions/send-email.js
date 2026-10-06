@@ -21,13 +21,25 @@ const ADMIN_ROLES = new Set(["super_admin", "service_admin"]);
 const TICKET_TYPES = {
   ticket_created: "participant",
   ticket_message: "participant",
-  ticket_reopened: "participant",
+  ticket_reopened: "participant", // müşteri kapanışı reddedip talebi yeniden açar
+  ticket_closed: "participant", // müşteri kapanışı onaylar ya da personel kapatır
   ticket_assigned: "staff",
   ticket_status_changed: "staff",
   ticket_resolved: "staff",
-  ticket_closed: "staff",
   ticket_close_approval: "staff",
   send_to_customer: "staff",
+};
+
+/**
+ * Durum bildirimleri yalnızca gerçek ticket durumuyla tutarlıysa gönderilir; böylece "participant"
+ * tiplerini kullanan bir müşteri, talep o durumda değilken sahte "kapandı/yeniden açıldı" maili üretemez.
+ */
+const REQUIRED_STATUS = {
+  ticket_resolved: "resolved",
+  ticket_closed: "closed",
+  ticket_reopened: "reopened",
+  ticket_close_approval: "pending_close",
+  send_to_customer: "waiting_customer",
 };
 const ADMIN_TYPES = new Set(["user_credentials", "test_email", "diagnostic"]);
 
@@ -305,6 +317,11 @@ async function handleTicketEvent({ type, body, token, profile, apiKey }) {
   const ticket = await rtdbGet(`v2/tickets/${ticketId}`, token);
   if (!ticket || typeof ticket !== "object") {
     throw new HttpError(404, "Ticket bulunamadı.", "ticket_not_found");
+  }
+
+  const requiredStatus = REQUIRED_STATUS[type];
+  if (requiredStatus && String(ticket.status || "").toLowerCase() !== requiredStatus) {
+    throw new HttpError(409, "Talep durumu bu bildirimle uyuşmuyor.", "status_mismatch");
   }
 
   const customerEmail = String(ticket.user_email || "").trim().toLowerCase();

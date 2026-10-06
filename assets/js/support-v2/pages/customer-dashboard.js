@@ -16,14 +16,14 @@ import {
   formatDateTime,
   escapeHtml,
 } from "../ui-shell.js";
-import { SAP_MODULE_LABELS, STATUSES } from "../ticket-utils.js";
+import { SAP_MODULE_LABELS, STATUSES, OPEN_STATUSES } from "../ticket-utils.js";
 import { initCreateTicketModal, bindNewTicketButton } from "./create-ticket-modal.js";
 
 const app = document.getElementById("sv2-app");
 let session = null;
 let allTickets = [];
 
-const ACTIVE_STATUSES = ["open", "in_progress", "waiting_customer"];
+const ACTIVE_STATUSES = OPEN_STATUSES;
 
 function isThisMonth(iso) {
   if (!iso) return false;
@@ -198,7 +198,7 @@ function bindTableRowClicks() {
 async function loadData() {
   showLoading(true);
   try {
-    allTickets = await ParlaDb.getTicketsForUser(session.uid);
+    allTickets = await ParlaDb.getTicketsForSession(session);
   } catch (err) {
     handleError(err, "Talepler yüklenemedi");
     allTickets = [];

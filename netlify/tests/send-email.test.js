@@ -262,6 +262,45 @@ test("pasif personele gönderim reddedilir", async () => {
   assert.equal(res.statusCode, 403);
 });
 
+test("müşteri, talep gerçekten yeniden açıldıysa personele 'tekrar açıldı' bildirimi gönderebilir", async () => {
+  db.v2.tickets.T123456789.status = "reopened";
+  const res = await post(
+    ticketMail("ticket_reopened", ["danisman@parla.com", "info@parlabilgiteknolojileri.net"], { note: "Hata sürüyor" }),
+    makeToken({ sub: "uid-cust" })
+  );
+  assert.equal(res.statusCode, 200, res.body);
+  assert.match(resendCalls[0].payload.subject, /Talep tekrar açıldı/);
+  assert.match(resendCalls[0].payload.html, /Hata sürüyor/);
+});
+
+test("müşteri kapanış onayını bildirebilir (durum 'closed' ise)", async () => {
+  db.v2.tickets.T123456789.status = "closed";
+  const res = await post(ticketMail("ticket_closed", ["info@parlabilgiteknolojileri.net"], { note: "onay" }), makeToken({ sub: "uid-cust" }));
+  assert.equal(res.statusCode, 200, res.body);
+});
+
+test("durumla uyuşmayan bildirim reddedilir (sahte 'kapandı/yeniden açıldı' maili üretilemez)", async () => {
+  // ticket durumu 'open'
+  const closed = await post(ticketMail("ticket_closed", ["info@parlabilgiteknolojileri.net"]), makeToken({ sub: "uid-cust" }));
+  assert.equal(closed.statusCode, 409);
+  assert.equal(JSON.parse(closed.body).code, "status_mismatch");
+  const reopened = await post(ticketMail("ticket_reopened", ["info@parlabilgiteknolojileri.net"]), makeToken({ sub: "uid-cust" }));
+  assert.equal(reopened.statusCode, 409);
+  const approval = await post(ticketMail("ticket_close_approval", ["musteri@abc.com"]), makeToken());
+  assert.equal(approval.statusCode, 409, "personel de durum tutarsızsa gönderemez");
+  assert.equal(resendCalls.length, 0);
+});
+
+test("kapanış onayı isteği yalnızca personelden ve durum 'pending_close' iken kabul edilir", async () => {
+  db.v2.tickets.T123456789.status = "pending_close";
+  const asCustomer = await post(ticketMail("ticket_close_approval", ["musteri@abc.com"]), makeToken({ sub: "uid-cust" }));
+  assert.equal(asCustomer.statusCode, 403);
+  const asStaff = await post(ticketMail("ticket_close_approval", ["musteri@abc.com"]), makeToken());
+  assert.equal(asStaff.statusCode, 200, asStaff.body);
+  assert.match(resendCalls[0].payload.subject, /Kapanış onayı/);
+  assert.match(resendCalls[0].payload.html, /customer\/ticket-detail\.html\?id=T123456789/);
+});
+
 test("müşteri personel tiplerini (atama/durum) gönderemez", async () => {
   const token = makeToken({ sub: "uid-cust" });
   assert.equal((await post(ticketMail("ticket_assigned", ["danisman@parla.com"]), token)).statusCode, 403);

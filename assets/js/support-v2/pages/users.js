@@ -29,6 +29,7 @@ import {
   generateTempPassword,
   formatRoleLabel,
   matchesSearch,
+  isCustomerRole,
 } from "../ticket-utils.js";
 import { validateUserForm } from "../validators.js";
 import ParlaEmailService from "../email-service.js";
@@ -131,6 +132,7 @@ function buildPageContent() {
           search: { id: "users-search", placeholder: "Ad, e-posta veya firma ara...", value: filters.search },
           chips: [
             { value: "all", label: "Tüm Roller", active: filters.role === "all" },
+            { value: ROLES.COMPANY_ADMIN, label: "Firma Yön.", active: filters.role === ROLES.COMPANY_ADMIN },
             { value: ROLES.CUSTOMER, label: "Müşteri", active: filters.role === ROLES.CUSTOMER },
             { value: ROLES.ARIZI_CUSTOMER, label: "Arızi Müşteri", active: filters.role === ROLES.ARIZI_CUSTOMER },
             { value: ROLES.CONSULTANT, label: "Danışman", active: filters.role === ROLES.CONSULTANT },
@@ -388,7 +390,7 @@ async function submitNewUser() {
   };
 
   const needsCompany =
-    data.role === ROLES.CUSTOMER || data.role === ROLES.ARIZI_CUSTOMER;
+    isCustomerRole(data.role);
 
   if (needsCompany && !companyId && !selectedCompany?.create) {
     showFormErrors(form, { company: "Müşteri kullanıcıları için firma seçimi zorunludur." });

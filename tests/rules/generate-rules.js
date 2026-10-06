@@ -14,7 +14,10 @@ const MY_COMPANY_SET = `${ME}.child('company_id').exists() && ${MY_COMPANY} !== 
 // Açık kayıtla oluşturulmuş ama yönetici tarafından profili açılmamış hesapları dışarıda bırakır.
 const HAS_PROFILE = `${ME}.child('role').exists() && ${ME}.child('is_active').val() !== false`;
 const TICKET = (id) => `root.child('v2/tickets').child(${id})`;
-const OWNER = (id) => `${TICKET(id)}.child('user_id').val() === auth.uid`;
+const COMPANY_ADMIN = `${ROLE} === 'company_admin'`;
+// Ticket'ın tarafı: talep sahibi VEYA aynı firmanın firma yöneticisi (customer rolü yalnızca kendi ticket'larını görür).
+const PARTY = (node) => `(${node}.child('user_id').val() === auth.uid || (${COMPANY_ADMIN} && ${MY_COMPANY_SET} && ${node}.child('company_id').val() === ${MY_COMPANY}))`;
+const OWNER = (id) => PARTY(TICKET(id));
 const AUTH = "auth != null";
 const and = (...p) => p.filter(Boolean).join(" && ");
 
@@ -42,18 +45,29 @@ const rules = {
         },
       },
       tickets: {
-        ".read": `${AUTH} && (${STAFF} || (query.orderByChild == 'user_id' && query.equalTo == auth.uid) || (query.orderByChild == 'company_id' && ${MY_COMPANY_SET} && query.equalTo == ${MY_COMPANY}))`,
-        ".indexOn": ["user_id", "company_id", "assigned_to_id", "status", "created_at", "ticket_type"],
+        ".read": `${AUTH} && (${STAFF} || (query.orderByChild == 'user_id' && query.equalTo == auth.uid) || (query.orderByChild == 'company_id' && ${COMPANY_ADMIN} && ${MY_COMPANY_SET} && query.equalTo == ${MY_COMPANY}))`,
+        ".indexOn": ["user_id", "company_id", "assigned_to_id", "status", "created_at", "updated_at", "ticket_type"],
         $ticketId: {
-          ".read": `${AUTH} && (data.child('user_id').val() === auth.uid || ${STAFF})`,
+          ".read": `${AUTH} && (${PARTY("data")} || ${STAFF})`,
           // Personel serbest yazar (silme yalnızca admin). Müşteri yalnızca kendi adına, 'open' durumda ve
           // kendi firmasıyla ticket OLUŞTURABİLİR; sonrasında yalnızca aşağıdaki alanları güncelleyebilir.
           ".write": `${AUTH} && ((!newData.exists() && ${ADMIN}) || (newData.exists() && ${STAFF}) || (!data.exists() && newData.child('user_id').val() === auth.uid && newData.child('status').val() === 'open' && (newData.child('assigned_to_id').val() === '' || !newData.child('assigned_to_id').exists()) && (newData.child('company_id').val() === ${MY_COMPANY} || (newData.child('company_id').val() === '' && !${ME}.child('company_id').exists()))))`,
+          // Talep sahibi/firma yöneticisi yalnızca şu alanları yazabilir:
+          //  - status: müşteri bekleniyor -> işlemde (yanıtlayınca); çözüldü/kapanış onayı -> kapandı (onay);
+          //    kapanış onayı/çözüldü/kapandı -> tekrar açıldı (gerekçeyle)
           status: {
-            ".write": `${AUTH} && data.parent().child('user_id').val() === auth.uid && data.val() === 'waiting_customer' && newData.val() === 'in_progress'`,
+            ".write": `${AUTH} && ${PARTY("data.parent()")} && ((data.val() === 'waiting_customer' && newData.val() === 'in_progress') || ((data.val() === 'pending_close' || data.val() === 'resolved') && newData.val() === 'closed') || ((data.val() === 'pending_close' || data.val() === 'resolved' || data.val() === 'closed') && newData.val() === 'reopened'))`,
           },
-          updated_at: { ".write": `${AUTH} && data.parent().child('user_id').val() === auth.uid` },
-          updated_by: { ".write": `${AUTH} && data.parent().child('user_id').val() === auth.uid` },
+          closed_at: {
+            ".write": `${AUTH} && ${PARTY("data.parent()")} && (((data.parent().child('status').val() === 'pending_close' || data.parent().child('status').val() === 'resolved') && newData.isString()) || ((data.parent().child('status').val() === 'pending_close' || data.parent().child('status').val() === 'resolved' || data.parent().child('status').val() === 'closed') && !newData.exists()))`,
+          },
+          reopened_at: {
+            ".write": `${AUTH} && ${PARTY("data.parent()")} && (data.parent().child('status').val() === 'pending_close' || data.parent().child('status').val() === 'resolved' || data.parent().child('status').val() === 'closed') && newData.isString()`,
+          },
+          updated_at: { ".write": `${AUTH} && ${PARTY("data.parent()")}` },
+          updated_by: { ".write": `${AUTH} && ${PARTY("data.parent()")}` },
+          public_updated_at: { ".write": `${AUTH} && ${PARTY("data.parent()")}` },
+          public_updated_by: { ".write": `${AUTH} && ${PARTY("data.parent()")}` },
         },
       },
       ticket_messages: {

@@ -18,6 +18,8 @@ const U = {
   cons: { uid: "cons" },
   custA: { uid: "custA" },
   custA2: { uid: "custA2" },
+  cadmin: { uid: "cadmin" }, // A firmasının firma yöneticisi
+  cadminB: { uid: "cadminB" },
   custB: { uid: "custB" },
   arizi: { uid: "arizi" },
   intruder: { uid: "intruder" }, // Auth hesabı var ama profili yok (açık kayıt ile oluşturulmuş)
@@ -33,6 +35,8 @@ const data = {
       custA: { role: "customer", company_id: "cA", is_active: true, last_login_at: "2026-01-01T00:00:00Z" },
       custA2: { role: "customer", company_id: "cA", is_active: true },
       custB: { role: "customer", company_id: "cB", is_active: true },
+      cadmin: { role: "company_admin", company_id: "cA", is_active: true },
+      cadminB: { role: "company_admin", company_id: "cB", is_active: true },
       arizi: { role: "arizi_customer", company_id: "", is_active: true },
     },
     tickets: {
@@ -120,12 +124,34 @@ test("[kritik] müşteri assigned_to_id sorgusuyla başka firmaların ticket'lar
   assertDenied(as(U.intruder).read("/v2/tickets", q("assigned_to_id", "p2")));
 });
 
-test("müşteri kendi user_id / company_id sorgusunu okuyabilir, başkasınınkini okuyamaz", () => {
+test("müşteri yalnızca kendi user_id sorgusunu okur; firma sorgusu yalnızca firma yöneticisine açık", () => {
   assertAllowed(as(U.custA).read("/v2/tickets", q("user_id", "custA")));
-  assertAllowed(as(U.custA).read("/v2/tickets", q("company_id", "cA")));
   assertDenied(as(U.custA).read("/v2/tickets", q("user_id", "custB")));
+  assertDenied(as(U.custA).read("/v2/tickets", q("company_id", "cA")), "customer rolü firma listesini göremez");
   assertDenied(as(U.custA).read("/v2/tickets", q("company_id", "cB")));
   assertDenied(as(U.custA).read("/v2/tickets"));
+});
+
+test("firma yöneticisi kendi firmasının ticket'larını listeler, başka firmayı listeleyemez", () => {
+  assertAllowed(as(U.cadmin).read("/v2/tickets", q("company_id", "cA")));
+  assertDenied(as(U.cadmin).read("/v2/tickets", q("company_id", "cB")));
+  assertDenied(as(U.cadmin).read("/v2/tickets"));
+  assertDenied(as(U.cadmin).read("/v2/tickets", q("assigned_to_id", "p1")));
+  assertAllowed(as(U.cadmin).read("/v2/tickets", q("user_id", "cadmin")));
+});
+
+test("firma yöneticisi firma ticket'ını, mesajlarını, geçmişini ve atamalarını okur/yanıtlar; başka firmanınkini okuyamaz", () => {
+  assertAllowed(as(U.cadmin).read("/v2/tickets/t1"));
+  assertDenied(as(U.cadmin).read("/v2/tickets/t2"));
+  assertAllowed(as(U.cadmin).read("/v2/ticket_messages/t1"));
+  assertAllowed(as(U.cadmin).read("/v2/ticket_history/t1"));
+  assertAllowed(as(U.cadmin).read("/v2/ticket_assignments/t1"));
+  assertDenied(as(U.cadminB).read("/v2/ticket_messages/t1"));
+  assertDenied(as(U.cadmin).read("/v2/ticket_internal_notes/t1"), "iç notlar firma yöneticisine de kapalı");
+  const msg = { message_id: "mc", user_id: "cadmin", message: "firma yanıtı", created_at: "now" };
+  assertAllowed(as(U.cadmin).write("/v2/ticket_messages/t1/mc", msg));
+  assertDenied(as(U.cadmin).write("/v2/ticket_messages/t2/mc", msg));
+  assertDenied(as(U.custA2).read("/v2/ticket_messages/t1"), "aynı firmadaki sıradan müşteri görmez");
 });
 
 test("firması olmayan (arızi) müşteri company_id='' sorgusuyla diğer arızi kayıtları okuyamaz", () => {
@@ -184,6 +210,52 @@ test("personel ticket güncelleyebilir; silme yalnızca admin", () => {
   assertDenied(as(U.cons).write("/v2/tickets/t2", null));
   assertAllowed(as(U.root).write("/v2/tickets/t2", null));
   assertAllowed(as(U.svc).write("/v2/tickets/t2", null));
+});
+
+// ------------------------------------------------ yaşam döngüsü (onay/yeniden açma)
+function withStatus(status, extra) {
+  const d = JSON.parse(JSON.stringify(data));
+  d.v2.tickets.t1.status = status;
+  Object.assign(d.v2.tickets.t1, extra || {});
+  return targaryen.database(rules, d);
+}
+
+test("müşteri 'kapanış onayı bekliyor' talebi onaylayıp kapatabilir (closed_at ile)", () => {
+  const d = withStatus("pending_close");
+  assertAllowed(d.as(U.custA).update("/v2/tickets/t1", { status: "closed", closed_at: "now", updated_at: "now", updated_by: "custA", public_updated_at: "now", public_updated_by: "custA" }));
+  assertDenied(d.as(U.custB).update("/v2/tickets/t1", { status: "closed", closed_at: "now" }), "başka müşteri kapatamaz");
+  assertDenied(d.as(U.custA).update("/v2/tickets/t1", { status: "resolved" }), "müşteri çözüldü işaretleyemez");
+});
+
+test("müşteri çözülmüş/kapanmış/onay bekleyen talebi gerekçeyle yeniden açabilir", () => {
+  for (const status of ["pending_close", "resolved", "closed"]) {
+    const d = withStatus(status);
+    assertAllowed(d.as(U.custA).update("/v2/tickets/t1", { status: "reopened", reopened_at: "now", updated_at: "now", updated_by: "custA" }), status + " -> reopened");
+  }
+  assertAllowed(withStatus("closed", { closed_at: "2026-01-01" }).as(U.custA).update("/v2/tickets/t1", { status: "reopened", reopened_at: "now", closed_at: null }));
+  assertDenied(withStatus("in_progress").as(U.custA).update("/v2/tickets/t1", { status: "reopened", reopened_at: "now" }), "açık talep yeniden açılmaz");
+  assertDenied(withStatus("open").as(U.custA).update("/v2/tickets/t1", { status: "closed", closed_at: "now" }), "açık talep müşteri tarafından kapatılamaz");
+});
+
+test("firma yöneticisi firma ticket'ını onaylayıp yeniden açabilir; sıradan müşteri başkasının ticket'ını yönetemez", () => {
+  const d = withStatus("pending_close");
+  assertAllowed(d.as(U.cadmin).update("/v2/tickets/t1", { status: "closed", closed_at: "now", updated_at: "now" }));
+  assertDenied(d.as(U.cadminB).update("/v2/tickets/t1", { status: "closed", closed_at: "now" }));
+  assertDenied(d.as(U.custA2).update("/v2/tickets/t1", { status: "closed", closed_at: "now" }));
+});
+
+test("müşteri yaşam döngüsü alanları dışında hiçbir alanı değiştiremez (durum geçişi sırasında bile)", () => {
+  const d = withStatus("pending_close");
+  assertDenied(d.as(U.custA).update("/v2/tickets/t1", { status: "closed", closed_at: "now", priority: "low" }));
+  assertDenied(d.as(U.custA).update("/v2/tickets/t1", { status: "reopened", reopened_at: "now", assigned_to_id: "x" }));
+  assertDenied(d.as(U.custA).write("/v2/tickets/t1/first_response_at", "now"));
+  assertDenied(d.as(U.custA).write("/v2/tickets/t1/sla_note", "x"));
+});
+
+test("personel her durum geçişini yapabilir (pending_close, reopened dahil)", () => {
+  for (const status of ["pending_close", "waiting_customer", "reopened", "resolved", "closed", "in_progress"]) {
+    assertAllowed(as(U.cons).update("/v2/tickets/t1", { status, updated_at: "now" }), status);
+  }
 });
 
 // ------------------------------------------------------ ticket_messages

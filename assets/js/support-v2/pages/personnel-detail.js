@@ -22,7 +22,7 @@ import {
   renderPriorityBadge,
 } from "../ui-shell.js";
 import { validatePersonnelForm } from "../validators.js";
-import { STATUSES, SAP_MODULE_LABELS } from "../ticket-utils.js";
+import { STATUSES, SAP_MODULE_LABELS, isOpenStatus } from "../ticket-utils.js";
 import { initPhoneInput, normalizePhone, formatPhoneDisplay, setPhoneValue } from "../phone-utils.js";
 
 let session = null;
@@ -46,8 +46,7 @@ function initials(p) {
 }
 
 function openTickets() {
-  const open = [STATUSES.OPEN, STATUSES.IN_PROGRESS, STATUSES.WAITING_CUSTOMER];
-  return tickets.filter((t) => open.includes(t.status));
+  return tickets.filter((t) => isOpenStatus(t.status));
 }
 
 function completedTickets() {

@@ -7,6 +7,7 @@ export const ROLES = {
   SERVICE_ADMIN: "service_admin",
   PROJECT_MANAGER: "project_manager",
   CONSULTANT: "consultant",
+  COMPANY_ADMIN: "company_admin",
   CUSTOMER: "customer",
   ARIZI_CUSTOMER: "arizi_customer",
 };
@@ -16,6 +17,7 @@ export const ROLE_LABELS = {
   service_admin: "Destek Atayıcı",
   project_manager: "Proje Yöneticisi",
   consultant: "Danışman",
+  company_admin: "Firma Yöneticisi",
   customer: "Müşteri Kullanıcısı",
   arizi_customer: "Arızi Müşteri",
 };
@@ -27,7 +29,7 @@ export const ADMIN_ROLES = [
   ROLES.CONSULTANT,
 ];
 
-export const CUSTOMER_ROLES = [ROLES.CUSTOMER, ROLES.ARIZI_CUSTOMER];
+export const CUSTOMER_ROLES = [ROLES.COMPANY_ADMIN, ROLES.CUSTOMER, ROLES.ARIZI_CUSTOMER];
 
 export const TICKET_TYPES = {
   SUP: "SUP",
@@ -66,8 +68,10 @@ export const STATUSES = {
   ASSIGNED: "assigned",
   IN_PROGRESS: "in_progress",
   WAITING_CUSTOMER: "waiting_customer",
+  PENDING_CLOSE: "pending_close",
   RESOLVED: "resolved",
   CLOSED: "closed",
+  REOPENED: "reopened",
 };
 
 export const STATUS_LABELS = {
@@ -75,13 +79,38 @@ export const STATUS_LABELS = {
   assigned: "Atandı",
   in_progress: "İşlemde",
   waiting_customer: "Müşteri Bekleniyor",
+  pending_close: "Kapanış Onayı Bekliyor",
   resolved: "Çözüldü",
   closed: "Kapandı",
+  reopened: "Tekrar Açıldı",
 };
 
 export function isOpenStatus(status) {
   const s = String(status || "").toLowerCase();
   return s !== "closed" && s !== "resolved";
+}
+
+/** Açık sayılan tüm durumlar (atandı, kapanış onayı bekliyor, tekrar açıldı dahil). */
+export const OPEN_STATUSES = Object.values(STATUSES).filter(isOpenStatus);
+
+/** Müşterinin kapanmış/çözülmüş talebi yeniden açabileceği süre (gün). */
+export const REOPEN_WINDOW_DAYS = 14;
+
+/**
+ * Müşteri tarafı yaşam döngüsü eylemleri.
+ * - Onayla: kapanış onayı bekleyen veya çözüldü durumundaki talep kapatılır.
+ * - Yeniden aç: kapanış onayı/çözüldü talepler her zaman, kapalı talepler REOPEN_WINDOW_DAYS içinde.
+ */
+export function customerLifecycle(ticket, now) {
+  const status = String(ticket?.status || "").toLowerCase();
+  const nowMs = now instanceof Date ? now.getTime() : Date.now();
+  const canApprove = status === STATUSES.PENDING_CLOSE || status === STATUSES.RESOLVED;
+  let canReopen = canApprove;
+  if (status === STATUSES.CLOSED) {
+    const closedAt = new Date(ticket.closed_at || ticket.updated_at || 0).getTime();
+    canReopen = closedAt > 0 && nowMs - closedAt <= REOPEN_WINDOW_DAYS * 24 * 3600 * 1000;
+  }
+  return { status, canApprove, canReopen };
 }
 
 export const SAP_MODULES = [

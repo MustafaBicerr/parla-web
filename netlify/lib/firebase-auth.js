@@ -113,7 +113,7 @@ async function verifyIdToken(token, options) {
 
 /** Firebase push key / uid benzeri güvenli anahtar mı? (path enjeksiyonunu engeller) */
 function isSafeKey(value) {
-  return /^[A-Za-z0-9_-]{6,128}$/.test(String(value || ""));
+  return /^[A-Za-z0-9_-]{1,128}$/.test(String(value || ""));
 }
 
 /**

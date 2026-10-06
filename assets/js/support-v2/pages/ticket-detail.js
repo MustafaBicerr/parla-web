@@ -17,8 +17,14 @@ import {
   toast,
   formatDateTime,
   escapeHtml,
+  renderModal,
+  openModal,
+  closeModal,
 } from "../ui-shell.js";
 import {
+  customerLifecycle,
+  REOPEN_WINDOW_DAYS,
+  nowIso,
   STATUS_LABELS,
   PRIORITY_LABELS,
   STATUSES,
@@ -181,6 +187,172 @@ function renderReplyBox(isAdmin) {
     </div>`;
 }
 
+/** Müşteri tarafı yaşam döngüsü bandı: kapanış onayı, yeniden açma ve bilgilendirme. */
+function renderLifecycleBanner() {
+  const lc = customerLifecycle(ticket);
+  const actions = (approve, reopen) => `
+    <div class="sv2-lifecycle-actions">
+      ${approve ? `<button type="button" class="sv2-btn sv2-btn-primary" id="sv2-approve-close"><i class="fas fa-check"></i> Onayla ve Kapat</button>` : ""}
+      ${reopen ? `<button type="button" class="sv2-btn sv2-btn-outline" id="sv2-reopen-ticket"><i class="fas fa-undo"></i> Yeniden Aç</button>` : ""}
+    </div>`;
+  const banner = (kind, icon, title, text, extra) => `
+    <div class="sv2-lifecycle sv2-lifecycle--${kind}" id="sv2-lifecycle-banner">
+      <div class="sv2-lifecycle-icon"><i class="fas ${icon}"></i></div>
+      <div class="sv2-lifecycle-body"><h4>${escapeHtml(title)}</h4><p>${escapeHtml(text)}</p></div>
+      ${extra || ""}
+    </div>`;
+
+  switch (lc.status) {
+    case STATUSES.PENDING_CLOSE:
+      return banner(
+        "pending_close",
+        "fa-clipboard-check",
+        "Kapanış onayınız bekleniyor",
+        "Danışmanımız çözümü tamamladığını bildirdi. Sorun giderildiyse talebi kapatın; devam ediyorsa nedenini yazarak yeniden açın.",
+        actions(true, true)
+      );
+    case STATUSES.RESOLVED:
+      return banner(
+        "resolved",
+        "fa-check-circle",
+        "Talebiniz çözüldü",
+        "Çözümü kontrol edin. Memnunsanız talebi kapatabilir, sorun sürüyorsa yeniden açabilirsiniz.",
+        actions(lc.canApprove, lc.canReopen)
+      );
+    case STATUSES.WAITING_CUSTOMER:
+      return banner(
+        "waiting",
+        "fa-user-clock",
+        "Yanıtınız bekleniyor",
+        "Danışmanımız çözümü test etmenizi veya ek bilgi vermenizi bekliyor. Aşağıdaki Mesajlar bölümünden yanıt yazın."
+      );
+    case STATUSES.REOPENED:
+      return banner("reopened", "fa-undo", "Talebiniz yeniden açıldı", "Danışmanımız kaydı yeniden inceliyor; gelişmeleri e-posta ile bildireceğiz.");
+    case STATUSES.CLOSED:
+      return lc.canReopen
+        ? banner(
+            "closed",
+            "fa-lock",
+            "Talep kapatıldı",
+            `Sorun tekrar ederse kapanıştan sonraki ${REOPEN_WINDOW_DAYS} gün içinde talebi yeniden açabilirsiniz.`,
+            actions(false, true)
+          )
+        : banner("closed", "fa-lock", "Talep kapatıldı", `Yeniden açma süresi (${REOPEN_WINDOW_DAYS} gün) doldu; yeni bir talep oluşturabilirsiniz.`);
+    default:
+      return "";
+  }
+}
+
+function openLifecycleModal(kind) {
+  const isReopen = kind === "reopen";
+  renderModal("sv2-lifecycle-modal", {
+    title: isReopen ? "Talebi Yeniden Aç" : "Talebi Kapat",
+    body: `
+      <p class="sv2-subtitle">${
+        isReopen
+          ? "Sorunun neden devam ettiğini kısaca yazın; danışmanımız talebi yeniden ele alacak."
+          : "Talep kapatılacak. İsterseniz danışmanımıza bir not bırakabilirsiniz."
+      }</p>
+      <div class="sv2-form-group">
+        <label for="sv2-lifecycle-note">${isReopen ? "Yeniden açma gerekçesi *" : "Not (isteğe bağlı)"}</label>
+        <textarea id="sv2-lifecycle-note" rows="4" maxlength="1000" placeholder="${isReopen ? "En az 10 karakter" : "Örn. Çözüm için teşekkürler."}"></textarea>
+        <span class="sv2-field-error" id="sv2-lifecycle-error" hidden></span>
+      </div>`,
+    footer: `
+      <button type="button" class="sv2-btn sv2-btn-secondary" data-close="sv2-lifecycle-modal">Vazgeç</button>
+      <button type="button" class="sv2-btn sv2-btn-primary" id="sv2-lifecycle-confirm">${isReopen ? "Yeniden Aç" : "Onayla ve Kapat"}</button>`,
+  });
+  openModal("sv2-lifecycle-modal");
+
+  document.getElementById("sv2-lifecycle-confirm")?.addEventListener("click", async () => {
+    const note = document.getElementById("sv2-lifecycle-note").value.trim();
+    const errEl = document.getElementById("sv2-lifecycle-error");
+    if (isReopen && note.length < 10) {
+      errEl.textContent = "Lütfen en az 10 karakterlik bir gerekçe yazın.";
+      errEl.hidden = false;
+      return;
+    }
+    closeModal("sv2-lifecycle-modal");
+    await (isReopen ? reopenTicket(note) : approveClosure(note));
+  });
+}
+
+async function notifyStaff(eventType, updated, note, actor) {
+  const recipients = ParlaEmailService.uniqueEmails(staffRecipients(), session.email);
+  const res = await ParlaEmailService.notifyTicketEvent(eventType, recipients, updated, { note });
+  await reportEmailResult(res, { eventType, label: "Bildirim e-postası", ticket: updated, actor });
+}
+
+async function approveClosure(note) {
+  showLoading(true);
+  try {
+    const actor = getActor();
+    const id = getTicketKey(ticket);
+    const previous = ticket.status;
+    const updated = await ParlaDb.updateTicket(id, { status: STATUSES.CLOSED }, actor);
+    await ParlaDb.addTicketHistory(id, {
+      action: "status_note",
+      field_changed: "status",
+      old_value: formatStatusLabel(previous),
+      new_value: formatStatusLabel(STATUSES.CLOSED),
+      changed_by_uid: session.uid,
+      changed_by_name: actor.name,
+      note: note ? `Müşteri kapanışı onayladı: ${note}` : "Müşteri kapanışı onayladı.",
+    });
+    await ParlaDb.logActivity("ticket_closed", "ticket", id, ticket.ticket_number, "Müşteri kapanışı onayladı", actor);
+    toast("Talebiniz kapatıldı. Teşekkür ederiz.", "success");
+    await reloadTicket();
+    notifyStaff("ticket_closed", updated, note || "Müşteri kapanışı onayladı.", actor).catch(() => {});
+  } catch (err) {
+    handleError(err, "Talep kapatma");
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function reopenTicket(reason) {
+  showLoading(true);
+  try {
+    const actor = getActor();
+    const id = getTicketKey(ticket);
+    const previous = ticket.status;
+    // Gerekçe mesaj olarak da kaydedilir; danışman konuşmada görür.
+    await ParlaDb.addTicketMessage(id, {
+      user_id: session.uid,
+      author_name: actor.name,
+      author_email: session.email,
+      author_role: "customer",
+      message: `Yeniden açma gerekçesi: ${reason}`,
+      is_internal: false,
+    });
+    const patch = { status: STATUSES.REOPENED, reopened_at: nowIso() };
+    if (previous === STATUSES.CLOSED) patch.closed_at = null;
+    const updated = await ParlaDb.updateTicket(id, patch, actor);
+    await ParlaDb.addTicketHistory(id, {
+      action: "status_note",
+      field_changed: "status",
+      old_value: formatStatusLabel(previous),
+      new_value: formatStatusLabel(STATUSES.REOPENED),
+      changed_by_uid: session.uid,
+      changed_by_name: actor.name,
+      note: `Müşteri talebi yeniden açtı: ${reason}`,
+    });
+    await ParlaDb.logActivity("ticket_reopened", "ticket", id, ticket.ticket_number, "Müşteri talebi yeniden açtı", actor);
+    toast("Talebiniz yeniden açıldı.", "success");
+    await reloadTicket();
+    notifyStaff("ticket_reopened", updated, reason, actor).catch(() => {});
+  } catch (err) {
+    handleError(err, "Talebi yeniden açma");
+  } finally {
+    showLoading(false);
+  }
+}
+
+function bindLifecycle() {
+  document.getElementById("sv2-approve-close")?.addEventListener("click", () => openLifecycleModal("approve"));
+  document.getElementById("sv2-reopen-ticket")?.addEventListener("click", () => openLifecycleModal("reopen"));
+}
+
 function renderPage() {
   const isAdmin = isAdminRole(session.role);
   const ticketsPath = isAdmin ? PATHS.adminTickets : PATHS.customerTickets;
@@ -200,6 +372,7 @@ function renderPage() {
       { label: isAdmin ? "Ticketlar" : "Taleplerim", href: ticketsPath },
       { label: ticket.ticket_number || "Detay" },
     ])}
+    ${isAdmin ? "" : renderLifecycleBanner()}
     <div class="sv2-section">
       <div class="sv2-section-header">
         <h3>${escapeHtml(ticket.title || "Talep Detayı")}</h3>
@@ -260,7 +433,7 @@ function renderPage() {
       <div class="sv2-section-header"><h3>Mesajlar</h3></div>
       <div class="sv2-section-body">
         ${renderTimeline(messagesToTimeline(messages, isAdmin))}
-        ${showReply ? renderReplyBox(isAdmin) : `<p style="color:var(--sv2-gray-500);font-size:0.875rem;margin:0">Bu talep kapatıldığı için yanıt yazılamaz.</p>`}
+        ${showReply ? renderReplyBox(isAdmin) : `<p style="color:var(--sv2-gray-500);font-size:0.875rem;margin:0">Bu talep çözüldü veya kapatıldığı için yanıt yazılamaz. Gerekirse yukarıdaki düğmeyle yeniden açabilirsiniz.</p>`}
       </div>
     </div>`;
 
@@ -274,6 +447,7 @@ function renderPage() {
 
   if (showReply) bindReply(isAdmin);
   if (isAdmin) bindAdminForm();
+  else bindLifecycle();
 }
 
 function getActor() {
@@ -450,7 +624,9 @@ async function loadTicket(ticketId) {
     }
 
     const isAdmin = isAdminRole(session.role);
-    if (!isAdmin && ticket.user_id !== session.uid) {
+    const isCompanyColleague =
+      session.role === "company_admin" && !!session.company_id && ticket.company_id === session.company_id;
+    if (!isAdmin && ticket.user_id !== session.uid && !isCompanyColleague) {
       toast("Bu talebe erişim yetkiniz yok.", "error");
       window.location.href = PATHS.customerTickets;
       return;

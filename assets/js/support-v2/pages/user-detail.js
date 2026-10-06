@@ -23,7 +23,7 @@ import {
   renderStatusBadge,
   renderTypeBadge,
 } from "../ui-shell.js";
-import { ROLE_LABELS, formatRoleLabel, STATUSES } from "../ticket-utils.js";
+import { ROLE_LABELS, formatRoleLabel, STATUSES, isOpenStatus } from "../ticket-utils.js";
 import { validateUserForm } from "../validators.js";
 import { initPhoneInput, normalizePhone, formatPhoneDisplay, setPhoneValue } from "../phone-utils.js";
 
@@ -55,8 +55,7 @@ function renderRoleBadge(role) {
 }
 
 function computeStats() {
-  const openStatuses = [STATUSES.OPEN, STATUSES.IN_PROGRESS, STATUSES.WAITING_CUSTOMER];
-  const open = tickets.filter((t) => openStatuses.includes(t.status)).length;
+  const open = tickets.filter((t) => isOpenStatus(t.status)).length;
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const thisMonth = tickets.filter((t) => new Date(t.created_at) >= monthStart).length;

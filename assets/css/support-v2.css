@@ -1155,6 +1155,16 @@
   color: var(--sv2-gray-700);
 }
 
+.sv2-badge-pending_close {
+  background: #ede9fe;
+  color: #6d28d9;
+}
+
+.sv2-badge-reopened {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
 /* Priority badges */
 .sv2-badge-priority-low {
   background: var(--sv2-gray-100);
@@ -2532,3 +2542,41 @@
     font-size: 0.8125rem;
   }
 }
+
+
+/* ─── Müşteri yaşam döngüsü bandı (kapanış onayı / yeniden açma) ─────────── */
+.sv2-lifecycle {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  border-radius: var(--sv2-radius-md, 10px);
+  border: 1px solid var(--sv2-gray-200);
+  border-left-width: 4px;
+  background: #fff;
+}
+.sv2-lifecycle-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  flex: none;
+}
+.sv2-lifecycle-body { flex: 1 1 260px; min-width: 0; }
+.sv2-lifecycle-body h4 { margin: 0 0 0.25rem; font-size: 1rem; }
+.sv2-lifecycle-body p { margin: 0; color: var(--sv2-gray-600); font-size: 0.875rem; line-height: 1.5; }
+.sv2-lifecycle-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.sv2-lifecycle--pending_close { border-left-color: #6d28d9; background: #faf8ff; }
+.sv2-lifecycle--pending_close .sv2-lifecycle-icon { background: #ede9fe; color: #6d28d9; }
+.sv2-lifecycle--resolved { border-left-color: #047857; background: #f6fdf9; }
+.sv2-lifecycle--resolved .sv2-lifecycle-icon { background: var(--sv2-success-soft); color: #047857; }
+.sv2-lifecycle--waiting { border-left-color: #9d174d; background: #fff8fb; }
+.sv2-lifecycle--waiting .sv2-lifecycle-icon { background: #fce7f3; color: #9d174d; }
+.sv2-lifecycle--reopened { border-left-color: #c2410c; background: #fffaf5; }
+.sv2-lifecycle--reopened .sv2-lifecycle-icon { background: #ffedd5; color: #c2410c; }
+.sv2-lifecycle--closed { border-left-color: var(--sv2-gray-500); background: var(--sv2-gray-50, #f9fafb); }
+.sv2-lifecycle--closed .sv2-lifecycle-icon { background: var(--sv2-gray-200); color: var(--sv2-gray-700); }

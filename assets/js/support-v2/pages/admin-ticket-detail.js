@@ -19,6 +19,9 @@ import {
   linkUser,
   linkCompany,
   linkPersonnel,
+  renderModal,
+  openModal,
+  closeModal,
   formatDate,
   formatDateTime,
   escapeHtml,
@@ -209,6 +212,140 @@ function renderEffortsTable() {
   });
 }
 
+/** Durum -> bildirim tipi. Müşteri adına yapılan geçişler kendi şablonlarını kullanır. */
+function eventForStatus(status) {
+  switch (status) {
+    case STATUSES.RESOLVED:
+      return "ticket_resolved";
+    case STATUSES.CLOSED:
+      return "ticket_closed";
+    case STATUSES.WAITING_CUSTOMER:
+      return "send_to_customer";
+    case STATUSES.PENDING_CLOSE:
+      return "ticket_close_approval";
+    default:
+      return "ticket_status_changed";
+  }
+}
+
+/** Yaşam döngüsü hızlı işlemleri: mevcut duruma göre mantıklı sonraki adımlar. */
+function quickActionList() {
+  const s = String(ticket.status || "").toLowerCase();
+  const manager = canManageTicket();
+  const list = [];
+  if (s === STATUSES.OPEN || s === STATUSES.ASSIGNED) {
+    list.push({ id: "sv2-start-work", label: "İşleme Al", icon: "fa-play", primary: true });
+  }
+  if (s === STATUSES.IN_PROGRESS || s === STATUSES.REOPENED) {
+    list.push({ status: STATUSES.WAITING_CUSTOMER, label: "Müşteri Testine Gönder", icon: "fa-user-clock" });
+    list.push({ status: STATUSES.PENDING_CLOSE, label: "Kapanış Onayı İste", icon: "fa-clipboard-check", primary: true });
+  }
+  if (s === STATUSES.WAITING_CUSTOMER) {
+    list.push({ status: STATUSES.IN_PROGRESS, label: "İşleme Geri Al", icon: "fa-undo" });
+    list.push({ status: STATUSES.PENDING_CLOSE, label: "Kapanış Onayı İste", icon: "fa-clipboard-check", primary: true });
+  }
+  if (s === STATUSES.PENDING_CLOSE) {
+    list.push({ status: STATUSES.IN_PROGRESS, label: "İşleme Geri Al", icon: "fa-undo" });
+    if (manager) list.push({ status: STATUSES.CLOSED, label: "Müşteri Adına Kapat", icon: "fa-lock" });
+  }
+  if (manager && s === STATUSES.RESOLVED) {
+    list.push({ status: STATUSES.CLOSED, label: "Kapat", icon: "fa-lock", primary: true });
+  }
+  if (manager && s === STATUSES.CLOSED) {
+    list.push({ status: STATUSES.REOPENED, label: "Yeniden Aç", icon: "fa-undo" });
+  }
+  return list;
+}
+
+function renderQuickActions() {
+  const actions = quickActionList();
+  const hint =
+    String(ticket.status || "").toLowerCase() === STATUSES.PENDING_CLOSE
+      ? `<p class="sv2-text-muted" style="font-size:0.8125rem;margin:0.5rem 0 0"><i class="fas fa-hourglass-half"></i> Müşterinin kapanış onayı bekleniyor; onaylarsa talep otomatik kapanır, reddederse "Tekrar Açıldı" durumuna geçer.</p>`
+      : "";
+  if (!actions.length && !hint) return "";
+  const buttons = actions
+    .map((a) =>
+      a.id
+        ? `<button type="button" class="sv2-btn sv2-btn-primary sv2-btn-sm" id="${a.id}"><i class="fas ${a.icon}"></i> ${escapeHtml(a.label)}</button>`
+        : `<button type="button" class="sv2-btn ${a.primary ? "sv2-btn-primary" : "sv2-btn-outline"} sv2-btn-sm sv2-quick-status" data-status="${a.status}"><i class="fas ${a.icon}"></i> ${escapeHtml(a.label)}</button>`
+    )
+    .join("");
+  return `
+    <div class="sv2-quick-actions sv2-mb-1" id="sv2-quick-actions">
+      <label style="display:block;font-size:0.6875rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--sv2-gray-500);font-weight:600;margin-bottom:0.5rem">Hızlı İşlemler</label>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">${buttons}</div>
+      ${hint}
+    </div>`;
+}
+
+function openQuickStatusModal(status) {
+  const label = STATUS_LABELS[status] || status;
+  const help = {
+    [STATUSES.WAITING_CUSTOMER]: "Müşteriye test/bilgi isteği olarak iletilecek. Ne kontrol etmesi gerektiğini yazın.",
+    [STATUSES.PENDING_CLOSE]: "Müşteriye kapanış onayı e-postası gidecek. Yapılan çözümü kısaca özetleyin.",
+    [STATUSES.CLOSED]: "Talep müşteri adına kapatılacak. Kapanış gerekçesini yazın.",
+    [STATUSES.REOPENED]: "Talep yeniden açılacak. Gerekçeyi yazın.",
+    [STATUSES.IN_PROGRESS]: "Talep tekrar işleme alınacak. Gerekçeyi yazın.",
+  }[status] || "Değişiklik notunu yazın.";
+  renderModal("sv2-quick-status-modal", {
+    title: `Durum: ${label}`,
+    body: `
+      <p class="sv2-subtitle">${escapeHtml(help)}</p>
+      <div class="sv2-form-group">
+        <label for="sv2-quick-note">Not * <span class="sv2-text-muted">(en az 10 karakter; müşteriye de iletilir)</span></label>
+        <textarea id="sv2-quick-note" rows="4" maxlength="1000"></textarea>
+        <span class="sv2-field-error" id="sv2-quick-error" hidden></span>
+      </div>`,
+    footer: `
+      <button type="button" class="sv2-btn sv2-btn-secondary" data-close="sv2-quick-status-modal">Vazgeç</button>
+      <button type="button" class="sv2-btn sv2-btn-primary" id="sv2-quick-confirm">${escapeHtml(label)} Olarak Kaydet</button>`,
+  });
+  openModal("sv2-quick-status-modal");
+  document.getElementById("sv2-quick-confirm")?.addEventListener("click", async () => {
+    const note = document.getElementById("sv2-quick-note").value.trim();
+    if (!minLength(note, 10)) {
+      const err = document.getElementById("sv2-quick-error");
+      err.textContent = "Lütfen en az 10 karakterlik bir not yazın.";
+      err.hidden = false;
+      return;
+    }
+    closeModal("sv2-quick-status-modal");
+    await applyQuickStatus(status, note);
+  });
+}
+
+async function applyQuickStatus(status, note) {
+  showLoading(true);
+  try {
+    const id = getTicketKey(ticket);
+    const previous = ticket.status;
+    const patch = { status };
+    if (status === STATUSES.IN_PROGRESS && !ticket.started_at) patch.started_at = new Date().toISOString();
+    if (status === STATUSES.REOPENED && previous === STATUSES.CLOSED) patch.closed_at = null;
+    const updated = await ParlaDb.updateTicket(id, patch, session);
+    await ParlaDb.addTicketHistory(id, {
+      action: "status_note",
+      field_changed: "status",
+      old_value: formatStatusLabel(previous),
+      new_value: formatStatusLabel(status),
+      changed_by_uid: session.uid,
+      changed_by_name: actorName(),
+      note,
+    });
+    await ParlaDb.logActivity("ticket_updated", "ticket", id, updated.ticket_number, `${formatStatusLabel(status)}`, session);
+    ticket = updated;
+    history = await ParlaDb.getTicketHistory(id);
+    toast("Durum güncellendi.", "success");
+    renderPage();
+    sendNotifications(eventForStatus(status), updated, { note }).catch(() => {});
+  } catch (err) {
+    handleError(err, "Durum güncelleme");
+  } finally {
+    showLoading(false);
+  }
+}
+
 function renderAdminPanel() {
   if (session.role === ROLES.CONSULTANT && !canManageTicket()) {
     if (!isAssignedConsultant()) {
@@ -217,17 +354,9 @@ function renderAdminPanel() {
         <div><p class="sv2-warning-text">Bu ticket size atanmadığı için yalnızca görüntüleyebilirsiniz.</p></div>
       </div>`;
     }
-    const showStart =
-      String(ticket.status || "").toLowerCase() === STATUSES.ASSIGNED;
     return `
       <div class="sv2-section-body">
-        ${
-          showStart
-            ? `<button type="button" class="sv2-btn sv2-btn-primary sv2-mb-1" id="sv2-start-work">
-                <i class="fas fa-play"></i> İşleme Al
-              </button>`
-            : ""
-        }
+        ${renderQuickActions()}
         <p class="sv2-text-muted" style="font-size:0.875rem;margin:0 0 1rem">
           Atama: ${escapeHtml(formatDateTime(ticket.assigned_at))} · Durum: ${renderStatusBadge(ticket.status)}
         </p>
@@ -236,6 +365,7 @@ function renderAdminPanel() {
 
   return `
     <div class="sv2-section-body">
+      ${renderQuickActions()}
       <div class="sv2-form-row">
         <div class="sv2-form-group">
           <label for="sv2-admin-status">Durum</label>
@@ -529,7 +659,7 @@ async function sendNotifications(eventType, updatedTicket, extra, newlyAssignedI
   let recipients;
   if (eventType === "ticket_assigned") {
     recipients = personnelEmails(newlyAssignedIds || []);
-  } else if (eventType === "send_to_customer") {
+  } else if (eventType === "send_to_customer" || eventType === "ticket_close_approval") {
     recipients = [updatedTicket.user_email];
   } else {
     recipients = [
@@ -625,15 +755,7 @@ async function handleAdminUpdate() {
       );
     }
     if (statusChanged) {
-      const eventType =
-        newStatus === "resolved"
-          ? "ticket_resolved"
-          : newStatus === "closed"
-            ? "ticket_closed"
-            : newStatus === "waiting_customer"
-              ? "send_to_customer"
-              : "ticket_status_changed";
-      notifyResults.push(sendNotifications(eventType, updated, { note: statusNote }));
+      notifyResults.push(sendNotifications(eventForStatus(newStatus), updated, { note: statusNote }));
     }
     await Promise.all(notifyResults);
 
@@ -656,8 +778,12 @@ async function handleStartWork() {
       { status: STATUSES.IN_PROGRESS, started_at: new Date().toISOString() },
       session
     );
+    history = await ParlaDb.getTicketHistory(id);
     toast("Ticket işleme alındı.", "success");
     renderPage();
+    sendNotifications("ticket_status_changed", ticket, {
+      note: "Talebiniz danışmanımız tarafından işleme alındı.",
+    }).catch(() => {});
   } catch (err) {
     handleError(err, "Durum güncelleme");
   } finally {
@@ -782,6 +908,9 @@ function bindEvents() {
   document.getElementById("sv2-admin-update")?.addEventListener("click", handleAdminUpdate);
   document.getElementById("sv2-reply-send")?.addEventListener("click", handleReply);
   document.getElementById("sv2-start-work")?.addEventListener("click", handleStartWork);
+  document.querySelectorAll(".sv2-quick-status").forEach((btn) => {
+    btn.addEventListener("click", () => openQuickStatusModal(btn.dataset.status));
+  });
   document.getElementById("sv2-effort-add")?.addEventListener("click", handleAddEffort);
   document.querySelectorAll(".sv2-effort-del").forEach((btn) => {
     btn.addEventListener("click", () => handleDeleteEffort(btn.dataset.id));

@@ -2,7 +2,7 @@
  * Parla BT Ticket V2 — form doğrulama (Türkçe hata mesajları)
  */
 
-import { ROLES, TICKET_TYPES, PRIORITIES, SAP_MODULES } from "./ticket-utils.js";
+import { ROLES, TICKET_TYPES, PRIORITIES, SAP_MODULES, isCustomerRole } from "./ticket-utils.js";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -87,10 +87,7 @@ export function validateUserForm(data) {
     }
   }
 
-  if (
-    (d.role === ROLES.CUSTOMER || d.role === ROLES.ARIZI_CUSTOMER) &&
-    !required(d.company_id)
-  ) {
+  if (isCustomerRole(d.role) && !required(d.company_id)) {
     fieldError(errors, "company_id", "Müşteri kullanıcıları için firma seçimi zorunludur.");
   }
 

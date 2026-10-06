@@ -30,6 +30,10 @@ let filters = {
   sort: "newest",
 };
 
+function isCompanyAdmin() {
+  return session?.role === "company_admin";
+}
+
 function ticketLink(id, number) {
   return `<a href="${PATHS.customerTicketDetail}?id=${encodeURIComponent(id)}" class="sv2-link">${escapeHtml(number || id)}</a>`;
 }
@@ -42,6 +46,9 @@ function getTicketColumns() {
       render: (val, row) => ticketLink(row.id || row.ticket_id, val),
     },
     { key: "title", label: "KONU", render: (val) => escapeHtml(val || "—") },
+    ...(isCompanyAdmin()
+      ? [{ key: "user_name", label: "TALEP SAHİBİ", render: (val) => escapeHtml(val || "—") }]
+      : []),
     { key: "ticket_type", label: "TİP", render: (val) => renderTypeBadge(val) },
     {
       key: "sap_module",
@@ -76,7 +83,8 @@ function applyFilters() {
       const num = String(t.ticket_number || "").toLowerCase();
       const title = String(t.title || "").toLowerCase();
       const module = String(t.sap_module || "").toLowerCase();
-      return num.includes(q) || title.includes(q) || module.includes(q);
+      const owner = String(t.user_name || "").toLowerCase();
+      return num.includes(q) || title.includes(q) || module.includes(q) || owner.includes(q);
     });
   }
 
@@ -112,7 +120,7 @@ function renderPage() {
   const content = `
     <div class="sv2-section">
       <div class="sv2-section-header">
-        <h3>Taleplerim</h3>
+        <h3>${isCompanyAdmin() ? "Firma Talepleri" : "Taleplerim"}</h3>
         <button type="button" class="sv2-btn sv2-btn-primary sv2-btn-sm" id="sv2-new-ticket-btn">
           <i class="fas fa-plus"></i> Yeni Talep
         </button>
@@ -121,7 +129,7 @@ function renderPage() {
         ${renderFilterBar({
           search: {
             id: "sv2-ticket-search",
-            placeholder: "Talep no veya konu ara...",
+            placeholder: isCompanyAdmin() ? "Talep no, konu veya talep sahibi ara..." : "Talep no veya konu ara...",
             value: filters.search,
           },
           chips: renderStatusChips(),
@@ -142,7 +150,7 @@ function renderPage() {
     </div>`;
 
   renderShell(app, {
-    title: "Taleplerim",
+    title: isCompanyAdmin() ? "Firma Talepleri" : "Taleplerim",
     activePage: "tickets",
     profile: session,
     isAdmin: false,
@@ -201,7 +209,7 @@ function bindTableRowClicks() {
 async function loadData() {
   showLoading(true);
   try {
-    allTickets = await ParlaDb.getTicketsForUser(session.uid);
+    allTickets = await ParlaDb.getTicketsForSession(session);
     renderPage();
   } catch (err) {
     handleError(err, "Talepler yüklenemedi");

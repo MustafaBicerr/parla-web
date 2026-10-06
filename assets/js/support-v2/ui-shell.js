@@ -448,15 +448,9 @@ function renderEmptyState(message, icon) {
 
 function renderStatusBadge(status) {
   const key = String(status || "open").toLowerCase();
-  const clsMap = {
-    open: "open",
-    assigned: "assigned",
-    in_progress: "in-progress",
-    waiting_customer: "waiting",
-    resolved: "resolved",
-    closed: "closed",
-  };
-  const cls = clsMap[key] || "open";
+  // CSS sınıfları durum anahtarıyla aynı adlandırılır (sv2-badge-in_progress vb.).
+  const known = ["open", "assigned", "in_progress", "waiting_customer", "pending_close", "resolved", "closed", "reopened"];
+  const cls = known.includes(key) ? key : "open";
   return `<span class="sv2-badge sv2-badge-${cls}">${escapeHtml(formatStatusLabel(status))}</span>`;
 }
 
