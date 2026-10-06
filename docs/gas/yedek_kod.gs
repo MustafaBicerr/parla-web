@@ -1,7 +1,10 @@
+// DİKKAT: Bu dosya Apps Script kaynağının DEPODAKİ temizlenmiş yedeğidir (gizli anahtarsız; açık röle dalı kaldırılmış).
+// Canlı Apps Script projesine yapıştırıp YENİ SÜRÜM olarak dağıtın; GEMINI_API_KEY ve RESEND_API_KEY'i Script properties'e girin.
 // --- AYARLAR ---
 var HEDEF_MAIL = "info@parlabilgiteknolojileri.net";
 var RESEND_FROM = "Parla BT Destek <info@parlabilgiteknolojileri.net>";
-var GEMINI_API_KEY = "AIzaSyCublpywjEbq8YUWychrQn2qqieIFOEjoA"; // Tercihen PropertiesService kullanın
+// Gizli anahtarlar yalnızca Apps Script → Project settings → Script properties içinde tutulur (depoda ASLA).
+var GEMINI_API_KEY = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY");
 var HEDEF_KLASOR_YOLU = "Web_Dosyalari/Kariyer_Formu_CV";
 // Resend: Apps Script → Project Settings → Script properties → RESEND_API_KEY
 // ----------------
@@ -124,31 +127,8 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({ "result": "success" })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    // --- SENARYO 5: DESTEK PORTALI (yedek) ---
-    // Canlı portal Netlify Function kullanır. Bu dal yalnızca eski istemciler içindir.
-    else if (type === "support_v2_notify") {
-      var to = params.to;
-      var recipients = Array.isArray(to) ? to : String(to || "").split(",");
-      var td = params.ticketData || {};
-      if (!recipients.length || !String(recipients[0] || "").trim()) {
-        return ContentService.createTextOutput(JSON.stringify({ success: false, message: "Alıcı yok" })).setMimeType(ContentService.MimeType.JSON);
-      }
-      sendViaResend_({
-        to: recipients,
-        subject: params.subject || ("Parla BT Destek · " + (td.ticket_number || "")),
-        eyebrow: "Destek Portalı",
-        title: params.subject || "Destek bildirimi",
-        intro: params.body || (td.title || "Yeni bir destek bildirimi."),
-        rows: [
-          ["Talep no", td.ticket_number],
-          ["Konu", td.title],
-          ["Durum", td.status],
-          ["Öncelik", td.priority]
-        ],
-        note: td.note || td.event
-      });
-      return ContentService.createTextOutput(JSON.stringify({ success: true, message: "E-posta gönderildi." })).setMimeType(ContentService.MimeType.JSON);
-    }
+    // (Destek portalı bildirimi "support_v2_notify" kaldırıldı: kimlik doğrulamasız açık e-posta rölesiydi.
+    //  Portal e-postaları yalnızca kimlik doğrulamalı Netlify Function üzerinden gider.)
 
     return ContentService.createTextOutput(JSON.stringify({ "result": "error", "reply": "Bilinmeyen istek türü." })).setMimeType(ContentService.MimeType.JSON);
 
