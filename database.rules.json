@@ -5,96 +5,143 @@
     "v2": {
       "users": {
         ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')",
-        ".indexOn": ["email", "company_id", "role"],
+        ".indexOn": [
+          "email",
+          "company_id",
+          "role"
+        ],
         "$uid": {
-          ".read": "auth != null && (auth.uid === $uid || root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')",
-          ".write": "auth != null && (auth.uid === $uid || root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')"
+          ".read": "auth != null && (auth.uid === $uid || (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin'))",
+          ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')",
+          "role": {
+            ".validate": "newData.isString() && (newData.val() === 'super_admin' || newData.val() === 'service_admin' || newData.val() === 'project_manager' || newData.val() === 'consultant' || newData.val() === 'customer' || newData.val() === 'arizi_customer' || newData.val() === 'company_admin') && (newData.val() !== 'super_admin' || data.val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin')"
+          },
+          "last_login_at": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.isString()"
+          },
+          "updated_at": {
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.isString()"
+          },
+          "must_change_password": {
+            ".write": "auth != null && auth.uid === $uid && newData.val() === false"
+          }
         }
       },
       "tickets": {
-        ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager' || (query.orderByChild == 'user_id' && query.equalTo == auth.uid) || (query.orderByChild == 'company_id' && query.equalTo == root.child('v2/users').child(auth.uid).child('company_id').val()) || (query.orderByChild == 'assigned_to_id' && query.equalTo != null))",
-        ".indexOn": ["user_id", "company_id", "assigned_to_id", "status", "created_at", "ticket_type"],
+        ".read": "auth != null && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || (query.orderByChild == 'user_id' && query.equalTo == auth.uid) || (query.orderByChild == 'company_id' && root.child('v2/users').child(auth.uid).child('company_id').exists() && root.child('v2/users').child(auth.uid).child('company_id').val() !== '' && query.equalTo == root.child('v2/users').child(auth.uid).child('company_id').val()))",
+        ".indexOn": [
+          "user_id",
+          "company_id",
+          "assigned_to_id",
+          "status",
+          "created_at",
+          "ticket_type"
+        ],
         "$ticketId": {
-          ".read": "auth != null && (data.child('user_id').val() === auth.uid || root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
-          ".write": "auth != null && ((!newData.exists() && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')) || (newData.exists() && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager' || (!data.exists() && newData.child('user_id').val() === auth.uid) || (data.exists() && data.child('user_id').val() === auth.uid))))"
+          ".read": "auth != null && (data.child('user_id').val() === auth.uid || (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager'))",
+          ".write": "auth != null && ((!newData.exists() && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')) || (newData.exists() && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')) || (!data.exists() && newData.child('user_id').val() === auth.uid && newData.child('status').val() === 'open' && (newData.child('assigned_to_id').val() === '' || !newData.child('assigned_to_id').exists()) && (newData.child('company_id').val() === root.child('v2/users').child(auth.uid).child('company_id').val() || (newData.child('company_id').val() === '' && !root.child('v2/users').child(auth.uid).child('company_id').exists()))))",
+          "status": {
+            ".write": "auth != null && data.parent().child('user_id').val() === auth.uid && data.val() === 'waiting_customer' && newData.val() === 'in_progress'"
+          },
+          "updated_at": {
+            ".write": "auth != null && data.parent().child('user_id').val() === auth.uid"
+          },
+          "updated_by": {
+            ".write": "auth != null && data.parent().child('user_id').val() === auth.uid"
+          }
         }
       },
       "ticket_messages": {
         "$ticketId": {
-          ".read": "auth != null",
-          ".write": "auth != null",
+          ".read": "auth != null && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || root.child('v2/tickets').child($ticketId).child('user_id').val() === auth.uid)",
           "$messageId": {
-            ".read": "auth != null",
-            ".write": "auth != null"
+            ".write": "auth != null && ((!data.exists() && newData.exists() && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || root.child('v2/tickets').child($ticketId).child('user_id').val() === auth.uid)) || root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin')",
+            ".validate": "newData.hasChildren(['message', 'created_at', 'user_id']) && newData.child('user_id').val() === auth.uid && newData.child('message').isString() && newData.child('message').val().length <= 10000"
           }
         }
       },
       "ticket_history": {
         "$ticketId": {
-          ".read": "auth != null",
-          ".write": "auth != null",
+          ".read": "auth != null && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || root.child('v2/tickets').child($ticketId).child('user_id').val() === auth.uid)",
           "$historyId": {
-            ".read": "auth != null",
-            ".write": "!data.exists()"
+            ".write": "auth != null && ((!data.exists() && newData.exists() && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || root.child('v2/tickets').child($ticketId).child('user_id').val() === auth.uid)) || root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin')"
           }
         }
       },
       "ticket_assignments": {
         ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
         "$ticketId": {
-          ".read": "auth != null",
-          ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant')",
-          "$personnelId": {
-            ".read": "auth != null",
-            ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant')"
-          }
+          ".read": "auth != null && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || root.child('v2/tickets').child($ticketId).child('user_id').val() === auth.uid)",
+          ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')"
         }
       },
       "ticket_efforts": {
         ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
         "$ticketId": {
-          ".read": "auth != null",
-          ".indexOn": ["work_date", "personnel_id", "created_at"],
+          ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
+          ".indexOn": [
+            "work_date",
+            "personnel_id",
+            "created_at"
+          ],
           "$effortId": {
-            ".read": "auth != null",
-            ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant')"
+            ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
+            ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')"
           }
         }
       },
       "companies": {
-        ".read": "auth != null",
-        ".indexOn": ["name", "customer_code", "customer_type"],
+        ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
+        ".indexOn": [
+          "name",
+          "customer_code",
+          "customer_type"
+        ],
         ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')",
         "$companyId": {
-          ".read": "auth != null",
+          ".read": "auth != null && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || (root.child('v2/users').child(auth.uid).child('company_id').exists() && root.child('v2/users').child(auth.uid).child('company_id').val() !== '' && root.child('v2/users').child(auth.uid).child('company_id').val() === $companyId))",
           ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')"
         }
       },
       "personnel": {
-        ".read": "auth != null",
-        ".indexOn": ["email", "department_id", "is_active"],
+        ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
+        ".indexOn": [
+          "email",
+          "department_id",
+          "is_active"
+        ],
         ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')",
         "$personnelId": {
-          ".read": "auth != null",
+          ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
           ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')"
         }
       },
       "contracts": {
-        ".read": "auth != null",
-        ".indexOn": ["company_id", "status", "end_date"],
+        ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
+        ".indexOn": [
+          "company_id",
+          "status",
+          "end_date"
+        ],
         ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')",
         "$contractId": {
-          ".read": "auth != null",
+          ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
           ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin')"
         }
       },
       "projects": {
-        ".read": "auth != null",
-        ".indexOn": ["company_id", "status", "project_code"],
-        ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
+        ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
+        ".indexOn": [
+          "company_id",
+          "status",
+          "project_code"
+        ],
+        ".write": "auth != null && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin') || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
         "$projectId": {
-          ".read": "auth != null",
-          ".write": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')"
+          ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
+          ".write": "auth != null && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin') || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')"
         }
       },
       "departments": {
@@ -123,25 +170,31 @@
       },
       "activities": {
         ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
-        ".indexOn": ["created_at", "entity_type", "user_uid"],
-        ".write": "auth != null",
+        ".indexOn": [
+          "created_at",
+          "entity_type",
+          "user_uid"
+        ],
         "$actId": {
           ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
-          ".write": "!data.exists()"
+          ".write": "auth != null && root.child('v2/users').child(auth.uid).child('role').exists() && root.child('v2/users').child(auth.uid).child('is_active').val() !== false && !data.exists() && newData.exists()"
         }
       },
       "counters": {
         ".read": "auth != null",
-        ".write": "auth != null"
+        "$type": {
+          "$code": {
+            "$yymm": {
+              ".write": "auth != null && root.child('v2/users').child(auth.uid).child('role').exists() && root.child('v2/users').child(auth.uid).child('is_active').val() !== false",
+              ".validate": "newData.isNumber() && newData.val() >= 1"
+            }
+          }
+        }
       },
       "notifications": {
         "$uid": {
           ".read": "auth != null && auth.uid === $uid",
-          ".write": "auth != null",
-          "$notifId": {
-            ".read": "auth != null && auth.uid === $uid",
-            ".write": "auth != null"
-          }
+          ".write": "auth != null && (auth.uid === $uid || (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager'))"
         }
       }
     }

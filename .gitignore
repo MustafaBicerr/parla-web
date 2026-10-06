@@ -4,3 +4,4 @@ project-hierarchy.txt
 .env
 .env.*
 !.env.example
+node_modules
