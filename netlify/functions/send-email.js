@@ -274,6 +274,17 @@ async function collectPersonnelEmails(token) {
   return emails;
 }
 
+async function collectAssignmentEmails(ticketId, token) {
+  const assignments = await rtdbGet(`v2/ticket_assignments/${ticketId}`, token);
+  const emails = new Set();
+  if (assignments && typeof assignments === "object") {
+    Object.values(assignments).forEach((a) => {
+      if (a && a.personnel_email) emails.add(String(a.personnel_email).trim().toLowerCase());
+    });
+  }
+  return emails;
+}
+
 async function handleTicketEvent({ type, body, token, profile, apiKey }) {
   const kind = TICKET_TYPES[type];
   if (kind === "staff" && !STAFF_ROLES.has(profile.role)) {
@@ -299,9 +310,18 @@ async function handleTicketEvent({ type, body, token, profile, apiKey }) {
   const customerEmail = String(ticket.user_email || "").trim().toLowerCase();
   const allowed = new Set([contactEmail()]);
   if (customerEmail) allowed.add(customerEmail);
+
   if (recipients.some((r) => !allowed.has(r))) {
-    const personnelEmails = await collectPersonnelEmails(token);
-    personnelEmails.forEach((e) => allowed.add(e));
+    // Atanmış danışmanların adresi atama kayıtlarında tutulur; talep sahibi ve personel okuyabilir.
+    try {
+      (await collectAssignmentEmails(ticketId, token)).forEach((e) => allowed.add(e));
+    } catch (err) {
+      if (err.code !== "db_denied") throw err;
+    }
+  }
+  if (recipients.some((r) => !allowed.has(r)) && STAFF_ROLES.has(profile.role)) {
+    // Personel gönderenler için tüm aktif personel adresleri de geçerlidir (personel listesi yalnızca personele açıktır).
+    (await collectPersonnelEmails(token)).forEach((e) => allowed.add(e));
   }
   const rejected = recipients.filter((r) => !allowed.has(r));
   if (rejected.length) {

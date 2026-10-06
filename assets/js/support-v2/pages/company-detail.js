@@ -478,7 +478,7 @@ async function loadData(id) {
   if (!company) return;
 
   const [allUsers, companyTickets, allContracts, allProjects] = await Promise.all([
-    ParlaDb.getAllUsers(),
+    ParlaDb.getAllUsers().catch(() => []), // kullanıcı listesi yalnızca admin rollerine açık
     ParlaDb.getTicketsForCompany(id),
     ParlaDb.getAllContracts(),
     ParlaDb.getAllProjects(),

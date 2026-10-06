@@ -528,6 +528,8 @@ const ParlaDb = {
       payload[pid] = {
         personnel_id: pid,
         personnel_name: a.personnel_name || a.name || "",
+        // Müşteri tarafı personel listesini okuyamaz; bildirim adresi atama kaydında tutulur.
+        personnel_email: String(a.personnel_email || a.email || "").trim().toLowerCase(),
         is_primary: !!a.is_primary,
         assigned_at: a.assigned_at || ts,
         assigned_by_uid: af.created_by,
@@ -536,6 +538,23 @@ const ParlaDb = {
     }
 
     await fb.db.set(v2Ref(`ticket_assignments/${ticketId}`), payload);
+  },
+
+  /** Eski atama kayıtlarına personel e-postasını yazar (en iyi çaba; yalnızca personel çağırır). */
+  async backfillAssignmentEmails(ticketId, assignments, personnel) {
+    const fb = getFirebase();
+    const byId = new Map((personnel || []).map((p) => [p.personnel_id || p.id, p]));
+    const updates = {};
+    for (const a of assignments || []) {
+      const pid = a.personnel_id || a.id;
+      const email = String(byId.get(pid)?.email || "").trim().toLowerCase();
+      if (pid && email && !a.personnel_email && a.id) {
+        updates[`${pid}/personnel_email`] = email;
+      }
+    }
+    if (!Object.keys(updates).length) return false;
+    await fb.db.update(v2Ref(`ticket_assignments/${ticketId}`), updates);
+    return true;
   },
 
   async assignConsultants(ticketId, assignments, actor) {

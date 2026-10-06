@@ -159,7 +159,7 @@ export function mountCreateTicketModal(session) {
       const actor = getActor(session);
       const customerCode =
         session.customer_code ||
-        (await ParlaDb.getCompany(session.company_id))?.customer_code ||
+        (session.company_id ? (await ParlaDb.getCompany(session.company_id))?.customer_code : "") ||
         "";
 
       if (!customerCode) {

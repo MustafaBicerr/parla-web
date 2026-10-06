@@ -239,6 +239,7 @@ function openAssignModal(ticket) {
           {
             personnel_id: pid,
             personnel_name: name,
+            personnel_email: person?.email || "",
             is_primary: true,
           },
         ],

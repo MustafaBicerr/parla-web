@@ -285,11 +285,8 @@ function getActor() {
 function staffRecipients() {
   const cfg = window.__PARLA_SITE_CONFIG || {};
   const emails = [cfg.CONTACT_EMAIL];
-  const assignedIds = new Set(assignments.map((a) => a.personnel_id || a.id));
-  if (ticket.assigned_to_id) assignedIds.add(ticket.assigned_to_id);
-  personnel.forEach((p) => {
-    if (assignedIds.has(p.personnel_id || p.id) && p.is_active !== false) emails.push(p.email);
-  });
+  // Atama kayıtları personel e-postasını taşır (müşteri personel listesini okuyamaz).
+  assignments.forEach((a) => emails.push(a.personnel_email));
   return emails;
 }
 
@@ -459,11 +456,11 @@ async function loadTicket(ticketId) {
       return;
     }
 
-    // Personel ve atamalar müşteri için de gerekli: yanıt bildirimi atanan danışmanlara gider.
+    // Atamalar müşteri için de gerekli: yanıt bildirimi atanan danışmanlara gider.
     [messages, history, personnel, assignments] = await Promise.all([
       ParlaDb.getTicketMessages(ticketId),
       getTicketHistory(ticketId),
-      ParlaDb.getAllPersonnel().catch(() => []),
+      isAdmin ? ParlaDb.getAllPersonnel() : Promise.resolve([]),
       ParlaDb.getTicketAssignments(ticketId).catch(() => []),
     ]);
 

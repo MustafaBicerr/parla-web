@@ -493,9 +493,11 @@ function renderTabContent() {
 function collectAssignmentSelection() {
   const selected = [];
   document.querySelectorAll(".sv2-assign-check:checked").forEach((cb) => {
+    const person = allPersonnel.find((p) => (p.personnel_id || p.id) === cb.value);
     selected.push({
       personnel_id: cb.value,
       personnel_name: cb.dataset.name || "",
+      personnel_email: person?.email || "",
       is_primary: false,
     });
   });
@@ -869,6 +871,9 @@ async function loadTicket() {
     assignments = assign;
     efforts = eff;
     renderPage();
+
+    // Eski atama kayıtlarında personel e-postası yoktur; müşteri yanıt bildirimleri için tamamla.
+    ParlaDb.backfillAssignmentEmails(id, assign, personnel).catch(() => {});
   } catch (err) {
     handleError(err, "Ticket");
   } finally {

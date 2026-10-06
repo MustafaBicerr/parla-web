@@ -1029,7 +1029,7 @@ async function loadData() {
       ParlaDb.getAllTickets(),
       ParlaDb.getAllCompanies(),
       ParlaDb.getAllPersonnel(),
-      ParlaDb.getAllUsers(),
+      ParlaDb.getAllUsers().catch(() => []), // kullanıcı listesi yalnızca admin rollerine açık
     ]);
     allTickets = tickets;
     allCompanies = companies;

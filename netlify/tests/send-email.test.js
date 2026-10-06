@@ -71,7 +71,11 @@ function installFetch() {
       const token = decodeURIComponent(m[2]);
       const sub = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString()).sub;
       // Kural simülasyonu: başka bir müşterinin ticket'ını okuyamaz
-      if (sub === "uid-other" && p.startsWith("v2/tickets/")) return jsonResponse(401, { error: "Permission denied" });
+      if (sub === "uid-other" && (p.startsWith("v2/tickets/") || p.startsWith("v2/ticket_assignments/"))) return jsonResponse(401, { error: "Permission denied" });
+      // Kural simülasyonu: personel listesi yalnızca personele açık
+      if (p.startsWith("v2/personnel") && String(db.v2.users[sub] && db.v2.users[sub].role).includes("customer")) {
+        return jsonResponse(401, { error: "Permission denied" });
+      }
       const node = p.split("/").reduce((acc, k) => (acc == null ? acc : acc[k]), db);
       return jsonResponse(200, node === undefined ? null : node);
     }
@@ -109,6 +113,9 @@ function resetState() {
           user_name: "Müşteri Kişi",
           user_email: "musteri@abc.com",
         },
+      },
+      ticket_assignments: {
+        T123456789: { p1: { personnel_id: "p1", personnel_email: "Danisman@Parla.com", is_primary: true } },
       },
       personnel: {
         p1: { email: "Danisman@Parla.com", is_active: true },
@@ -232,6 +239,22 @@ test("ticket muhatabı olmayan alıcı reddedilir", async () => {
   assert.equal(res.statusCode, 403);
   assert.equal(JSON.parse(res.body).code, "recipient_not_allowed");
   assert.equal(resendCalls.length, 0);
+});
+
+test("müşteri yanıtı atanmış danışmana gidebilir (atama kaydındaki adres; personel listesi okunmaz)", async () => {
+  const res = await post(ticketMail("ticket_message", ["danisman@parla.com", "info@parlabilgiteknolojileri.net"]), makeToken({ sub: "uid-cust" }));
+  assert.equal(res.statusCode, 200, res.body);
+  assert.deepEqual(
+    resendCalls.map((c) => c.payload.to).flat().sort(),
+    ["danisman@parla.com", "info@parlabilgiteknolojileri.net"]
+  );
+});
+
+test("müşteri, atanmamış bir personele (listede olsa bile) mail tetikleyemez", async () => {
+  db.v2.personnel.p3 = { email: "baska@parla.com", is_active: true };
+  const res = await post(ticketMail("ticket_message", ["baska@parla.com"]), makeToken({ sub: "uid-cust" }));
+  assert.equal(res.statusCode, 403);
+  assert.equal(JSON.parse(res.body).code, "recipient_not_allowed");
 });
 
 test("pasif personele gönderim reddedilir", async () => {

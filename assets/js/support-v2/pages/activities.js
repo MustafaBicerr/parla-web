@@ -93,7 +93,7 @@ async function loadData() {
   try {
     [allActivities, allUsers] = await Promise.all([
       ParlaDb.getActivities(),
-      ParlaDb.getAllUsers(),
+      ParlaDb.getAllUsers().catch(() => []), // kullanıcı listesi yalnızca admin rollerine açık
     ]);
     renderFilters();
     renderContent();

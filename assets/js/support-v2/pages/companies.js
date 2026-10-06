@@ -302,7 +302,7 @@ function refreshView() {
 async function loadData() {
   [companies, allUsers, allTickets] = await Promise.all([
     ParlaDb.getAllCompanies(),
-    ParlaDb.getAllUsers(),
+    ParlaDb.getAllUsers().catch(() => []), // kullanıcı listesi yalnızca admin rollerine açık
     ParlaDb.getAllTickets(),
   ]);
 }
