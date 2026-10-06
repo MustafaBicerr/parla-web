@@ -24,6 +24,9 @@ const and = (...p) => p.filter(Boolean).join(" && ");
 const VALID_ROLES = ["super_admin", "service_admin", "project_manager", "consultant", "customer", "arizi_customer", "company_admin"]
   .map((r) => `newData.val() === '${r}'`).join(" || ");
 
+const ATTACHMENT_VALIDATE =
+  "newData.hasChildren(['name', 'type', 'size', 'data', 'uploader_uid']) && newData.child('uploader_uid').val() === auth.uid && newData.child('name').isString() && newData.child('name').val().length <= 200 && newData.child('data').isString() && newData.child('data').val().length <= 3000000 && newData.child('size').isNumber() && newData.child('size').val() <= 2200000 && newData.child('type').isString() && newData.child('type').val().matches(/^(image\\/(png|jpeg|gif|webp)|application\\/pdf|text\\/(plain|csv)|application\\/zip|application\\/msword|application\\/vnd\\.[a-z0-9.+-]+)$/)";
+
 const rules = {
   rules: {
     ".read": false,
@@ -88,6 +91,26 @@ const rules = {
           $noteId: {
             ".write": `${AUTH} && ((!data.exists() && newData.exists() && ${STAFF}) || ${SUPER})`,
             ".validate": "newData.hasChildren(['message', 'created_at', 'user_id']) && newData.child('message').isString() && newData.child('message').val().length <= 10000",
+          },
+        },
+      },
+      // Dosya ekleri: ek verisi (base64) mesajlardan ayrı düğümlerde tutulur; liste okuma yoktur (yalnızca kimliği
+      // bilinen ek okunur). Yalnızca eklenir. İç notların ekleri yalnızca personele açıktır.
+      ticket_attachments: {
+        $ticketId: {
+          $attId: {
+            ".read": `${AUTH} && (${STAFF} || ${OWNER("$ticketId")})`,
+            ".write": `${AUTH} && ((!data.exists() && newData.exists() && (${STAFF} || ${OWNER("$ticketId")})) || ${SUPER})`,
+            ".validate": ATTACHMENT_VALIDATE,
+          },
+        },
+      },
+      ticket_internal_attachments: {
+        $ticketId: {
+          $attId: {
+            ".read": `${AUTH} && ${STAFF}`,
+            ".write": `${AUTH} && ((!data.exists() && newData.exists() && ${STAFF}) || ${SUPER})`,
+            ".validate": ATTACHMENT_VALIDATE,
           },
         },
       },

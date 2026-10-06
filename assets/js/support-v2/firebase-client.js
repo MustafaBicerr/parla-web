@@ -474,7 +474,12 @@ const ParlaDb = {
 
     return [...byId.values()]
       .filter((m) => includeInternal || !m.is_internal)
-      .map((m) => ({ ...m, message_id: m.message_id || m.id }))
+      .map((m) => ({
+        ...m,
+        message_id: m.message_id || m.id,
+        // RTDB dizileri nesneye çevirebilir: her zaman dizi olarak sun
+        attachments: m.attachments ? (Array.isArray(m.attachments) ? m.attachments : Object.values(m.attachments)) : [],
+      }))
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
   },
 
@@ -522,6 +527,11 @@ const ParlaDb = {
       work_hours: data.work_hours || 0,
       created_at: ts,
     };
+    // Ek referansları (veri ayrı düğümlerde: bkz. attachments.js)
+    const attachments = (Array.isArray(data.attachments) ? data.attachments : [])
+      .slice(0, 3)
+      .map((a) => ({ id: String(a.id), name: String(a.name).slice(0, 200), type: String(a.type), size: Number(a.size) || 0 }));
+    if (attachments.length) payload.attachments = attachments;
     await fb.db.set(ref, payload);
 
     // Talep üzerindeki "son hareket" alanları. Dahili notlar yalnızca updated_at'i değiştirir;

@@ -4,6 +4,7 @@
 import ParlaDb from "../firebase-client.js";
 import ParlaEmailService from "../email-service.js";
 import { reportEmailResults } from "../email-report.js";
+import { attachmentsNote, bindFilePicker, renderFilePicker, uploadAttachments } from "../attachments.js";
 import { validateTicketForm } from "../validators.js";
 import {
   TICKET_TYPE_LABELS,
@@ -25,6 +26,7 @@ export const CREATE_TICKET_MODAL_ID = "sv2-create-ticket-modal";
 
 const CUSTOMER_TICKET_TYPES = ["SUP", "ARZ", "BUG"];
 let onTicketCreatedCallback = null;
+let createPicker = null;
 
 function defaultTicketType(role) {
   return role === ROLES.ARIZI_CUSTOMER ? "ARZ" : "SUP";
@@ -79,7 +81,11 @@ function buildModalBody(session) {
         <span class="sv2-field-error" id="sv2-err-description" hidden></span>
       </div>
       <div class="sv2-form-group">
-        <label for="sv2-ticket-attachment">Ek Dosya (Google Drive linki, isteğe bağlı)</label>
+        <label>Ekran Görüntüsü / Dosya (isteğe bağlı)</label>
+        ${renderFilePicker("sv2-create")}
+      </div>
+      <div class="sv2-form-group">
+        <label for="sv2-ticket-attachment">Ek Bağlantı (Google Drive vb., isteğe bağlı)</label>
         <input type="url" id="sv2-ticket-attachment" name="attachment_url" placeholder="https://drive.google.com/...">
         <span class="sv2-field-error" id="sv2-err-attachment_url" hidden></span>
       </div>
@@ -131,6 +137,7 @@ export function mountCreateTicketModal(session) {
       </button>`,
   });
 
+  createPicker = bindFilePicker("sv2-create");
   const form = document.getElementById("sv2-create-ticket-form");
   form?.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -156,6 +163,10 @@ export function mountCreateTicketModal(session) {
     showLoading(true);
 
     try {
+      // Dosyalar talep oluşturulmadan doğrulanır (hatalıysa talep açılmaz).
+      const prepared = createPicker ? await createPicker.getPrepared() : [];
+      if (prepared === null) return;
+
       const actor = getActor(session);
       const customerCode =
         session.customer_code ||
@@ -194,8 +205,26 @@ export function mountCreateTicketModal(session) {
         actor
       );
 
+      let refs = [];
+      if (prepared.length) {
+        try {
+          refs = await uploadAttachments(ticket.id, prepared, { session });
+          await ParlaDb.addTicketMessage(ticket.id, {
+            user_id: session.uid,
+            author_name: actor.name,
+            author_email: session.email,
+            author_role: "customer",
+            message: "Talebe ek dosya(lar) eklendi.",
+            attachments: refs,
+          });
+        } catch (uploadErr) {
+          toast("Talep oluşturuldu ancak dosyalar yüklenemedi; talep sayfasından yeniden ekleyebilirsiniz.", "warning");
+        }
+      }
+
       closeModal(CREATE_TICKET_MODAL_ID);
       form.reset();
+      createPicker?.clear();
       toast("Talebiniz başarıyla oluşturuldu.", "success");
 
       // Müşteriye kayıt onayı + destek ekibine yeni talep bildirimi.
@@ -205,7 +234,7 @@ export function mountCreateTicketModal(session) {
       if (cfg.CONTACT_EMAIL) {
         notifications.push(
           ParlaEmailService.notifyTicketEvent("ticket_created", cfg.CONTACT_EMAIL, ticket, {
-            note: `${actor.name} tarafından yeni talep oluşturuldu.`,
+            note: `${actor.name} tarafından yeni talep oluşturuldu.${attachmentsNote(refs)}`,
           })
         );
       }

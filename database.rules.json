@@ -84,6 +84,24 @@
           }
         }
       },
+      "ticket_attachments": {
+        "$ticketId": {
+          "$attId": {
+            ".read": "auth != null && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || (root.child('v2/tickets').child($ticketId).child('user_id').val() === auth.uid || (root.child('v2/users').child(auth.uid).child('role').val() === 'company_admin' && root.child('v2/users').child(auth.uid).child('company_id').exists() && root.child('v2/users').child(auth.uid).child('company_id').val() !== '' && root.child('v2/tickets').child($ticketId).child('company_id').val() === root.child('v2/users').child(auth.uid).child('company_id').val())))",
+            ".write": "auth != null && ((!data.exists() && newData.exists() && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || (root.child('v2/tickets').child($ticketId).child('user_id').val() === auth.uid || (root.child('v2/users').child(auth.uid).child('role').val() === 'company_admin' && root.child('v2/users').child(auth.uid).child('company_id').exists() && root.child('v2/users').child(auth.uid).child('company_id').val() !== '' && root.child('v2/tickets').child($ticketId).child('company_id').val() === root.child('v2/users').child(auth.uid).child('company_id').val())))) || root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin')",
+            ".validate": "newData.hasChildren(['name', 'type', 'size', 'data', 'uploader_uid']) && newData.child('uploader_uid').val() === auth.uid && newData.child('name').isString() && newData.child('name').val().length <= 200 && newData.child('data').isString() && newData.child('data').val().length <= 3000000 && newData.child('size').isNumber() && newData.child('size').val() <= 2200000 && newData.child('type').isString() && newData.child('type').val().matches(/^(image\\/(png|jpeg|gif|webp)|application\\/pdf|text\\/(plain|csv)|application\\/zip|application\\/msword|application\\/vnd\\.[a-z0-9.+-]+)$/)"
+          }
+        }
+      },
+      "ticket_internal_attachments": {
+        "$ticketId": {
+          "$attId": {
+            ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
+            ".write": "auth != null && ((!data.exists() && newData.exists() && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')) || root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin')",
+            ".validate": "newData.hasChildren(['name', 'type', 'size', 'data', 'uploader_uid']) && newData.child('uploader_uid').val() === auth.uid && newData.child('name').isString() && newData.child('name').val().length <= 200 && newData.child('data').isString() && newData.child('data').val().length <= 3000000 && newData.child('size').isNumber() && newData.child('size').val() <= 2200000 && newData.child('type').isString() && newData.child('type').val().matches(/^(image\\/(png|jpeg|gif|webp)|application\\/pdf|text\\/(plain|csv)|application\\/zip|application\\/msword|application\\/vnd\\.[a-z0-9.+-]+)$/)"
+          }
+        }
+      },
       "ticket_history": {
         "$ticketId": {
           ".read": "auth != null && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || (root.child('v2/tickets').child($ticketId).child('user_id').val() === auth.uid || (root.child('v2/users').child(auth.uid).child('role').val() === 'company_admin' && root.child('v2/users').child(auth.uid).child('company_id').exists() && root.child('v2/users').child(auth.uid).child('company_id').val() !== '' && root.child('v2/tickets').child($ticketId).child('company_id').val() === root.child('v2/users').child(auth.uid).child('company_id').val())))",

@@ -4,6 +4,14 @@
 import ParlaDb from "../firebase-client.js";
 import ParlaEmailService from "../email-service.js";
 import { markTicketSeen } from "../notifications.js";
+import {
+  attachmentsNote,
+  bindAttachmentClicks,
+  bindFilePicker,
+  renderAttachmentChips,
+  renderFilePicker,
+  uploadAttachments,
+} from "../attachments.js";
 import { reportEmailResult, reportEmailResults } from "../email-report.js";
 import { requireAuth, PATHS } from "../auth-guard.js";
 import {
@@ -93,6 +101,7 @@ function messagesToTimeline(items, isAdmin) {
     author: m.author_name || "Kullanıcı",
     created_at: m.created_at,
     message: m.message,
+    attachments_html: renderAttachmentChips(m.attachments, getTicketKey(ticket), m.is_internal),
     variant: m.is_internal ? "internal" : m.author_role === "customer" ? "customer" : "admin",
   }));
 }
@@ -159,6 +168,7 @@ function renderReplyBox(isAdmin) {
       <div class="sv2-reply-box" id="sv2-reply-box">
         <h4 style="margin:0 0 0.75rem;font-size:0.9375rem">Yanıt Yaz</h4>
         <textarea id="sv2-reply-message" placeholder="Müşteriye veya ekibe yanıt yazın..." rows="4"></textarea>
+        ${renderFilePicker("sv2-reply")}
         <div class="sv2-reply-actions">
           <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.875rem;cursor:pointer">
             <input type="checkbox" id="sv2-reply-internal"> Dahili not (müşteri görmez)
@@ -180,6 +190,7 @@ function renderReplyBox(isAdmin) {
     <div class="sv2-reply-box" id="sv2-reply-box">
       <h4 style="margin:0 0 0.75rem;font-size:0.9375rem">Yanıt Yaz</h4>
       <textarea id="sv2-reply-message" placeholder="Danışmanınıza yanıt yazın..." rows="4"></textarea>
+      ${renderFilePicker("sv2-reply")}
       <div class="sv2-reply-actions">
         <span style="font-size:0.8125rem;color:var(--sv2-gray-500)">Yanıtınız danışman ekibimize iletilecektir.</span>
         <button type="button" class="sv2-btn sv2-btn-primary sv2-btn-sm" id="sv2-send-reply">
@@ -475,6 +486,7 @@ function staffRecipients() {
 }
 
 function bindReply(isAdmin) {
+  const picker = bindFilePicker("sv2-reply");
   document.getElementById("sv2-send-reply")?.addEventListener("click", async () => {
     const text = document.getElementById("sv2-reply-message")?.value?.trim();
     if (!text || text.length < 3) {
@@ -490,6 +502,12 @@ function bindReply(isAdmin) {
         ? parseFloat(document.getElementById("sv2-reply-hours")?.value) || 0
         : 0;
 
+      const prepared = await picker.getPrepared();
+      if (prepared === null) return; // dosya hatası seçicide gösterildi
+      const refs = prepared.length
+        ? await uploadAttachments(getTicketKey(ticket), prepared, { internal: !!isInternal, session })
+        : [];
+
       await ParlaDb.addTicketMessage(getTicketKey(ticket), {
         user_id: session.uid,
         author_name: actor.name,
@@ -498,6 +516,7 @@ function bindReply(isAdmin) {
         message: text,
         is_internal: !!isInternal,
         work_hours: workHours,
+        attachments: refs,
       });
 
       if (!isAdmin && ticket.status === STATUSES.WAITING_CUSTOMER) {
@@ -523,7 +542,7 @@ function bindReply(isAdmin) {
           "ticket_message",
           ParlaEmailService.uniqueEmails(recipients, session.email),
           ticket,
-          { note: text.slice(0, 500) }
+          { note: text.slice(0, 500) + attachmentsNote(refs) }
         )
           .then((res) =>
             reportEmailResult(res, { eventType: "ticket_message", label: "Yanıt bildirimi", ticket, actor })
@@ -660,6 +679,7 @@ async function loadTicket(ticketId) {
 }
 
 async function init() {
+  bindAttachmentClicks();
   const ticketId = getTicketId();
   if (!ticketId) {
     app.innerHTML = `<div class="sv2-content" style="padding:2rem"><div class="sv2-empty"><i class="fas fa-exclamation-circle"></i><h4>Talep kimliği belirtilmedi.</h4><p><a href="${PATHS.customerTickets}" class="sv2-link">Taleplere dön</a></p></div></div>`;

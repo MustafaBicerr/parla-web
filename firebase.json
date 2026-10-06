@@ -2,9 +2,6 @@
   "database": {
     "rules": "database.rules.json"
   },
-  "storage": {
-    "rules": "storage.rules"
-  },
   "hosting": {
     "public": ".",
     "ignore": [
@@ -18,7 +15,10 @@
       ".env",
       ".env.*",
       "project-hierarchy.txt",
-      "support/SUPPORT_SETUP.md"
+      "tests/**",
+      "docs/manuals/node_modules/**",
+      "docs/manuals/out/**",
+      "netlify/tests/**"
     ],
     "redirects": [
       {
@@ -35,23 +35,48 @@
     "headers": [
       {
         "source": "/assets/js/support-v2/**",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, must-revalidate"
+          }
+        ]
       },
       {
         "source": "/assets/css/support-v2.css",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, must-revalidate"
+          }
+        ]
       },
       {
         "source": "/assets/js/firebase-init.js",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, must-revalidate"
+          }
+        ]
       },
       {
         "source": "/assets/**",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public, max-age=31536000, immutable"
+          }
+        ]
       },
       {
         "source": "**/*.@(html|json)",
-        "headers": [{ "key": "Cache-Control", "value": "no-cache, must-revalidate" }]
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, must-revalidate"
+          }
+        ]
       }
     ],
     "cleanUrls": false,

@@ -664,6 +664,7 @@ function renderTimeline(items) {
             <span class="sv2-timeline-time">${escapeHtml(formatDateTime(item.created_at || item.changed_at))}</span>
           </div>
           <div class="sv2-timeline-body">${escapeHtml(item.message || item.new_value || item.details || "")}</div>
+          ${item.attachments_html || ""}
         </div>
       </li>`;
     })

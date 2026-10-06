@@ -2610,3 +2610,23 @@
 .sv2-notif-empty { padding: 2rem 1rem; text-align: center; color: var(--sv2-gray-500); }
 .sv2-notif-empty i { font-size: 1.5rem; color: #0d7d4d; }
 .sv2-notif-empty p { margin: 0.5rem 0 0; font-size: 0.875rem; }
+
+/* ─── Dosya ekleri ────────────────────────────────────────────────────────── */
+.sv2-attachments { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+.sv2-attachment {
+  display: inline-flex; align-items: center; gap: 0.45rem; max-width: 100%;
+  padding: 0.35rem 0.65rem; border: 1px solid var(--sv2-gray-200); border-radius: 999px;
+  background: var(--sv2-gray-50, #f9fafb); color: var(--sv2-navy); cursor: pointer; font: inherit; font-size: 0.8125rem;
+}
+.sv2-attachment:hover { border-color: var(--sv2-accent); background: var(--sv2-accent-soft); }
+.sv2-attachment i { color: var(--sv2-accent); }
+.sv2-attachment span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+.sv2-attachment small { color: var(--sv2-gray-500); }
+.sv2-file-picker { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: 0.5rem 0; }
+.sv2-file-btn { cursor: pointer; }
+.sv2-file-hint { font-size: 0.75rem; }
+.sv2-file-list { list-style: none; margin: 0; padding: 0; flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.sv2-file-list li { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.3rem 0.2rem 0.65rem; border-radius: 999px; background: var(--sv2-accent-soft); font-size: 0.8125rem; }
+.sv2-file-list small { color: var(--sv2-gray-500); }
+.sv2-file-remove { background: none; border: none; cursor: pointer; font-size: 1.1rem; line-height: 1; color: var(--sv2-gray-500); padding: 0 0.3rem; }
+.sv2-file-picker .sv2-field-error { flex-basis: 100%; }

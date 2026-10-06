@@ -317,6 +317,51 @@ test("herkese açık mesaj düğümüne yeni iç not yazılamaz (eski istemciler
   assertAllowed(as(U.cons).write("/v2/ticket_messages/t1/m7", { ...msg, is_internal: false }));
 });
 
+// ------------------------------------------------------- ticket_attachments
+const att = (uid, over) => ({ att_id: "a1", name: "ekran.png", type: "image/png", size: 1000, data: "AAAA", uploader_uid: uid, created_at: "now", ...(over || {}) });
+
+test("ek: ticket sahibi ve personel yükler; başkası yükleyemez/okuyamaz; liste okunamaz", () => {
+  assertAllowed(as(U.custA).write("/v2/ticket_attachments/t1/a1", att("custA")));
+  assertAllowed(as(U.cons).write("/v2/ticket_attachments/t1/a2", att("cons", { att_id: "a2" })));
+  assertAllowed(as(U.cadmin).write("/v2/ticket_attachments/t1/a3", att("cadmin", { att_id: "a3" })));
+  assertDenied(as(U.custB).write("/v2/ticket_attachments/t1/a4", att("custB")), "başka firma");
+  assertDenied(as(U.intruder).write("/v2/ticket_attachments/t1/a4", att("intruder")));
+  assertDenied(as(U.custA).write("/v2/ticket_attachments/t2/a4", att("custA")), "başkasının ticket'ı");
+  assertDenied(as(U.custA).read("/v2/ticket_attachments/t1"), "toplu okuma yok");
+  assertDenied(as(U.cons).read("/v2/ticket_attachments/t1"), "personel de toplu okuyamaz (ek verisi büyük)");
+});
+
+test("ek: yalnızca kimliği bilinen ek, ticket tarafları ve personelce okunur", () => {
+  const d = targaryen.database(rules, JSON.parse(JSON.stringify({ ...data, v2: { ...data.v2, ticket_attachments: { t1: { a1: att("custA") } } } })));
+  assertAllowed(d.as(U.custA).read("/v2/ticket_attachments/t1/a1"));
+  assertAllowed(d.as(U.cadmin).read("/v2/ticket_attachments/t1/a1"));
+  assertAllowed(d.as(U.cons).read("/v2/ticket_attachments/t1/a1"));
+  assertDenied(d.as(U.custB).read("/v2/ticket_attachments/t1/a1"));
+  assertDenied(d.as(U.custA2).read("/v2/ticket_attachments/t1/a1"));
+  assertDenied(d.as(U.custA).write("/v2/ticket_attachments/t1/a1", null), "silinemez");
+  assertDenied(d.as(U.custA).write("/v2/ticket_attachments/t1/a1/data", "BBBB"), "değiştirilemez");
+  assertAllowed(d.as(U.root).write("/v2/ticket_attachments/t1/a1", null), "super_admin moderasyon");
+});
+
+test("ek doğrulama: başkası adına, büyük, izin verilmeyen tür reddedilir", () => {
+  assertDenied(as(U.custA).write("/v2/ticket_attachments/t1/a5", att("cons")), "uploader_uid başkası");
+  assertDenied(as(U.custA).write("/v2/ticket_attachments/t1/a5", att("custA", { data: "A".repeat(3000001) })), "çok büyük veri");
+  assertDenied(as(U.custA).write("/v2/ticket_attachments/t1/a5", att("custA", { size: 3000000 })), "çok büyük boyut");
+  assertDenied(as(U.custA).write("/v2/ticket_attachments/t1/a5", att("custA", { type: "application/x-msdownload", name: "virus.exe" })), "exe");
+  assertDenied(as(U.custA).write("/v2/ticket_attachments/t1/a5", att("custA", { type: "text/html", name: "x.html" })), "html");
+  assertAllowed(as(U.custA).write("/v2/ticket_attachments/t1/a5", att("custA", { type: "application/pdf", name: "rapor.pdf" })));
+  assertAllowed(as(U.custA).write("/v2/ticket_attachments/t1/a6", att("custA", { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", name: "tablo.xlsx" })));
+});
+
+test("[kritik] iç not ekleri yalnızca personelce okunur/yazılır", () => {
+  assertAllowed(as(U.cons).write("/v2/ticket_internal_attachments/t1/i1", att("cons", { att_id: "i1" })));
+  assertDenied(as(U.custA).write("/v2/ticket_internal_attachments/t1/i2", att("custA", { att_id: "i2" })));
+  const d = targaryen.database(rules, JSON.parse(JSON.stringify({ ...data, v2: { ...data.v2, ticket_internal_attachments: { t1: { i1: att("cons") } } } })));
+  assertAllowed(d.as(U.cons).read("/v2/ticket_internal_attachments/t1/i1"));
+  assertDenied(d.as(U.custA).read("/v2/ticket_internal_attachments/t1/i1"));
+  assertDenied(d.as(U.cadmin).read("/v2/ticket_internal_attachments/t1/i1"));
+});
+
 // ------------------------------------------------------- ticket_history
 test("[kritik] geçmiş kayıtları yalnızca muhataplarca okunur ve yalnızca eklenir", () => {
   assertDenied(as(U.custB).read("/v2/ticket_history/t1"));
