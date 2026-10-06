@@ -1,0 +1,22 @@
+{
+  "title": "Destek Portalı\n*Kullanıcı* Kılavuzu",
+  "subtitle": "Talep açma, takip etme ve danışmanlarımızla iletişim kurma rehberi. Bu belge tasarım sisteminin örnek çıktısıdır.",
+  "eyebrow": "Örnek kılavuz",
+  "product": "Destek Portalı",
+  "version": "0.1 (örnek)",
+  "date": "Ekim 2026",
+  "audience": "Müşteri kullanıcıları",
+  "author": "Parla Bilgi Teknolojileri",
+  "header": "Destek Portalı · Kullanıcı Kılavuzu",
+  "footer": "Parla Bilgi Teknolojileri · Destek Portalı",
+  "pdfTitle": "Parla BT Destek Portalı — Kullanıcı Kılavuzu (örnek)",
+  "keywords": ["Parla BT", "Destek Portalı", "kullanıcı kılavuzu", "ticket"],
+  "toc": { "depth": 2, "title": "İçindekiler" },
+  "numbering": true,
+  "backCover": {
+    "kicker": "Destek",
+    "title": "Yardıma mı\nihtiyacınız var?",
+    "lines": ["Portal üzerinden yeni bir talep açabilir", "veya danışmanınıza mesaj yazabilirsiniz."]
+  },
+  "output": "out/_sample.pdf"
+}

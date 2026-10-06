@@ -5,3 +5,4 @@ project-hierarchy.txt
 .env.*
 !.env.example
 node_modules
+docs/manuals/out/

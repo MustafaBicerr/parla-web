@@ -1,0 +1,18 @@
+{
+  "title": "Destek Portalı\n*Kullanıcı* Kılavuzu",
+  "subtitle": "Talep açma, takip etme, danışmanlarımızla yazışma ve çözümü onaylama — adım adım, ekran görüntüleriyle.",
+  "eyebrow": "Kullanıcı Kılavuzu",
+  "product": "Destek Portalı",
+  "version": "1.0",
+  "date": "Ekim 2026",
+  "audience": "Müşteri kullanıcıları",
+  "author": "Parla Bilgi Teknolojileri",
+  "header": "Destek Portalı · Kullanıcı Kılavuzu",
+  "footer": "Parla Bilgi Teknolojileri · Destek Portalı",
+  "pdfTitle": "Parla BT Destek Portalı — Kullanıcı Kılavuzu",
+  "keywords": ["Parla BT", "Destek Portalı", "Kullanıcı Kılavuzu", "SAP destek", "ticket"],
+  "toc": { "depth": 2, "title": "İçindekiler" },
+  "numbering": true,
+  "backCover": { "kicker": "Destek", "title": "Yardıma mı\nihtiyacınız var?", "lines": ["info@parlabilgiteknolojileri.net", "+90 530 226 77 98", "www.parlabilgiteknolojileri.net"] },
+  "output": "out/Kullanici-Kilavuzu.pdf"
+}
