@@ -1,0 +1,18 @@
+{
+  "title": "Sistem Adminleri\n*Kullanım* Kılavuzu",
+  "subtitle": "Talep yönetimi, kullanıcı ve müşteri tanımları, raporlar ile e-posta ve veri bakımı — Parla BT personeli için ekran görüntülü başvuru kılavuzu.",
+  "eyebrow": "Sistem Adminleri Kullanım Kılavuzu",
+  "product": "Destek Portalı",
+  "version": "1.0",
+  "date": "Ekim 2026",
+  "audience": "Parla BT personeli",
+  "author": "Parla Bilgi Teknolojileri",
+  "header": "Destek Portalı · Sistem Adminleri Kılavuzu",
+  "footer": "Parla Bilgi Teknolojileri · Destek Portalı",
+  "pdfTitle": "Parla BT Destek Portalı — Sistem Adminleri Kullanım Kılavuzu",
+  "keywords": ["Parla BT", "Destek Portalı", "Sistem Adminleri", "yönetici kılavuzu", "ticket", "SLA", "Resend", "Firebase"],
+  "toc": { "depth": 2, "title": "İçindekiler" },
+  "numbering": true,
+  "backCover": { "kicker": "Destek", "title": "Yardıma mı\nihtiyacınız var?", "lines": ["info@parlabilgiteknolojileri.net", "+90 530 226 77 98", "www.parlabilgiteknolojileri.net"] },
+  "output": "out/Sistem-Adminleri-Kullanim-Kilavuzu.pdf"
+}

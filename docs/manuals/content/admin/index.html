@@ -1,0 +1,554 @@
+
+<section class="chapter" data-title="Başlangıç"
+         data-intro="Roller ve yetkiler, personel girişi, ekranın bölümleri ve Genel Bakış sayfasındaki özet kartlar. Bu bölüm, kılavuzun geri kalanında kullanılan temel kavramları tanıtır.">
+  <h1>Başlangıç</h1>
+
+  <h2>Roller ve yetkiler</h2>
+  <p class="lead">Parla BT tarafında dört personel rolü vardır. Rol, hesabınıza <strong>Muhataplar</strong> sayfasında atanır; hangi işlemleri yapabileceğinizi belirler. Menü dört rolde de aynıdır — roller menüyü değil, sayfaların içindeki işlemleri ve Muhataplar sayfasını sınırlar. Kılavuzda <span class="rb mgr">yönetici roller</span> ifadesi Süper Admin, Destek Atayıcı ve Proje Yöneticisi'ni anlatır.</p>
+  <table class="fields">
+    <thead><tr><th>Rol</th><th>Ne yapar?</th></tr></thead>
+    <tbody>
+      <tr><td><span class="rb sa">Süper Admin</span></td><td>Her şeyi görür ve yönetir. Departman, modül ve destek türü tanımlarını, <em>Veri Bakımı</em> aracını ve Süper Admin rolü atamayı yalnızca bu rol yapar.</td></tr>
+      <tr><td><span class="rb da">Destek Atayıcı</span></td><td>Günlük operasyonu yürütür: talepleri atar, durum/önceliği değiştirir, talep siler; firma, kullanıcı, danışman ve sözleşme kayıtlarını yönetir; e-posta servisini izler.</td></tr>
+      <tr><td><span class="rb pm">Proje Yöneticisi</span></td><td>Talepleri Destek Atayıcı gibi yönetir (atama, durum, öncelik, efor) ve proje kayıtlarını düzenler. Kullanıcı/firma/sözleşme yönetemez, talep silemez.</td></tr>
+      <tr><td><span class="rb dn">Danışman</span></td><td>Kendine atanan taleplerde çalışır (işleme alma, müşteri testi, kapanış onayı isteme, efor). Tüm talepleri görüntüler; atanmadığı talepte durum değiştiremez.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Yetki matrisi</h3>
+  <p>Matris kodda ve veritabanı kurallarında doğrulanan yetkileri özetler. Yetkisiz bir düğmeye basarsanız işlem <em>“Bu işlem için yetkiniz yok”</em> uyarısıyla durur; yetkinin asıl kaynağı veritabanı kurallarıdır.</p>
+  <table class="matrix">
+    <thead><tr><th>Özellik</th><th><span class="rb sa">Süper Admin</span><small>super_admin</small></th><th><span class="rb da">Destek Atayıcı</span><small>service_admin</small></th><th><span class="rb pm">Proje Yöneticisi</span><small>project_manager</small></th><th><span class="rb dn">Danışman</span><small>consultant</small></th></tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="5">Talepler</td></tr>
+      <tr><td>Tüm talepleri listeleme, arama, dışa aktarma</td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td></tr>
+      <tr><td>Yeni talep oluşturma<small>Muhatap seçimi ve yeni firma kaydı yalnızca Süper Admin / Destek Atayıcı'da çalışır.</small></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk p"></span></td><td><span class="mk p"></span></td></tr>
+      <tr><td>Admin Paneli: durum, öncelik, danışman atama<small>Danışman yalnızca <em>Hızlı İşlemler</em>'i görür.</small></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk n"></span></td></tr>
+      <tr><td>Hızlı işlemler (İşleme Al, Müşteri Testi, Kapanış Onayı İste, İşleme Geri Al)<small>Danışman: yalnızca kendisine atanmış talepte.</small></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk p"></span></td></tr>
+      <tr><td>Müşteri Adına Kapat, Kapat, Yeniden Aç</td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk n"></span></td></tr>
+      <tr><td>Yanıt yazma, iç not, dosya ekleme</td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td></tr>
+      <tr><td>Efor ekleme / silme<small>Silme yalnızca yöneticilerde; Danışman yalnızca atandığı talepte efor ekler.</small></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk p"></span></td></tr>
+      <tr><td>Talep silme</td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk n"></span></td><td><span class="mk n"></span></td></tr>
+      <tr class="grp"><td colspan="5">Müşteri ve kullanıcılar</td></tr>
+      <tr><td>Muhataplar: kullanıcı oluşturma, düzenleme, şifre sıfırlama, pasife alma<small>Diğer roller sayfayı açamaz; Genel Bakış'a yönlendirilir.</small></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk n"></span></td><td><span class="mk n"></span></td></tr>
+      <tr><td>Süper Admin rolü atama</td><td><span class="mk y"></span></td><td><span class="mk n"></span></td><td><span class="mk n"></span></td><td><span class="mk n"></span></td></tr>
+      <tr><td>Firma, danışman (personel) ve sözleşme kayıtları<small>Sayfaları tüm personel okur; yazma yalnızca Süper Admin / Destek Atayıcı.</small></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk n"></span></td><td><span class="mk n"></span></td></tr>
+      <tr class="grp"><td colspan="5">Tanımlar ve izleme</td></tr>
+      <tr><td>Proje kayıtları</td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk n"></span></td></tr>
+      <tr><td>Departman, Modül, Destek Türü tanımları</td><td><span class="mk y"></span></td><td><span class="mk n"></span></td><td><span class="mk n"></span></td><td><span class="mk n"></span></td></tr>
+      <tr><td>Genel Bakış, Raporlar, Aktiviteler, bildirim zili</td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk y"></span></td></tr>
+      <tr><td>E-posta Servisi kartı (durum, test e-postası)</td><td><span class="mk y"></span></td><td><span class="mk y"></span></td><td><span class="mk n"></span></td><td><span class="mk n"></span></td></tr>
+      <tr><td>Veri Bakımı kartı</td><td><span class="mk y"></span></td><td><span class="mk n"></span></td><td><span class="mk n"></span></td><td><span class="mk n"></span></td></tr>
+    </tbody>
+  </table>
+  <div class="matrix-legend"><span><span class="mk y"></span> Yapabilir</span><span><span class="mk p"></span> Kısmen / koşullu (satır notuna bakın)</span><span><span class="mk n"></span> Yapamaz</span></div>
+
+  <h2>Giriş ve ilk adımlar</h2>
+  <div class="shot-row side" style="--lc:74mm"><figure class="shot shot--bare"><img src="screens/a01-giris.png" alt="Personel girişi."><span class="pin" style="left:10%;top:27.6%">1</span><span class="pin" style="left:10%;top:39.6%">2</span><span class="pin" style="left:10%;top:49.2%">3</span><span class="pin" style="left:61.7%;top:57%">4</span><span class="pin" style="left:64.3%;top:85.5%">5</span><figcaption>Personel girişi.</figcaption></figure><div class="side-body"><ol class="pin-legend"><li><strong>E-posta</strong> — hesabınıza tanımlı adres.</li><li><strong>Şifre</strong> — göz simgesi gösterir/gizler.</li><li><strong>Giriş Yap</strong></li><li><strong>Şifremi Unuttum</strong> — sıfırlama e-postası yollar.</li><li><strong>Sistem Adminleri Kılavuzu</strong> — bu PDF'i <em>Aç</em> veya <em>İndir</em>.</li></ol>
+      <p>Personel hesabı <strong>Muhataplar</strong> sayfasından açılır (Bölüm 3); kendi kendinize kayıt olamazsınız. Size e-posta adresiniz ve bir <strong>geçici şifre</strong> iletilir.</p>
+      <ul>
+        <li>Adres: <strong>www.parlabilgiteknolojileri.net/support</strong> (otomatik giriş sayfasına yönlenir).</li>
+        <li>Geçici şifreyle ilk girişte <strong>Şifrenizi belirleyin</strong> sayfası açılır: en az 8 karakter, 1 büyük harf, 1 rakam; geçici şifreden farklı olmalı. Tamamlanmadan başka sayfa açılmaz.</li>
+        <li>Girişten sonra personel rolleri <strong>Genel Bakış</strong>'a gider; müşteri sayfalarını açmaya çalışırsanız yönetici sayfasına döndürülürsünüz.</li>
+      </ul>
+      <div class="callout warn"><p>Pasif hesaplar giriş yapamaz (“Hesabınız aktif değil”); pasife alınan kullanıcının açık oturumu da sonraki sayfada kapanır.</p></div></div></div>
+
+  <h2>Ekranı tanıyın</h2>
+  <p>Her sayfa soldaki <strong>menü</strong>, üstteki <strong>başlık çubuğu</strong> ve ortadaki <strong>çalışma alanı</strong>ndan oluşur. Menünün altında adınız, rolünüz, <em>Şifre Değiştir</em> ve <em>Çıkış Yap</em> bulunur.</p>
+  <figure class="shot shot--wide" data-url="www.parlabilgiteknolojileri.net/support-v2/admin/dashboard.html"><img src="screens/a01-genel-bakis.png" alt="Genel Bakış (Süper Admin görünümü)."><span class="pin" style="left:18.3%;top:21.9%">1</span><span class="pin" style="left:77.6%;top:4.2%">2</span><span class="pin" style="left:85.6%;top:4.2%">3</span><span class="pin" style="left:21.2%;top:12.9%">4</span><span class="pin" style="left:57.9%;top:30.8%">5</span><span class="pin" style="left:21.8%;top:51.6%">6</span><span class="pin" style="left:61.1%;top:51.6%">7</span><span class="pin" style="left:89.2%;top:4.2%">8</span><figcaption>Genel Bakış (Süper Admin görünümü).</figcaption><ol class="pin-legend cols-2"><li><strong>Menü</strong> — tüm personel sayfaları.</li><li><strong>Kılavuz</strong> — bu PDF'i yeni sekmede açar.</li><li><strong>Bildirim zili</strong> — size özel uyarılar (Bölüm 5.3).</li><li><strong>Özet kartları</strong> — açık, kritik, atanmamış, SLA.</li><li><strong>SLA Aşımı</strong> — hedefi aşılmış açık talepler.</li><li><strong>Ticket Tipi Dağılımı</strong></li><li><strong>Son Aktiviteler</strong> — son 20 kayıt.</li><li><strong>Hesabınız</strong> — adınız.</li></ol></figure>
+  <table class="fields">
+    <thead><tr><th>Menü öğesi</th><th>Ne işe yarar?</th><th>Bölüm</th></tr></thead>
+    <tbody>
+      <tr><td>Genel Bakış · Ticketlar</td><td>Özet kartlar ve iş yükü · tüm taleplerin listesi ve ayrıntısı.</td><td>1.4 · 2</td></tr>
+      <tr><td>Aktiviteler</td><td>Değişmez denetim günlüğü; e-posta hataları da burada.</td><td>5.2</td></tr>
+      <tr><td>Muhataplar <span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span></td><td>Müşteri ve personel kullanıcı hesapları.</td><td>3.2</td></tr>
+      <tr><td>Müşteriler · Sözleşmeler · Projeler</td><td>Firma, sözleşme ve proje kayıtları.</td><td>3.1 · 4</td></tr>
+      <tr><td>Yönetim: Departmanlar, Modüller, Danışmanlar, Destek Türleri, Raporlar</td><td>Tanım listeleri, personel kayıtları ve raporlar.</td><td>3.3 · 4.3 · 5.1</td></tr>
+      <tr><td>Kılavuzlar</td><td>Sistem Adminleri ve Kullanıcı kılavuzu PDF'leri (aç / indir).</td><td>—</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Genel Bakış sayfası</h2>
+  <p>Kartlar <strong>tüm talepler</strong> üzerinden hesaplanır (yalnızca sizin taleplerinizle sınırlı değildir).</p>
+  <table class="fields">
+    <thead><tr><th>Kart</th><th>Neyi sayar?</th></tr></thead>
+    <tbody>
+      <tr><td>Toplam Açık · Kritik</td><td>Çözüldü/Kapandı olmayan tüm talepler (Kapanış Onayı ve Müşteri Bekleniyor dahil) · bunların içinde önceliği Kritik olanlar.</td></tr>
+      <tr><td>Bugün Açılan · Bugün Kapanan</td><td>Bugün oluşturulan · bugün kapanan talepler.</td></tr>
+      <tr><td>Atanmamış</td><td>Açık ve henüz danışman atanmamış talepler.</td></tr>
+      <tr><td>SLA Aşımı</td><td>İlk yanıt veya çözüm hedefi aşılmış açık talepler (<em>Müşteri Bekleniyor</em> hariç; Bölüm 2.7).</td></tr>
+      <tr><td>Bu Ay Çözülen · Ort. Çözüm Süresi</td><td>Bu ay Çözüldü/Kapandı olanlar · çözülmüş/kapanmış taleplerde oluşturma–çözüm arası ortalama.</td></tr>
+    </tbody>
+  </table>
+  <p>Kartların altında <strong>Danışman İş Yükü</strong> (aktif danışman başına açık talep, kritik talep ve toplam efor; yalnızca <em>birincil</em> danışman sayılır), <strong>E-posta Servisi</strong> ve <strong>Veri Bakımı</strong> kartları (Bölüm 6) ile en yeni 10 <strong>Atanmamış Ticket</strong> bulunur.</p>
+  <figure class="shot shot--wide"><img src="screens/a01-is-yuku.png" alt="Danışman İş Yükü ve Atanmamış Ticketlar."><span class="pin" style="left:2.2%;top:4.3%">1</span><span class="pin" style="left:89.1%;top:76.2%">2</span><span class="pin" style="left:86.5%;top:54.7%">3</span><figcaption>Danışman İş Yükü ve Atanmamış Ticketlar.</figcaption><ol class="pin-legend"><li><strong>Danışman İş Yükü</strong> — kim ne kadar işle meşgul.</li><li><strong>Ata</strong> — danışman seçme penceresini açar: kişi tek ve birincil danışman olur, talep <em>Atandı</em>'ya geçer, ona e-posta gider (işlemi yapana gitmez). Düğme yönetici rollerde (Süper Admin, Destek Atayıcı, Proje Yöneticisi) görünür; Danışman rolünde yerine <em>Aç</em> bağlantısı gelir. Çoklu atama için Admin Paneli (Bölüm 2.3).</li><li><strong>Tümünü Gör</strong> — Ticketlar listesini “Sadece atanmamış” filtresiyle açar.</li></ol></figure>
+</section>
+
+
+<section class="chapter" data-opener="false" data-title="Talep Yönetimi"
+         data-intro="Talep listesi, filtreler, yeni talep oluşturma, ayrıntı sayfası, durum yaşam döngüsü, atama, efor, SLA ve e-posta bildirimleri.">
+  <h1>Talep Yönetimi</h1>
+
+  <h2>Talep listesi ve filtreler</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span><span class="rb pm">Proje Yöneticisi</span><span class="rb dn">Danışman</span></p>
+  <p><span class="ui-menu">Ticketlar</span> sayfası <strong>tüm firmaların tüm taleplerini</strong> listeler; her personel rolü hepsini görür (sayfa başına 25 kayıt). Talep numarası veya <span class="ui-btn outline">Düzenle</span> ayrıntıyı açar.</p>
+  <figure class="shot shot--wide" data-url="www.parlabilgiteknolojileri.net/support-v2/admin/tickets.html"><img src="screens/a02-liste.png" alt="Ticketlar listesi (Destek Atayıcı; ilk beş satır)."><span class="pin" style="left:64.9%;top:0.5%">1</span><span class="pin" style="left:75.3%;top:0.5%">2</span><span class="pin" style="left:3.8%;top:6.5%">3</span><span class="pin" style="left:17.9%;top:14.6%">4</span><span class="pin" style="left:79.2%;top:14.4%">5</span><span class="pin" style="left:88.8%;top:13.9%">6</span><span class="pin" style="left:1.9%;top:20.4%">7</span><span class="pin" style="left:76.4%;top:29.3%">8</span><span class="pin" style="left:61.8%;top:49.5%">9</span><span class="pin" style="left:94.4%;top:42.6%">10</span><figcaption>Ticketlar listesi (Destek Atayıcı; ilk beş satır).</figcaption><ol class="pin-legend cols-2"><li><strong>Yeni Ticket</strong> — müşteri adına talep açar.</li><li><strong>CSV / Excel</strong> — süzülmüş listeyi indirir.</li><li><strong>Durum çipleri</strong> — birden fazlası seçilebilir.</li><li><strong>Arama</strong> — numara, konu, firma, kullanıcı, danışman, müşteri kodu.</li><li><strong>Sıralama</strong> — En Yeni, En Eski, Öncelik, Durum, No.</li><li><strong>Gelişmiş Filtre</strong></li><li><strong>Tip çipleri</strong> — SUP, ARZ, PRJ, INT, DEV, BUG.</li><li><strong>SLA</strong> — hedef durumu (Bölüm 2.7).</li><li><strong>Onay kutusu</strong> — iç takip işareti.</li><li><strong>Sil</strong> — yalnızca Süper Admin / Destek Atayıcı.</li></ol></figure>
+  <figure class="shot shot--wide shot--bare"><img src="screens/a02-filtre.png" alt="Filtre örneği: İşlemde + Atandı, Yüksek öncelik, danışman Zeynep Arslan."><span class="pin" style="left:9.5%;top:3.4%">1</span><span class="pin" style="left:18.9%;top:18.7%">2</span><span class="pin" style="left:14.1%;top:47%">3</span><span class="pin" style="left:35.3%;top:47%">4</span><span class="pin" style="left:54.1%;top:47.5%">5</span><span class="pin" style="left:7.4%;top:67.4%">6</span><span class="pin" style="left:21.9%;top:64.1%">7</span><span class="pin" style="left:3.3%;top:85.4%">8</span><figcaption>Filtre örneği: İşlemde + Atandı, Yüksek öncelik, danışman Zeynep Arslan.</figcaption><ol class="pin-legend cols-2"><li><strong>Seçili çipler</strong> mavi görünür.</li><li><strong>Arama</strong> çiplerle birlikte çalışır.</li><li><strong>SAP Modülü</strong> / Öncelik listeleri.</li><li><strong>Danışman</strong> — birincil danışman.</li><li><strong>Firma</strong> — yazınca öneri çıkar; listeden seçin.</li><li><strong>Sadece atanmamış</strong></li><li><strong>Uygula</strong> — gelişmiş filtreyi çalıştırır.</li><li><strong>Tip çipleri</strong></li></ol></figure>
+  <ul>
+    <li><strong>Filtre mantığı:</strong> aynı gruptaki çipler “veya”, gruplar “ve” ile birleşir. Çipler ve arama <em>anında</em>, Gelişmiş Filtre (modül, öncelik, danışman, firma, oluşturma tarihi aralığı, atanmamış) <strong>Uygula</strong> ile çalışır. Arama büyük/küçük harf duyarsızdır ve yazdığınız ifadeyi bütün olarak arar.</li>
+    <li><strong>Dışa aktarma:</strong> CSV (virgül ayraçlı, Türkçe için BOM'lu) ve Excel dosyaları <em>süzülmüş</em> listenin tüm sayfalarını içerir: NO, KONU, MÜŞTERİ NO/UNVAN, DANIŞMAN, EFOR, ONAY, TARİH, DURUM, ÖNCELİK, TİP, SAP MODÜL. Excel için tarayıcının internetten bir kütüphane yükleyebilmesi gerekir.</li>
+    <li><strong>ONAY kutusu</strong> yalnızca iç takip işaretidir (dışa aktarmada Evet/Hayır); durumu veya müşteri onayını etkilemez. <strong>Sil</strong> onaydan sonra talep kaydını kaldırır ve Aktiviteler'e yazar; mesaj, geçmiş, efor ve ekler silinmez — mümkünse talebi <em>Kapandı</em> yapın.</li>
+  </ul>
+
+  <h2>Yeni talep oluşturma</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span><span class="rb pm">Proje Yöneticisi</span><span class="rb dn">Danışman</span></p>
+  <div class="shot-row side" style="--lc:70mm"><figure class="shot shot--bare"><img src="screens/a02-yeni-ticket.png" alt="Yeni Ticket Oluştur."><span class="pin" style="left:44.1%;top:20.6%">1</span><span class="pin" style="left:90.2%;top:20.6%">2</span><span class="pin" style="left:44.1%;top:32.9%">3</span><span class="pin" style="left:90.2%;top:32.9%">4</span><span class="pin" style="left:90.2%;top:45.1%">5</span><span class="pin" style="left:90.2%;top:57.3%">6</span><span class="pin" style="left:90.2%;top:69.2%">7</span><span class="pin" style="left:78.8%;top:91.2%">8</span><figcaption>Yeni Ticket Oluştur.</figcaption></figure><div class="side-body"><ol class="pin-legend"><li><strong>Talep Tipi</strong> * — altı tipin tamamı (müşteri yalnızca SUP/ARZ/BUG görür).</li><li><strong>Öncelik</strong> *</li><li><strong>Firma</strong> * — listeden seçin; yoksa <em>Yeni firma kaydet</em>.</li><li><strong>Muhatap</strong> — firmanın kullanıcıları.</li><li><strong>SAP Modülü</strong> *</li><li><strong>Konu</strong> * (5–100 karakter)</li><li><strong>Açıklama</strong> * (en az 20 karakter)</li><li><strong>Oluştur</strong></li></ol>
+      <ul>
+        <li><strong>Yeni firma kaydet</strong> seçilirse firma adı, müşteri tipi (CUS/ARC) ve önerilen müşteri kodu istenir. Talep <strong>Açık</strong> durumunda açılır; numara <code>TİP-MÜŞTERİ-MODÜL-YYAA-SIRA</code> biçimindedir (sıra tip + müşteri kodu + ay bazında).</li>
+        <li><strong>Muhatap</strong> seçerseniz talep onun adına açılır ve ona “Talebiniz alındı” e-postası gider; boş bırakırsanız sahibi <strong>siz</strong> olursunuz ve e-posta gitmez.</li>
+        <li><span class="rb pm">Proje Yöneticisi</span><span class="rb dn">Danışman</span> rollerinde Muhatap listesi boştur ve yeni firma kaydı yetki hatası verir.</li>
+      </ul></div></div>
+
+  <h2>Talep ayrıntısı ve Admin Paneli</h2>
+  <p>Ayrıntı sayfası şu bölümlerden oluşur: <strong>başlık ve künye</strong>, <strong>Admin Paneli</strong> (danışmanlar için <em>Danışman Paneli</em>) ile <strong>Müşteri Bilgileri</strong>, <strong>Atanan Danışmanlar</strong>, <strong>Efor Kayıtları</strong>, <strong>İç Notlar</strong> ve <strong>Mesajlar &amp; Geçmiş</strong>.</p>
+  <figure class="shot shot--wide"><img src="screens/a02-detay-ust.png" alt="Talep başlığı ve künye."><span class="pin" style="left:21.4%;top:25.9%">1</span><span class="pin" style="left:26.7%;top:26.2%">2</span><span class="pin" style="left:32.5%;top:26.2%">3</span><span class="pin" style="left:93.9%;top:63%">4</span><span class="pin" style="left:15.7%;top:81.2%">5</span><span class="pin" style="left:28.9%;top:81.2%">6</span><figcaption>Talep başlığı ve künye.</figcaption><ol class="pin-legend cols-2"><li><strong>Tip</strong> rozeti.</li><li><strong>Durum</strong> rozeti.</li><li><strong>Öncelik</strong> rozeti.</li><li><strong>SLA</strong> — o anki hedef durumu.</li><li><strong>İlk Yanıt</strong> — personelin ilk herkese açık yanıtı.</li><li><strong>Toplam Efor</strong> — efor kayıtlarının toplamı.</li></ol></figure>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span><span class="rb pm">Proje Yöneticisi</span></p>
+  <div class="shot-row side" style="--lc:70mm"><figure class="shot shot--bare"><img src="screens/a02-admin-paneli.png" alt="Admin Paneli."><span class="pin" style="left:5.5%;top:12%">1</span><span class="pin" style="left:43.6%;top:22.4%">2</span><span class="pin" style="left:90%;top:22.4%">3</span><span class="pin" style="left:6.4%;top:55.1%">4</span><span class="pin" style="left:71.6%;top:66.9%">5</span><span class="pin" style="left:90%;top:80.3%">6</span><span class="pin" style="left:5.9%;top:92.8%">7</span><figcaption>Admin Paneli.</figcaption></figure><div class="side-body"><ol class="pin-legend"><li><strong>Hızlı İşlemler</strong> — mevcut duruma uygun sonraki adımlar (Bölüm 2.4).</li><li><strong>Durum</strong> — sekiz durumun hepsine geçilebilir.</li><li><strong>Öncelik</strong> — Düşük … Kritik.</li><li><strong>Ata</strong> — işaretli danışmanlar talepte çalışır.</li><li><strong>Birincil</strong> — sorumlu danışman (tek).</li><li><strong>Durum Değişiklik Notu</strong> — durum değişince en az 10 karakter zorunlu.</li><li><strong>Güncelle</strong> — durum, öncelik ve atamayı birlikte kaydeder.</li></ol>
+      <ul>
+        <li>Hiçbir şey değişmediyse “Değişiklik yapılmadı” çıkar. Not, geçmişe yazılır ve müşteriye giden e-postada gösterilir.</li>
+        <li>Her durum, öncelik ve danışman değişikliği <em>Geçmiş</em>'e satır olur (atama iki satır görünebilir). Öncelik değişikliği e-posta üretmez; müşterinin zilinde görünür.</li>
+        <li>Durum listesi her geçişe izin verir; sıradan akış için Hızlı İşlemler daha güvenlidir. <em>Çözüldü</em>'ye yalnızca buradan geçilir.</li>
+        <li>Sağdaki <strong>Müşteri Bilgileri</strong> kartı muhatap, e-posta, firma, müşteri no ve danışmanları gösterir (bağlantılıdır).</li>
+      </ul></div></div>
+
+  <h2>Durum yaşam döngüsü</h2>
+  <div class="flow">
+    <div class="node open"><span class="n">1</span>Açık<small>Talep geldi</small></div><span class="arrow"></span>
+    <div class="node assigned"><span class="n">2</span>Atandı<small>Danışman atandı</small></div><span class="arrow"></span>
+    <div class="node in_progress"><span class="n">3</span>İşlemde<small>İşleme Al</small></div><span class="arrow"></span>
+    <div class="node waiting_customer"><span class="n">4</span>Müşteri Bekleniyor<small>Test / bilgi</small></div><span class="arrow"></span>
+    <div class="node pending_close"><span class="n">5</span>Kapanış Onayı<small>Müşteri onayı</small></div><span class="arrow"></span>
+    <div class="node closed"><span class="n">6</span>Kapandı<small>Tamamlandı</small></div>
+  </div>
+  <p>Müşteri kapanışı reddederse talep <em>Tekrar Açıldı</em>'ya döner ve çalışma yeniden başlar. Aşağıdaki tablo her durumda ne yapılacağını, <strong>Hızlı İşlem</strong> düğmesini ve müşteriye giden e-postayı özetler.</p>
+  <table class="fields w3">
+    <thead><tr><th>Durum</th><th>Anlamı</th><th>Hızlı işlem → sonuç · e-posta</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge open">Açık</span></td><td>Talep geldi, danışman yok; “Atanmamış” sayılır.</td><td>Danışman atayın (Açık → Atandı otomatik).</td></tr>
+      <tr><td><span class="badge assigned">Atandı</span></td><td>Danışman atandı.</td><td><strong>İşleme Al</strong> → İşlemde (not sorulmaz) · “Durum güncellendi”.</td></tr>
+      <tr><td><span class="badge in_progress">İşlemde</span></td><td>Çalışma sürüyor.</td><td><strong>Müşteri Testine Gönder</strong> → Müşteri Bekleniyor · “İncelemeniz bekleniyor”. <strong>Kapanış Onayı İste</strong> → Kapanış Onayı · “Kapanış onayı”.</td></tr>
+      <tr><td><span class="badge waiting_customer">Müşteri Bekleniyor</span></td><td>Müşteri yanıtı bekleniyor; SLA “duraklatıldı”. Müşteri yanıtlayınca talep otomatik <em>İşlemde</em> olur.</td><td><strong>İşleme Geri Al</strong> → İşlemde · “Durum güncellendi”. Kapanış Onayı İste de yapılabilir.</td></tr>
+      <tr><td><span class="badge pending_close">Kapanış Onayı Bekliyor</span></td><td>Çözüm tamamlandı; müşteri onayı bekleniyor (onaylarsa Kapandı, reddederse Tekrar Açıldı).</td><td><strong>İşleme Geri Al</strong>. <span class="rb mgr">yönetici roller</span> <strong>Müşteri Adına Kapat</strong> → Kapandı · “Talep kapatıldı”.</td></tr>
+      <tr><td><span class="badge resolved">Çözüldü</span></td><td>Yalnızca Durum listesinden verilir; çözüm zamanı bir kez kaydedilir. Müşteri bunu da onaylayıp kapatabilir.</td><td><span class="rb mgr">yönetici roller</span> <strong>Kapat</strong> → Kapandı · “Talep kapatıldı”.</td></tr>
+      <tr><td><span class="badge closed">Kapandı</span></td><td>Tamamlandı; müşteri 14 gün içinde yeniden açabilir.</td><td><span class="rb mgr">yönetici roller</span> <strong>Yeniden Aç</strong> → Tekrar Açıldı (kapanış zamanı silinir).</td></tr>
+      <tr><td><span class="badge reopened">Tekrar Açıldı</span></td><td>Müşteri veya yönetici yeniden açtı; birincil danışmana “Müşteri talebi yeniden açtı” bildirimi düşer.</td><td>İşlemde ile aynı düğmeler.</td></tr>
+    </tbody>
+  </table>
+  <div class="shot-row three">
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-hizli-acik.png" alt="Açık / Atandı"><figcaption>Açık / Atandı</figcaption></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-hizli-islemde.png" alt="İşlemde / Tekrar Açıldı"><figcaption>İşlemde / Tekrar Açıldı</figcaption></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-hizli-musteri.png" alt="Müşteri Bekleniyor"><figcaption>Müşteri Bekleniyor</figcaption></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-hizli-onay.png" alt="Kapanış Onayı Bekliyor (yönetici)"><figcaption>Kapanış Onayı Bekliyor (yönetici)</figcaption></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-hizli-cozuldu.png" alt="Çözüldü (yönetici)"><figcaption>Çözüldü (yönetici)</figcaption></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-hizli-kapandi.png" alt="Kapandı (yönetici)"><figcaption>Kapandı (yönetici)</figcaption></figure>
+  </div>
+  <div class="shot-row side" style="--lc:83mm"><figure class="shot shot--bare"><img src="screens/a02-durum-penceresi.png" alt="Müşteri Testine Gönder: not penceresi."><span class="pin" style="left:5.6%;top:46.9%">1</span><span class="pin" style="left:45.2%;top:84.6%">2</span><figcaption>Müşteri Testine Gönder: not penceresi.</figcaption></figure><div class="side-body"><ol class="pin-legend"><li><strong>Not</strong> — en az 10 karakter; geçmişe yazılır ve müşteriye iletilir.</li><li><strong>… Olarak Kaydet</strong> — durumu değiştirir, e-postayı gönderir.</li></ol>
+      <div class="callout tip"><p>Notu müşterinin okuyacağını varsayarak yazın: ne yapıldı, neyi kontrol etmeli, nereden bakmalı.</p></div>
+      <div class="callout warn"><p><strong>Müşteri Adına Kapat</strong>, müşterinin onayını beklemeden kapatır; yalnızca müşteri telefonla/e-postayla onayladıysa kullanın ve notta belirtin.</p></div></div></div>
+
+  <h2>Danışman atama ve efor</h2>
+  <p>Bir talebe birden çok danışman atanabilir; biri <strong>birincil</strong> danışmandır: listelerde “Danışman” olarak görünür, iş yükü/performans tablolarında sayılır ve bildirim zili uyarıları onun adına üretilir.</p>
+  <ul>
+    <li><strong>Ata</strong> kutusunu işaretleyin; ilk işaretlenen otomatik birincil olur, <strong>Birincil</strong> düğmesini seçmek danışmanı da atar, birincilin işaretini kaldırırsanız birincillik sıradakine geçer. Yalnızca <em>aktif</em> danışmanlar listelenir ve en az biri işaretli kalmalıdır.</li>
+    <li>Kayıtta atama zamanı yenilenir; <em>Açık/Atandı</em> talep <em>Atandı</em> olur, diğer durumlar değişmez. <strong>Yeni</strong> atananlara (işlemi yapan hariç) “Size atanan talep” e-postası gider; müşteriye gitmez.</li>
+  </ul>
+  <figure class="shot shot--wide"><img src="screens/a02-efor.png" alt="Efor Kayıtları."><span class="pin" style="left:87.8%;top:28.7%">1</span><span class="pin" style="left:46.8%;top:63.7%">2</span><span class="pin" style="left:94.9%;top:63.2%">3</span><span class="pin" style="left:46.8%;top:85.2%">4</span><span class="pin" style="left:51.7%;top:85.6%">5</span><figcaption>Efor Kayıtları.</figcaption><ol class="pin-legend cols-2"><li><strong>Sil</strong> — efor kaydını siler (yöneticiler).</li><li><strong>Saat</strong> — en az 0,25; 0,25'lik adımlarla.</li><li><strong>Tarih</strong> — çalışmanın yapıldığı gün.</li><li><strong>Not</strong> — yapılan iş.</li><li><strong>Efor Ekle</strong> — kaydı ekler, toplamı günceller.</li></ol></figure>
+  <ul>
+    <li>Efor, oturum e-postanızla eşleşen <em>Danışmanlar</em> kaydı adına yazılır; yöneticilerin kaydı yoksa talebin birincil danışmanı (o da yoksa kendi adınız), danışmanların kaydı yoksa <em>“Personel kaydınız bulunamadı”</em> uyarısı çıkar. Yanıt kutusundaki <strong>Efor (saat)</strong> alanı da aynı şekilde kayıt üretir (<em>“Mesaj: …”</em>).</li>
+    <li>Ekleyebilenler: yöneticiler ve talebe atanmış <span class="rb dn">Danışman</span>; silebilenler yalnızca yöneticiler. Toplam efor Firma ayrıntısı ve Raporlar'da kullanılır.</li>
+  </ul>
+
+  <h2>Yanıt, iç not ve ek dosya</h2>
+  <p><strong>Mesajlar</strong> müşteriyle yazışmayı, <strong>İç Notlar</strong> yalnızca personelin gördüğü notları gösterir; müşteri iç notları ne arayüzde ne veritabanında okuyabilir. Yanıt kutusu tüm personel rolleri için açıktır.</p>
+  <ul>
+    <li><strong>Herkese açık yanıt</strong> yalnızca talep sahibine “Yeni yanıt” e-postası yollar (firma yöneticisine/diğer personele gitmez); iç not e-posta üretmez.</li>
+    <li><strong>İlk yanıt:</strong> personelin ilk <em>herkese açık</em> mesajı “İlk Yanıt” zamanını yazar ve SLA'nın ilk yanıt hedefini kapatır; iç not, durum değişikliği ve atama sayılmaz.</li>
+    <li><strong>Ek dosya:</strong> mesaj başına en çok 3 dosya, her biri en çok 2 MB (görsel, PDF, Office, metin/CSV/LOG, ZIP). 300 KB üstü görseller en uzun kenar 1800 piksel olacak biçimde küçültülür. İç not ekleri yalnızca personele açıktır.</li>
+  </ul>
+  <figure class="shot"><img src="screens/a02-yanit.png" alt="Mesajlar & Geçmiş ve yanıt kutusu (ilk mesaj gizlendi)."><span class="pin" style="left:12.2%;top:11.1%">1</span><span class="pin" style="left:20.9%;top:11.1%">2</span><span class="pin" style="left:7.1%;top:20.8%">3</span><span class="pin" style="left:6.9%;top:31.7%">4</span><span class="pin" style="left:94.9%;top:70.5%">5</span><span class="pin" style="left:3.1%;top:84.2%">6</span><span class="pin" style="left:2.3%;top:91.9%">7</span><span class="pin" style="left:88.2%;top:90.8%">8</span><span class="pin" style="left:88.7%;top:91.2%">9</span><figcaption>Mesajlar & Geçmiş ve yanıt kutusu (ilk mesaj gizlendi).</figcaption><ol class="pin-legend cols-2"><li><strong>Mesajlar</strong> sekmesi.</li><li><strong>Geçmiş</strong> sekmesi.</li><li><strong>Müşteri mesajı</strong></li><li><strong>Ek dosya</strong> — tıklayınca açılır/iner.</li><li><strong>Yanıt Yaz</strong> — en az 3 karakter.</li><li><strong>Dosya Ekle</strong> — en çok 3 dosya.</li><li><strong>İç not olarak kaydet</strong> — müşteriye görünmez, e-posta gitmez.</li><li><strong>Efor (saat)</strong> — isteğe bağlı.</li><li><strong>Gönder</strong></li></ol></figure>
+  <div class="shot-row">
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-ic-not.png" alt="İç Notlar bölümü (turuncu çizgi: personele özel)."><span class="pin" style="left:3.6%;top:58.6%">1</span><figcaption>İç Notlar bölümü (turuncu çizgi: personele özel).</figcaption><ol class="pin-legend"><li><strong>İç not</strong> — yalnızca personel okur.</li></ol></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-gecmis.png" alt="Geçmiş sekmesi."><span class="pin" style="left:15.7%;top:6.6%">1</span><span class="pin" style="left:63.9%;top:26.8%">2</span><span class="pin" style="left:91.4%;top:26.8%">3</span><figcaption>Geçmiş sekmesi.</figcaption><ol class="pin-legend"><li><strong>Geçmiş</strong> sekmesi.</li><li><strong>Yeni</strong> değer.</li><li><strong>Not</strong> — durum notları.</li></ol></figure>
+  </div>
+
+  <h2>SLA ve ilk yanıt</h2>
+  <p>Hedefler <strong>takvim saati</strong> olarak önceliğe göre hesaplanır ve yalnızca <strong>SUP, ARZ, BUG</strong> taleplerine uygulanır (PRJ, INT, DEV için “—”). Saat, talebin oluşturulduğu andan başlar.</p>
+  <div class="shot-row">
+    <table class="fields" style="margin:0">
+      <thead><tr><th>Öncelik</th><th>İlk yanıt</th><th>Çözüm</th></tr></thead>
+      <tbody>
+        <tr><td><span class="prio critical">Kritik</span></td><td>1 saat</td><td>8 saat</td></tr>
+        <tr><td><span class="prio high">Yüksek</span></td><td>4 saat</td><td>24 saat</td></tr>
+        <tr><td><span class="prio medium">Orta</span></td><td>8 saat</td><td>72 saat</td></tr>
+        <tr><td><span class="prio low">Düşük</span></td><td>24 saat</td><td>120 saat</td></tr>
+      </tbody>
+    </table>
+    <ul style="margin:0;font-size:9.4pt;line-height:1.45">
+      <li><strong>Rozet:</strong> önce ilk yanıt, yanıt gelince çözüm hedefi (<em>“İlk yanıt: 2 sa kaldı”</em>, <em>“Çözüm aşıldı +1 sa”</em>). Kalan süre %25'in altına inince sarı, aşılınca kırmızı; kapanmış talepte “SLA karşılandı/aşıldı”.</li>
+      <li><strong>Müşteri Bekleniyor:</strong> “SLA duraklatıldı”, aşım/uyarı üretmez; ancak hedef zamanı ertelenmez.</li>
+      <li>Çözüm hedefi <em>Çözüldü/Kapandı</em> ile kapanır; <em>Kapanış Onayı</em> iken saat işler. Aşımlar Genel Bakış'ta ve birincil danışmanın zilinde görünür.</li>
+    </ul>
+  </div>
+
+  <h2>Danışman görünümü</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb dn">Danışman</span></p>
+  <p>Danışman tüm talepleri görür ama yalnızca <strong>kendisine atanmış</strong> talepte işlem yapar; atama, oturum e-postasının <em>Danışmanlar</em> kaydıyla eşleşmesine dayanır. Atanmamış talepte yalnızca bilgi kutusu görünür (yanıt kutusu yine açıktır); atanmış talepte panel Hızlı İşlemleri gösterir.</p>
+  <div class="shot-row">
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-danisman-kisitli.png" alt="Atanmamış talep."><span class="pin" style="left:1.6%;top:22.1%">1</span><figcaption>Atanmamış talep.</figcaption><ol class="pin-legend"><li><strong>Yalnızca görüntüleme</strong> uyarısı.</li></ol></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-danisman-paneli.png" alt="Atanmış talep: Danışman Paneli."><span class="pin" style="left:38%;top:35.7%">1</span><figcaption>Atanmış talep: Danışman Paneli.</figcaption><ol class="pin-legend"><li><strong>Hızlı İşlemler</strong></li></ol></figure>
+  </div>
+
+  <h2>E-posta bildirimleri</h2>
+  <p>E-postaları işlemi yapanın tarayıcısı portalın e-posta servisine gönderir (Netlify Function → Resend). <strong>İşlemi yapan kişiye e-posta gitmez.</strong> Talep sahibi müşteri bağlantılı, diğer alıcılar personel (admin ayrıntı) bağlantılı e-posta alır.</p>
+  <table class="fields">
+    <thead><tr><th>Olay</th><th>Konu</th><th>Alıcı</th></tr></thead>
+    <tbody>
+      <tr><td>Müşteri talep açar</td><td>Talebiniz alındı · Yeni destek talebi</td><td>Müşteri + destek kutusu (<code>info@parlabilgiteknolojileri.net</code>)</td></tr>
+      <tr><td>Personel talep açar (muhatap seçili)</td><td>Talebiniz alındı</td><td>Yalnızca muhatap</td></tr>
+      <tr><td>Danışman atanır</td><td>Size atanan talep</td><td>Yeni atanan danışman(lar)</td></tr>
+      <tr><td>Durum değişir (İşleme Al/Geri Al, Yeniden Aç, Çözüldü, Kapandı)</td><td>Durum güncellendi · Talep çözüldü · Talep kapatıldı</td><td>Müşteri + atanmış danışmanlar</td></tr>
+      <tr><td>Müşteri Testine Gönder · Kapanış Onayı İste</td><td>İncelemeniz bekleniyor · Kapanış onayı</td><td>Yalnızca müşteri</td></tr>
+      <tr><td>Personel herkese açık yanıt yazar</td><td>Yeni yanıt</td><td>Yalnızca talep sahibi</td></tr>
+      <tr><td>Müşteri yanıt yazar</td><td>Yeni yanıt</td><td>Destek kutusu + atanmış danışmanlar</td></tr>
+      <tr><td>Müşteri kapanışı onaylar / yeniden açar</td><td>Talep kapatıldı · Talep tekrar açıldı</td><td>Destek kutusu + atanmış danışmanlar</td></tr>
+      <tr><td>İç not, öncelik değişikliği, efor</td><td>—</td><td>E-posta gitmez</td></tr>
+    </tbody>
+  </table>
+  <div class="shot-row three">
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-eposta-atama.png" alt="Danışmana: Size atanan talep"><figcaption>Danışmana: Size atanan talep</figcaption></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-eposta-durum.png" alt="Müşteriye: Durum güncellendi"><figcaption>Müşteriye: Durum güncellendi</figcaption></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-eposta-cozuldu.png" alt="Müşteriye: Talep çözüldü"><figcaption>Müşteriye: Talep çözüldü</figcaption></figure>
+  </div>
+  <div class="shot-row three">
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-eposta-musteri-testi.png" alt="Müşteriye: İncelemeniz bekleniyor"><figcaption>Müşteriye: İncelemeniz bekleniyor</figcaption></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-eposta-kapanis-onayi.png" alt="Müşteriye: Kapanış onayı"><figcaption>Müşteriye: Kapanış onayı</figcaption></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a02-eposta-yeniden-acildi.png" alt="Personele: Talep tekrar açıldı"><figcaption>Personele: Talep tekrar açıldı</figcaption></figure>
+  </div>
+  <div class="callout info" data-title="Hata durumunda"><p>Gönderim hataları sessiz geçmez: ekranda uyarı çıkar ve Aktiviteler'e “E-posta Gönderilemedi” yazılır. Geçici hatalar tarayıcı kuyruğuna alınıp yeniden denenir (Bölüm 6.2).</p></div>
+</section>
+
+
+<section class="chapter" data-opener="false" data-title="Müşteri ve Kullanıcı Yönetimi"
+         data-intro="Firmalar, müşteri ve personel kullanıcı hesapları (oluşturma, giriş bilgileri, roller, şifre) ve danışman kayıtları.">
+  <h1>Müşteri ve Kullanıcı Yönetimi</h1>
+
+  <h2>Müşteriler (firmalar)</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span></p>
+  <p><span class="ui-menu">Müşteriler</span> sayfasını tüm personel okur; firma oluşturma, düzenleme ve pasife alma yalnızca Süper Admin ve Destek Atayıcı'dadır (diğer rollerde bu düğmeler hiç gösterilmez; sayfalar salt okunurdur). Müşteri tipi <strong>CUS</strong> (destek anlaşmalı) veya <strong>ARC</strong> (arızi müşteri)'dir.</p>
+  <figure class="shot shot--wide" data-url="www.parlabilgiteknolojileri.net/support-v2/admin/companies.html"><img src="screens/a03-musteriler.png" alt="Müşteriler listesi."><span class="pin" style="left:88.7%;top:13.7%">1</span><span class="pin" style="left:18.7%;top:33.4%">2</span><span class="pin" style="left:38%;top:29%">3</span><span class="pin" style="left:53.5%;top:61.3%">4</span><span class="pin" style="left:90.1%;top:71.5%">5</span><figcaption>Müşteriler listesi.</figcaption><ol class="pin-legend cols-2"><li><strong>Yeni Firma</strong></li><li><strong>Arama</strong> — ad, kod, iletişim e-postası.</li><li><strong>Filtre çipleri</strong> — tip (CUS/ARC), sözleşme ve durum.</li><li><strong>Kayıtlı Kullanıcı</strong> — firmaya bağlı hesap sayısı.</li><li><strong>Detay</strong></li></ol></figure>
+  <div class="shot-row side" style="--lc:60mm"><figure class="shot shot--bare"><img src="screens/a03-yeni-firma.png" alt="Yeni Firma penceresi."><span class="pin" style="left:90.2%;top:20.7%">1</span><span class="pin" style="left:44.1%;top:32.8%">2</span><span class="pin" style="left:90.2%;top:32.8%">3</span><span class="pin" style="left:90.2%;top:45.1%">4</span><span class="pin" style="left:79.2%;top:91.1%">5</span><figcaption>Yeni Firma penceresi.</figcaption></figure><div class="side-body"><ol class="pin-legend"><li><strong>Firma Adı</strong> * (en az 2 karakter).</li><li><strong>Müşteri Tipi</strong> *</li><li><strong>Müşteri Kodu</strong> * — 3 harf + 4 rakam (<code>CUS0001</code>), benzersiz; talep numarasının ikinci bölümüdür.</li><li><strong>Ana İletişim E-postası</strong></li><li><strong>Kaydet</strong></li></ol>
+      <div class="callout warn"><p>Ad veya kod sonradan değişse de <strong>mevcut talepler ve kullanıcı profilleri</strong> eski değeri taşır.</p></div>
+      <div class="callout info"><p>Listedeki <strong>sözleşme durumu</strong>, firma düzenlenirken işaretlenen <em>Aktif sözleşme var</em> kutusundan gelir; Sözleşmeler sayfasından hesaplanmaz.</p></div></div></div>
+  <p>Firma sayfası iletişim bilgilerini, dört özet kartı ve beş sekmeyi (<em>Ticketlar, Efor, Kullanıcılar, Sözleşmeler, Projeler</em>) toplar; <em>Efor</em> sekmesi seçilen ayın efor kayıtlarını talep bazında özetler ve Excel olarak indirir. <strong>Pasife Al</strong>, firmayı Sözleşme/Proje formlarından kaldırır; kullanıcıların girişini <em>engellemez</em>.</p>
+  <div style="width:68%;margin:0 auto"><figure class="shot shot--wide"><img src="screens/a03-firma-detay.png" alt="Firma ayrıntısı."><span class="pin" style="left:74.9%;top:5.9%">1</span><span class="pin" style="left:87%;top:5.9%">2</span><span class="pin" style="left:2%;top:65%">3</span><span class="pin" style="left:4.1%;top:92.2%">4</span><span class="pin" style="left:30.4%;top:91.9%">5</span><figcaption>Firma ayrıntısı.</figcaption><ol class="pin-legend cols-2"><li><strong>Düzenle</strong> — ad, tip, kod, iletişim, <em>Aktif sözleşme var</em>.</li><li><strong>Pasife Al / Aktive Et</strong></li><li><strong>Özet kartları</strong></li><li><strong>Ticketlar</strong> sekmesi — firmanın tüm talepleri.</li><li><strong>Sözleşmeler</strong> sekmesi.</li></ol></figure></div>
+
+  <h2>Muhataplar (kullanıcı hesapları)</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span></p>
+  <p><span class="ui-menu">Muhataplar</span> müşteri ve personel hesaplarını listeler; <em>Muhatap Kodu</em> sütunu mevcut sürümde boştur.</p>
+  <ul>
+    <li>Arama ad, e-posta, firma ve telefonda çalışır (her sözcük ayrı aranır); <strong>rol</strong> ve <strong>durum</strong> çipleri birlikte süzer. <em>Admin</em> çipi Süper Admin ve Destek Atayıcı'yı birlikte getirir.</li>
+    <li>Her satırda rol rozeti, kayıt tarihi, son giriş ve aktif/pasif durumu görünür; kullanıcı adı ve <em>Detay</em> ayrıntı sayfasını açar.</li>
+  </ul>
+  <figure class="shot shot--wide"><img src="screens/a03-muhataplar.png" alt="Muhataplar listesi (ilk üç kayıt)."><span class="pin" style="left:87.3%;top:13.5%">1</span><span class="pin" style="left:18.7%;top:32.7%">2</span><span class="pin" style="left:68.9%;top:28.4%">3</span><span class="pin" style="left:62.6%;top:62.1%">4</span><span class="pin" style="left:91.4%;top:60.6%">5</span><figcaption>Muhataplar listesi (ilk üç kayıt).</figcaption><ol class="pin-legend cols-2"><li><strong>Yeni Kullanıcı</strong></li><li><strong>Arama</strong></li><li><strong>Rol çipleri</strong> (altında durum çipleri).</li><li><strong>Rol rozeti</strong></li><li><strong>Detay</strong> — kullanıcı sayfası.</li></ol></figure>
+
+  <h3>Yeni kullanıcı oluşturma</h3>
+  <div class="shot-row side" style="--lc:70mm"><figure class="shot shot--bare"><img src="screens/a03-yeni-kullanici.png" alt="Yeni Kullanıcı penceresi."><span class="pin" style="left:44.1%;top:20.2%">1</span><span class="pin" style="left:90.2%;top:31.9%">2</span><span class="pin" style="left:90.2%;top:43.6%">3</span><span class="pin" style="left:90.2%;top:55.2%">4</span><span class="pin" style="left:90.2%;top:66.9%">5</span><span class="pin" style="left:70.1%;top:79.2%">6</span><span class="pin" style="left:82.7%;top:77.2%">7</span><span class="pin" style="left:78.8%;top:91.4%">8</span><figcaption>Yeni Kullanıcı penceresi.</figcaption></figure><div class="side-body"><ol class="pin-legend"><li><strong>Ad / Soyad</strong> *</li><li><strong>İş E-postası</strong> * — giriş adı; sonradan değişmez.</li><li><strong>Telefon</strong> * (en az 10 hane).</li><li><strong>Firma</strong> — müşteri rollerinde zorunlu; yeni firma da kaydedilebilir.</li><li><strong>Rol</strong> *</li><li><strong>Geçici Şifre</strong> * — otomatik üretilir.</li><li><strong>Üret</strong> — yeni şifre üretir.</li><li><strong>Oluştur</strong></li></ol>
+      <p><strong>Roller:</strong> <em>Müşteri Kullanıcısı</em> yalnızca kendi taleplerini görür; <em>Arızi Müşteri</em> sözleşmesiz firma kullanıcısıdır (tip varsayılanı ARZ); <em>Firma Yöneticisi</em> firmasının tüm taleplerini görür ve yanıtlar; personel rolleri Bölüm 1.1'dedir.</p>
+      <div class="callout warn"><p><strong>Süper Admin</strong> rolünü yalnızca Süper Admin atayabilir; Destek Atayıcı seçerse kayıt veritabanı kuralınca reddedilir. Destek Atayıcı/Süper Admin seçilince <em>Yüksek Yetki Uyarısı</em> görünür.</p></div></div></div>
+  <ol class="steps">
+    <li><h4>Doğrulama</h4><p>E-posta zaten kayıtlıysa form uyarır. Aynı e-posta hem <em>Danışmanlar</em> kaydında hem müşteri hesabında kullanılamaz.</p></li>
+    <li><h4>Hesap ve profil</h4><p>Firebase hesabı geçici şifreyle açılır (oturumunuz bozulmaz); profil <em>şifre değişimi zorunlu</em> işaretiyle kaydedilir. Firebase ayrıca bir şifre belirleme e-postası yollar (gönderilemezse sarı uyarı çıkar).</p></li>
+    <li><h4>Giriş bilgilerini iletin</h4><p>Geçici şifre <strong>yalnızca</strong> aşağıdaki pencerede görünür; kapatırsanız tekrar görülemez (kaybolursa <em>Şifre Sıfırla</em> kullanın).</p></li>
+  </ol>
+  <div class="shot-row">
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a03-kimlik-bilgileri.png" alt="Kullanıcı Oluşturuldu penceresi."><span class="pin" style="left:45.8%;top:51.2%">1</span><span class="pin" style="left:77.4%;top:51.2%">2</span><span class="pin" style="left:20%;top:82.8%">3</span><span class="pin" style="left:49.4%;top:82.8%">4</span><span class="pin" style="left:78.6%;top:82.8%">5</span><figcaption>Kullanıcı Oluşturuldu penceresi.</figcaption><ol class="pin-legend"><li><strong>E-posta</strong> — giriş adı.</li><li><strong>Geçici Şifre</strong> — yalnızca burada.</li><li><strong>Panoya Kopyala</strong> — bilgi ve giriş adresi.</li><li><strong>E-posta Gönder</strong> — bilgileri kullanıcıya iletir.</li><li><strong>Tamam</strong></li></ol></figure>
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a03-eposta-kimlik.png" alt="“E-posta Gönder” ile giden ileti."><figcaption>“E-posta Gönder” ile giden ileti.</figcaption></figure>
+  </div>
+  <div class="callout warn"><p>Şifre içeren bu e-posta tarayıcıda saklanıp <strong>sonradan yeniden denenmez</strong>; gönderilemezse (uyarı çıkar) düğmeye yeniden basın. Şifreyi mümkünse ayrıca telefonla iletin.</p></div>
+
+  <h3>Kullanıcı ayrıntısı ve roller</h3>
+  <figure class="shot shot--wide"><img src="screens/a03-kullanici-detay.png" alt="Kullanıcı ayrıntısı (Firma Yöneticisi)."><span class="pin" style="left:56.3%;top:9.1%">1</span><span class="pin" style="left:68.4%;top:9.1%">2</span><span class="pin" style="left:82.4%;top:9.1%">3</span><span class="pin" style="left:26.2%;top:44.4%">4</span><span class="pin" style="left:2%;top:75.6%">5</span><figcaption>Kullanıcı ayrıntısı (Firma Yöneticisi).</figcaption><ol class="pin-legend cols-2"><li><strong>Düzenle</strong></li><li><strong>Şifre Sıfırla</strong> — sıfırlama e-postası gönderir.</li><li><strong>Devre Dışı Bırak / Aktive Et</strong></li><li><strong>Rol</strong> rozeti.</li><li><strong>Özet</strong> — talep istatistikleri.</li></ol></figure>
+  <div class="shot-row side" style="--lc:66mm"><figure class="shot shot--bare"><img src="screens/a03-kullanici-duzenle.png" alt="Rolü Firma Yöneticisi yapma."><span class="pin" style="left:44.1%;top:26.4%">1</span><span class="pin" style="left:90.2%;top:41.7%">2</span><span class="pin" style="left:90.2%;top:72.4%">3</span><span class="pin" style="left:79.2%;top:88.7%">4</span><figcaption>Rolü Firma Yöneticisi yapma.</figcaption></figure><div class="side-body"><ol class="pin-legend"><li><strong>Ad / Soyad / Telefon</strong> düzenlenir.</li><li><strong>E-posta</strong> salt okunur.</li><li><strong>Rol</strong> — yedi rolden biri.</li><li><strong>Kaydet</strong></li></ol>
+      <ul>
+        <li><strong>Devre Dışı Bırak</strong> girişi engeller; açık oturum sonraki sayfada kapanır. Kullanıcı <em>silinmez</em>, pasife alınır; talepleri kalır.</li>
+        <li><strong>Firma Yöneticisi</strong> için kullanıcının firması olmalıdır (firma bu pencereden değişmez). Rol değişikliği kullanıcının sonraki sayfa yüklemesinde etkinleşir.</li>
+        <li>Personel rolündeki hesabın talep alabilmesi, efor girebilmesi ve kişisel bildirim görebilmesi için aynı e-postayla bir <strong>Danışmanlar</strong> kaydı gerekir.</li>
+      </ul></div></div>
+  <div class="shot-row">
+    <ul class="checklist" data-title="Yeni danışman">
+      <li>Danışmanlar'da personel kaydı açıldı (departman, rol ünvanı).</li>
+      <li>Muhataplar'da <strong>aynı e-postayla</strong> kullanıcı oluşturuldu.</li>
+      <li>Giriş bilgileri güvenli kanaldan iletildi.</li>
+      <li>Gerekli taleplere atama yapıldı.</li>
+    </ul>
+    <ul class="checklist" data-title="Ayrılan personel">
+      <li>Açık talepleri başkasına atandı (toplu devir yok).</li>
+      <li>Kullanıcı <em>Devre Dışı Bırak</em> ile pasife alındı.</li>
+      <li>Danışman kaydı <em>Pasife Al</em> ile pasife alındı.</li>
+    </ul>
+  </div>
+
+  <h2>Danışmanlar (personel kayıtları)</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span></p>
+  <p><span class="ui-menu">Danışmanlar</span> sayfası taleplere atanabilen personelin kayıt defteridir. <strong>Kullanıcı hesabından ayrıdır:</strong> kayıt açmak giriş yetkisi vermez; ikisi <em>e-posta adresiyle</em> eşleşir. Açık ticket ve efor sütunları yalnızca talebin <em>birincil</em> danışmanına sayılır.</p>
+  <figure class="shot shot--wide"><img src="screens/a03-personel.png" alt="Danışmanlar listesi."><span class="pin" style="left:86.7%;top:12.5%">1</span><span class="pin" style="left:19.1%;top:28.3%">2</span><span class="pin" style="left:13.1%;top:43.2%">3</span><span class="pin" style="left:2.6%;top:50.2%">4</span><span class="pin" style="left:66.4%;top:58.1%">5</span><span class="pin" style="left:90.9%;top:66.4%">6</span><figcaption>Danışmanlar listesi.</figcaption><ol class="pin-legend cols-2"><li><strong>Yeni Personel</strong></li><li><strong>Arama</strong> — ad, e-posta, bölüm, rol ünvanı.</li><li><strong>Departman</strong> filtresi.</li><li><strong>Durum</strong> çipleri.</li><li><strong>Açık Ticket</strong> — birincil olarak atanmış açık talepler.</li><li><strong>Detay</strong> — istatistik ve talepler.</li></ol></figure>
+  <div class="shot-row side" style="--lc:66mm"><figure class="shot shot--bare"><img src="screens/a03-yeni-personel.png" alt="Yeni Personel penceresi."><span class="pin" style="left:90.2%;top:36.2%">1</span><span class="pin" style="left:90.2%;top:62.8%">2</span><span class="pin" style="left:90.2%;top:76.3%">3</span><span class="pin" style="left:79.2%;top:90.2%">4</span><figcaption>Yeni Personel penceresi.</figcaption></figure><div class="side-body"><ol class="pin-legend"><li><strong>E-posta</strong> * — hesabın e-postasıyla aynı; benzersiz.</li><li><strong>Departman</strong> * — Departmanlar sayfasından.</li><li><strong>Rol Ünvanı</strong> * (ör. SAP FI Danışmanı).</li><li><strong>Kaydet</strong></li></ol>
+      <p>Zorunlu alanlar: Ad, Soyad, E-posta, Departman, Rol Ünvanı. Telefon isteğe bağlıdır.</p>
+      <div class="callout info"><p><strong>Pasife Al</strong> danışmanı yeni atama listelerinden ve iş yükü tablosundan kaldırır; <em>mevcut atamaları</em> korur. Girişini engellemek için kullanıcı hesabını ayrıca pasife alın.</p></div></div></div>
+</section>
+
+
+<section class="chapter" data-opener="false" data-title="Sözleşme, Proje ve Tanımlar"
+         data-intro="Sözleşme ve proje kayıtları ile departman, SAP modülü ve destek türü tanım listeleri.">
+  <h1>Sözleşme, Proje ve Tanımlar</h1>
+
+  <h2>Sözleşmeler</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span></p>
+  <p><span class="ui-menu">Sözleşmeler</span> sayfası firmaların destek sözleşmelerini izler. Listeyi tüm personel görür; ekleme ve düzenleme Süper Admin ve Destek Atayıcı'dadır. Bitiş tarihine göre <strong>kalan gün</strong> hesaplanır; 30 günün altı kırmızı görünür.</p>
+  <figure class="shot shot--wide" data-url="www.parlabilgiteknolojileri.net/support-v2/admin/contracts.html"><img src="screens/a04-sozlesmeler.png" alt="Sözleşme Listesi."><span class="pin" style="left:86.7%;top:5.8%">1</span><span class="pin" style="left:18.7%;top:24%">2</span><span class="pin" style="left:60.9%;top:20%">3</span><span class="pin" style="left:62.5%;top:31.8%">4</span><span class="pin" style="left:73.2%;top:31.8%">5</span><span class="pin" style="left:85.8%;top:42.1%">6</span><figcaption>Sözleşme Listesi.</figcaption><ol class="pin-legend cols-2"><li><strong>Yeni Sözleşme</strong></li><li><strong>Arama</strong> — sözleşme no, firma, tip, durum.</li><li><strong>Çipler</strong> — Tümü, Aktif, Sona Ermiş, Yenileme Gerekiyor (30 gün), Beklemede.</li><li><strong>Kalan Gün</strong> — kırmızı: 30 gün veya daha az / geçmiş.</li><li><strong>Durum</strong> — hesaplanan durum.</li><li><strong>Düzenle</strong></li></ol></figure>
+  <div class="shot-row side" style="--lc:74mm"><figure class="shot shot--bare"><img src="screens/a04-sozlesme-formu.png" alt="Yeni Sözleşme formu."><span class="pin" style="left:44.1%;top:20.6%">1</span><span class="pin" style="left:90.2%;top:20.6%">2</span><span class="pin" style="left:90.2%;top:32.8%">3</span><span class="pin" style="left:44.1%;top:44.9%">4</span><span class="pin" style="left:90.2%;top:44.9%">5</span><span class="pin" style="left:44.1%;top:57.1%">6</span><span class="pin" style="left:79.2%;top:91.2%">7</span><figcaption>Yeni Sözleşme formu.</figcaption></figure><div class="side-body"><ol class="pin-legend"><li><strong>Sözleşme No</strong> *</li><li><strong>Tip</strong> * — Yıllık Bakım, Bakım Anlaşması, Proje Sözleşmesi, Lisans, Diğer.</li><li><strong>Firma</strong> * — yalnızca aktif firmalar.</li><li><strong>Başlangıç</strong> *</li><li><strong>Bitiş</strong> * — başlangıçtan önce olamaz.</li><li><strong>Durum</strong> — Aktif, Sona Ermiş, Beklemede, İptal.</li><li><strong>Kaydet</strong></li></ol>
+      <table class="fields">
+        <thead><tr><th>Durum</th><th>Davranış</th></tr></thead>
+        <tbody>
+          <tr><td>Aktif</td><td>Bitiş tarihi geçmişse liste otomatik <strong>Sona Ermiş</strong> gösterir (kayıt değişmez).</td></tr>
+          <tr><td>Beklemede · İptal</td><td>Tarihten bağımsız olduğu gibi görünür.</td></tr>
+          <tr><td>Yenileme Gerekiyor</td><td>Aktif, bitişine 0–30 gün kalmış.</td></tr>
+        </tbody>
+      </table></div></div>
+  <div class="callout info"><p>Sözleşme kayıtları <strong>izleme ve raporlama</strong> amaçlıdır: talep açmayı, SLA'yı veya Müşteriler listesindeki “Sözleşme” rozetini otomatik etkilemez. Değer (₺) isteğe bağlıdır.</p></div>
+
+  <h2>Projeler</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span><span class="rb pm">Proje Yöneticisi</span></p>
+  <p><span class="ui-menu">Projeler</span> sayfası proje kayıtlarını tutar; listeyi tüm personel görür. Kod (<code>PRJ0001</code> …) otomatik önerilir ve değişmez. Formda: <strong>Proje Adı</strong> *, <strong>Firma</strong> * (aktif firmalar), Proje Yöneticisi (Danışmanlar kayıtlarından), Durum (Planlama, Aktif, Beklemede, Tamamlandı, İptal), tarihler, açıklama ve <strong>Atanan Personel</strong>.</p>
+  <figure class="shot shot--wide"><img src="screens/a04-projeler.png" alt="Proje Listesi (Proje Yöneticisi görünümü)."><span class="pin" style="left:88.9%;top:7.3%">1</span><span class="pin" style="left:24.9%;top:30.6%">2</span><span class="pin" style="left:62.6%;top:40.4%">3</span><span class="pin" style="left:72.1%;top:40.4%">4</span><span class="pin" style="left:81.3%;top:52.6%">5</span><figcaption>Proje Listesi (Proje Yöneticisi görünümü).</figcaption><ol class="pin-legend cols-2"><li><strong>Yeni Proje</strong></li><li><strong>Arama</strong> — kod, ad, firma, yönetici.</li><li><strong>Durum</strong></li><li><strong>Aktif Task</strong> — projeye bağlı kapanmamış PRJ talepleri.</li><li><strong>Detay</strong> ve Düzenle.</li></ol></figure>
+  <div class="callout warn"><p>Proje ayrıntısı, projeye bağlı <strong>PRJ taleplerini</strong> listeler; ancak mevcut sürümde talep formlarında <strong>proje seçimi bulunmadığından</strong> talepler projeye bağlanamaz ve <em>Aktif Task</em> sayacı ile ayrıntıdaki liste şimdilik boş kalır. Proje kaydı yönetim ve ekip bilgisi için kullanılır.</p></div>
+
+  <h2>Departman, Modül ve Destek Türü</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span></p>
+  <p>Bu üç <strong>Yönetim</strong> sayfası tanım listeleridir. Listeleri tüm personel görür, değiştirme yalnızca Süper Admin'dedir. Ortak davranış: <em>Durum/Aktif</em> anahtarı kaydı pasife alır, <em>Düzenle</em> kodu değiştirmeden güncelleme yapar, her değişiklik Aktiviteler'e yazılır.</p>
+  <figure class="shot shot--wide"><img src="screens/a04-departmanlar.png" alt="Departmanlar."><span class="pin" style="left:81%;top:9.8%">1</span><span class="pin" style="left:63.8%;top:61.5%">2</span><span class="pin" style="left:72.6%;top:53.9%">3</span><span class="pin" style="left:82.7%;top:53.9%">4</span><figcaption>Departmanlar.</figcaption><ol class="pin-legend cols-2"><li><strong>Yeni Departman</strong></li><li><strong>Durum</strong> anahtarı.</li><li><strong>Düzenle</strong></li><li><strong>Sil</strong> — kaydı silmez, pasifleştirir.</li></ol></figure>
+  <figure class="shot shot--wide"><img src="screens/a04-moduller.png" alt="SAP Modülleri (ilk dört kayıt)."><span class="pin" style="left:84.2%;top:7%">1</span><span class="pin" style="left:40.4%;top:25.2%">2</span><span class="pin" style="left:64.7%;top:44.1%">3</span><span class="pin" style="left:76.1%;top:38.7%">4</span><figcaption>SAP Modülleri (ilk dört kayıt).</figcaption><ol class="pin-legend cols-2"><li><strong>Yeni Modül</strong> — kod en çok 20 karakter, büyük harf.</li><li><strong>Toplam Ticket</strong> — modüldeki talep sayısı.</li><li><strong>Aktif</strong> anahtarı.</li><li><strong>Düzenle</strong> — yalnızca ad.</li></ol></figure>
+  <figure class="shot shot--wide"><img src="screens/a04-destek-turleri.png" alt="Destek Türleri (ilk dört kayıt)."><span class="pin" style="left:86.2%;top:7%">1</span><span class="pin" style="left:50.6%;top:38.7%">2</span><span class="pin" style="left:68.4%;top:44.1%">3</span><span class="pin" style="left:78.4%;top:38.7%">4</span><figcaption>Destek Türleri (ilk dört kayıt).</figcaption><ol class="pin-legend cols-2"><li><strong>Yeni Tür</strong> — kod en çok 10 karakter.</li><li><strong>Renk</strong> — tür rozetinin rengi.</li><li><strong>Aktif</strong> anahtarı.</li><li><strong>Düzenle</strong> — ad, açıklama, renk.</li></ol></figure>
+  <ul>
+    <li><strong>Departman</strong> personel formlarının listesini besler; <em>Personel Sayısı</em> aktif danışmanları sayar. Modül ve tür sayfaları boşsa ilk açılışta varsayılan kayıtlar eklenir (10 SAP modülü; SUP, ARZ, PRJ, INT, DEV, BUG).</li>
+    <li><strong>Talep tipleri:</strong> SUP Destek Anlaşmalı Talep · ARZ Arızi Talep · PRJ Proje Taskı · INT İç Task · DEV Geliştirme Taskı · BUG Hata / Problem Kaydı. Müşteri formu yalnızca SUP, ARZ, BUG sunar.</li>
+  </ul>
+  <div class="callout warn" data-title="Tanım listeleri ve formlar"><p>Talep formlarındaki ve raporlardaki <strong>modül/tür seçenekleri</strong> mevcut sürümde kodundaki sabit listeden (<code>assets/js/support-v2/ticket-utils.js</code>) gelir. Bu sayfalarda kayıt eklemek veya pasife almak formlara <em>otomatik yansımaz</em>; yeni modül/tür için geliştirme tarafında değişiklik gerekir.</p></div>
+</section>
+
+
+<section class="chapter" data-opener="false" data-title="Raporlar, Aktiviteler ve Bildirimler"
+         data-intro="Dönemsel raporlar ve dışa aktarma, değişmez aktivite günlüğü (e-posta hataları dahil) ve personel bildirim zili.">
+  <h1>Raporlar, Aktiviteler ve Bildirimler</h1>
+
+  <h2>Raporlar</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span><span class="rb pm">Proje Yöneticisi</span><span class="rb dn">Danışman</span></p>
+  <p><span class="ui-menu">Raporlar</span> sayfası seçilen tarih aralığı için dokuz kart üretir. Veri sayfa açılırken bir kez okunur; yeni kayıtlar için sayfayı yenileyin. Aralık <strong>Bu Hafta</strong> (pazartesiden bugüne), <strong>Bu Ay</strong>, <strong>Son 3 Ay</strong> veya <strong>Özel</strong> olabilir ve <span class="ui-btn primary">Uygula</span> ile çalışır.</p>
+  <figure class="shot shot--wide" data-url="www.parlabilgiteknolojileri.net/support-v2/admin/reports.html"><img src="screens/a05-raporlar.png" alt="Raporlar (Son 3 Ay; ilk satır)."><span class="pin" style="left:11.9%;top:8.2%">1</span><span class="pin" style="left:16%;top:6.2%">2</span><span class="pin" style="left:14.3%;top:20.3%">3</span><span class="pin" style="left:22.5%;top:20.3%">4</span><span class="pin" style="left:77.6%;top:37.5%">5</span><span class="pin" style="left:37.6%;top:33.5%">6</span><figcaption>Raporlar (Son 3 Ay; ilk satır).</figcaption><ol class="pin-legend cols-2"><li><strong>Tarih Aralığı</strong></li><li><strong>Uygula</strong></li><li><strong>CSV</strong> — kartın verisini noktalı virgül ayraçlı indirir.</li><li><strong>Excel</strong> — aynı veriyi .xlsx indirir.</li><li><strong>Modül / Tip dağılımı</strong> — pasta grafikler.</li><li><strong>Danışman Efor Detayı</strong> — ekranda ilk 50 satır; dışa aktarma hepsini içerir.</li></ol></figure>
+  <table class="fields">
+    <thead><tr><th>Kart</th><th>Neyi gösterir?</th><th>Tarih ölçütü</th></tr></thead>
+    <tbody>
+      <tr><td>Aylık Firma Eforu · Danışman Efor Detayı</td><td>Firma başına efor saati (ilk 15) · tek tek efor kayıtları.</td><td>Efor iş tarihi</td></tr>
+      <tr><td>Modül · Tip Bazlı Dağılım</td><td>Taleplerin SAP modülüne / talep tipine göre dağılımı.</td><td>Oluşturma tarihi</td></tr>
+      <tr><td>Danışman Performansı</td><td>Birincil danışman başına atanan, çözülen (Çözüldü/Kapandı), ortalama çözüm süresi (saat).</td><td>Oluşturma tarihi</td></tr>
+      <tr><td>En Aktif Firmalar (Top 10) · Arızı Müşteri İstatistikleri</td><td>En çok talep açan firmalar · ARZ talepleri, açık ARZ, ARC firma sayısı, ortalama çözüm.</td><td>Oluşturma tarihi</td></tr>
+      <tr><td>Aylık Trend (6 Ay) · Çözüm Süreleri (Öncelik)</td><td>Son altı ayın talep sayısı · öncelik başına ortalama çözüm (saat).</td><td>Trend: her zaman son 6 ay</td></tr>
+    </tbody>
+  </table>
+  <div class="callout info" data-title="Çözüm süresi ve dışa aktarma"><p>Ortalama çözüm süresi hesapları (<em>Danışman Performansı</em>, <em>Arızı Müşteri</em>, <em>Çözüm Süreleri</em>) yalnızca <strong>Çözüldü zaman damgası</strong> olan talepleri kullanır; doğrudan <em>Kapandı</em> yapılan veya müşterinin <em>Kapanış Onayı</em>'ndan kapattığı talepler girmez. Genel Bakış'taki “Ort. Çözüm Süresi” ise çözüm yoksa kapanış zamanını kullanır. <em>Excel</em> dışa aktarma tarayıcının internetten bir kütüphane yüklemesini gerektirir; CSV her zaman çalışır.</p></div>
+
+  <h2>Aktivite günlüğü</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span><span class="rb pm">Proje Yöneticisi</span><span class="rb dn">Danışman</span></p>
+  <p><span class="ui-menu">Aktiviteler</span> sayfası portaldaki önemli işlemlerin <strong>değişmez denetim günlüğüdür</strong>: kayıtlar eklenir; düzenlenemez veya silinemez (veritabanı kuralı, Süper Admin dahil). Tablo ve Zaman Çizelgesi görünümleri arasında geçilebilir; satırlardaki ticket, kullanıcı ve firma adları ilgili sayfaya bağlanır.</p>
+  <figure class="shot shot--wide shot--bare"><img src="screens/a05-eposta-hatalari.png" alt="Denetim Günlüğü: Olay Tipi = E-posta Gönderilemedi."><span class="pin" style="left:75.8%;top:5.3%">1</span><span class="pin" style="left:20.3%;top:36.1%">2</span><span class="pin" style="left:35.7%;top:36.1%">3</span><span class="pin" style="left:49.9%;top:36.1%">4</span><span class="pin" style="left:66.7%;top:36.1%">5</span><span class="pin" style="left:87.5%;top:32.9%">6</span><span class="pin" style="left:51.8%;top:47%">7</span><figcaption>Denetim Günlüğü: Olay Tipi = E-posta Gönderilemedi.</figcaption><ol class="pin-legend cols-2"><li><strong>Tablo / Zaman Çizelgesi</strong> görünümü.</li><li><strong>Olay Tipi</strong> — burada E-posta Gönderilemedi.</li><li><strong>Kullanıcı</strong> — liste Muhataplar okuma yetkisi gerektirir.</li><li><strong>Varlık Tipi</strong> — Ticket, Kullanıcı, Firma …</li><li><strong>Başlangıç / Bitiş</strong> tarihleri.</li><li><strong>Temizle</strong> — filtreleri sıfırlar.</li><li><strong>Detaylar</strong> — <code>olay — [hata kodu] açıklama</code>.</li></ol></figure>
+  <ul>
+    <li><strong>Kaydedilenler:</strong> talep oluşturma, güncelleme (durum, öncelik, atama), silme; müşterinin yanıtı, kapanış onayı, yeniden açması; kullanıcı, firma, danışman oluşturma/güncelleme/aktif-pasif; sözleşme, proje, departman, modül, tür değişiklikleri; <strong>e-posta gönderim hataları</strong>.</li>
+    <li><strong>Kaydedilmeyenler:</strong> personelin yanıt ve iç notları, efor, ek dosyalar, ONAY kutusu, girişler (bunlar talebin Mesajlar/Efor/Geçmiş bölümlerinde izlenir).</li>
+  </ul>
+  <ul>
+    <li>Etiketi tanımlı olmayan bazı olaylar <em>ham kod adıyla</em> görünür (ör. <code>ticket_closed</code>, <code>user_updated</code>). Sayfa tüm kayıtları bir kerede yükler; dönemi tarih filtreleriyle daraltın.</li>
+    <li><strong>E-posta hataları:</strong> bir bildirim gönderilemezse işlemi yapanın ekranında sarı uyarı çıkar ve günlüğe <strong>E-posta Gönderilemedi</strong> düşer. Olay Tipi filtresiyle sorunları toplu inceleyin; kodların anlamı Bölüm 6.2'dedir.</li>
+  </ul>
+  <div class="callout warn"><p>Geçici hatalarda e-posta kuyruktan sonradan yeniden denenir; ilk başarısızlık yine de günlüğe yazılır. <em>E-posta Gönderilemedi</em> kaydı e-postanın hiç ulaşmadığı anlamına gelmeyebilir; şüphede alıcıdan teyit isteyin.</p></div>
+
+  <h2>Bildirim zili</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span><span class="rb pm">Proje Yöneticisi</span><span class="rb dn">Danışman</span></p>
+  <p>Başlık çubuğundaki zil <strong>size ait</strong> uyarıları toplar. Bildirimler saklanmaz; son güncellenen 80 talepten türetilir ve her 90 saniyede bir ve sekmeye dönüldüğünde yenilenir. “Size ait”, <em>birincil danışmanı siz olan</em> talepler demektir (eşleştirme oturum e-postanızın <em>Danışmanlar</em> kaydıyla aynı olmasına dayanır).</p>
+  <div class="shot-row side" style="--lc:74mm"><figure class="shot shot--bare"><img src="screens/a05-bildirim-danisman.png" alt="Danışmanın bildirim paneli."><span class="pin" style="left:5.3%;top:29.1%">1</span><span class="pin" style="left:5.3%;top:64.4%">2</span><span class="pin" style="left:57.4%;top:14.6%">3</span><figcaption>Danışmanın bildirim paneli.</figcaption></figure><div class="side-body"><ol class="pin-legend"><li><strong>SLA hedefi aşıldı</strong> (+süre) — eylem bildirimi.</li><li><strong>Müşteri yanıtladı</strong> veya talebi güncelledi.</li><li><strong>Tümünü okundu say</strong> — yalnızca güncelleme bildirimlerini temizler.</li></ol><p>Panelde en yeni 12 bildirim gösterilir; zil rozeti hepsini sayar. “Okundu” bilgisi <strong>bu tarayıcıda</strong> tutulur (başka bilgisayarda yeniden görünebilir); ilk kullanımda son 48 saat dikkate alınır.</p>
+    <p>Danışmanlar “Atama bekliyor” almaz; personel kaydı olmayan bir yönetici yalnızca “Atama bekliyor” görür (Destek Atayıcı'nın panelinde bu bildirim <em>danışmansız açık talep</em> için çıkar).</p></div></div>
+  <table class="fields w3b">
+    <thead><tr><th>Bildirim</th><th>Kime?</th><th>Ne zaman kaybolur?</th></tr></thead>
+    <tbody>
+      <tr><td>Atama bekliyor</td><td><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span><span class="rb pm">Proje Yöneticisi</span></td><td>Danışman atanınca veya durum değişince.</td></tr>
+      <tr><td>Müşteri talebi yeniden açtı</td><td>Birincil danışman</td><td>Talep <em>Tekrar Açıldı</em>'dan çıkınca.</td></tr>
+      <tr><td>SLA hedefi aşıldı (+süre)</td><td>Birincil danışman</td><td>Talep kapanınca veya <em>Müşteri Bekleniyor</em> olunca.</td></tr>
+      <tr><td>Müşteri yanıtladı veya talebi güncelledi</td><td>Birincil danışman</td><td>Talebi açınca veya <em>Tümünü okundu say</em> ile.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+
+<section class="chapter" data-opener="false" data-title="Sistem ve Bakım"
+         data-intro="E-posta servisinin izlenmesi, test edilmesi ve kurulumu (Netlify, Resend, Firebase), yeniden deneme kuyruğu, Veri Bakımı aracı, veritabanı kurallarının yayınlanması ve güvenlik notları.">
+  <h1>Sistem ve Bakım</h1>
+
+  <h2>E-posta servisi</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span><span class="rb da">Destek Atayıcı</span></p>
+  <p>Portalın tüm bildirim e-postaları aynı hattan geçer. İşlemi yapan personelin tarayıcısı, oturum açmış kullanıcının Firebase kimlik jetonuyla portalın <code>/api/send-email</code> adresine istek gönderir; <strong>Netlify Function</strong> jetonu doğrular, içeriği ve alıcıları veritabanından kendisi oluşturur ve <strong>Resend</strong> aracılığıyla gönderir.</p>
+  <div class="flow">
+    <div class="node open"><span class="n">1</span>Tarayıcı<small>Personel işlemi</small></div><span class="arrow"></span>
+    <div class="node assigned"><span class="n">2</span>/api/send-email<small>Netlify Function</small></div><span class="arrow"></span>
+    <div class="node in_progress"><span class="n">3</span>Resend<small>info@ alan adı</small></div><span class="arrow"></span>
+    <div class="node closed"><span class="n">4</span>Alıcı<small>Müşteri / personel</small></div>
+  </div>
+  <p>Genel Bakış'taki <strong>E-posta Servisi</strong> kartı (Süper Admin ve Destek Atayıcı) hattın sağlığını gösterir. Sayfa açılınca servis yayında mı ve anahtar tanımlı mı diye kendiliğinden sorgular; iki düğme vardır:</p>
+  <figure class="shot shot--wide shot--bare"><img src="screens/a06-eposta-saglikli.png" alt="Sağlıklı durum."><span class="pin" style="left:66.9%;top:17.2%">1</span><span class="pin" style="left:81%;top:17.2%">2</span><figcaption>Sağlıklı durum.</figcaption><ol class="pin-legend"><li><strong>Durumu Kontrol Et</strong> — Resend'de <code>parlabilgiteknolojileri.net</code> alan adının doğrulanma durumunu sorgular.</li><li><strong>Test E-postası Gönder</strong> — kendi adresinize deneme iletisi yollar (uçtan uca kanıt).</li></ol></figure>
+  <figure class="shot shot--wide shot--bare shot--nonum"><img src="screens/a06-eposta-hata.png" alt="Test e-postası reddedilirse: alan adı doğrulanmamış (kırmızı çarpı = hata, sarı üçgen = uyarı, yeşil onay = sağlıklı)."><figcaption>Test e-postası reddedilirse: alan adı doğrulanmamış (kırmızı çarpı = hata, sarı üçgen = uyarı, yeşil onay = sağlıklı).</figcaption></figure>
+  <table class="fields">
+    <thead><tr><th>Kart ne diyor?</th><th>Anlamı → yapılacak</th></tr></thead>
+    <tbody>
+      <tr><td>“API anahtarı yalnızca gönderim yetkili; alan adı durumu okunamıyor (normal)”</td><td>Kısıtlı anahtar kullanılıyor; durum sorgulanamaz. Normaldir → yalnızca <em>Test E-postası</em> ile doğrulayın.</td></tr>
+      <tr><td>“Gönderen alan adı doğrulanmamış”</td><td>Resend'de SPF/DKIM eksik/bekliyor → DNS kayıtlarını tamamlayın.</td></tr>
+      <tr><td>“E-posta servisine ulaşılamıyor …”</td><td><code>/api/send-email</code> 404 veriyor → siteyi Netlify'a dağıtın (aşağıdaki liste).</td></tr>
+      <tr><td>“… RESEND_API_KEY tanımlı değil”</td><td>Ortam değişkeni eksik → Netlify'da ekleyip yeniden dağıtın.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Kurulum kontrol listesi</h3>
+  <table class="fields">
+    <thead><tr><th>Değişken (Netlify → Site settings → Environment variables)</th><th>Anlamı</th><th>Zorunlu mu?</th></tr></thead>
+    <tbody>
+      <tr><td><code>RESEND_API_KEY</code></td><td>Resend API anahtarı. Gönderim için yeterlidir; <em>Durumu Kontrol Et</em>'in alan adını okuyabilmesi için tam yetkili anahtar gerekir.</td><td><span class="req">Zorunlu</span></td></tr>
+      <tr><td><code>CONTACT_EMAIL</code></td><td>Destek kutusu adresi (varsayılan <code>info@parlabilgiteknolojileri.net</code>). Sunucu, talep e-postalarında bu adrese gönderime izin verir; <code>assets/js/site-config.js</code> içindeki <code>CONTACT_EMAIL</code> ile <strong>aynı</strong> olmalıdır.</td><td><span class="opt">İsteğe bağlı</span></td></tr>
+      <tr><td><code>ALLOWED_ORIGINS</code></td><td>Virgülle ayrılmış ek site alan adları (ör. <code>destek.ornek.com</code>). Varsayılan izinliler: <code>parlabilgiteknolojileri.net</code>, <code>www.</code>, <code>parla-bt-web.web.app</code>, <code>parla-bt-web.firebaseapp.com</code>, <code>localhost</code> ve tüm <code>*.netlify.app</code>.</td><td><span class="opt">İsteğe bağlı</span></td></tr>
+      <tr><td><code>FIREBASE_PROJECT_ID</code> · <code>FIREBASE_DATABASE_URL</code></td><td>Varsayılan değerleri <code>parla-bt-web</code> projesini gösterir; yalnızca farklı bir Firebase projesi kullanılırsa girilir.</td><td><span class="opt">İsteğe bağlı</span></td></tr>
+    </tbody>
+  </table>
+  <ol class="steps">
+    <li><h4>Siteyi ve işlevi yayınlayın</h4><p>Netlify, <code>netlify.toml</code> uyarınca <code>/api/send-email</code> isteğini <code>netlify/functions/send-email.js</code>'e yönlendirir. Site yalnızca Firebase Hosting'de çalışıyorsa <code>site-config.js</code> içindeki <code>EMAIL_API_URL</code> değerine Netlify sitesinin tam adresini yazın.</p></li>
+    <li><h4>Anahtarı ekleyip yeniden dağıtın</h4><p>Ortam değişkeni eklemek tek başına yetmez; <strong>yeniden dağıtım</strong> gerekir. Kontrol için tarayıcıda <code>/api/send-email</code> adresini açın: <code>"configured": true</code> görmelisiniz.</p></li>
+    <li><h4>Resend alan adını doğrulayın</h4><p><code>parlabilgiteknolojileri.net</code> alan adını Resend'e ekleyin, istenen SPF ve DKIM DNS kayıtlarını girin ve durum <em>verified</em> olunca Genel Bakış'ta <em>Durumu Kontrol Et</em> ile teyit edin. Gönderen her zaman <em>Parla BT Destek &lt;info@parlabilgiteknolojileri.net&gt;</em>; yanıtlar aynı adrese gider.</p></li>
+    <li><h4>Uçtan uca deneyin</h4><p><em>Test E-postası Gönder</em>'e basın; iletiyi gelen kutunuzda (ve spam'de) görün.</p></li>
+    <li><h4>Firebase şifre e-postaları (ayrı kurulum)</h4><p>Şifre sıfırlama ve hesap davet e-postalarını Firebase gönderir; kodla yönetilmez. Firebase Console → Authentication → Templates bölümünde SMTP'yi Resend'e (<code>smtp.resend.com</code>, 587, kullanıcı <code>resend</code>) yönlendirin ve eylem bağlantısını <code>https://www.parlabilgiteknolojileri.net/support-v2/auth-action.html</code> yapın; aksi halde iletiler Firebase'in varsayılan göndericisinden gider ve spam'e düşebilir.</p></li>
+  </ol>
+
+  <h2>Yeniden deneme kuyruğu ve hata kodları</h2>
+  <p>Gönderim hatası ekranda uyarı olarak görünür ve Aktiviteler'e <em>E-posta Gönderilemedi</em> yazılır (Bölüm 5.2). Hatanın türüne göre iki yol izlenir:</p>
+  <ul>
+    <li><strong>Geçici hatalar</strong> (ağ kesintisi, 5xx, “yoğunluk”): e-posta bu tarayıcının yerel depolamasındaki bir kuyruğa alınır. Kuyruk sayfa açıldıktan 4 saniye sonra, ardından her dakika ve tarayıcı yeniden çevrimiçi olunca işlenir; en çok 6 deneme veya 24 saat sürer, en çok 50 iletiyi tutar. Aynı istek kimliği kullanıldığından e-posta <em>mükerrer gitmez</em>. Süre/deneme dolarsa ileti düşürülür ve günlüğe yazılır.</li>
+    <li><strong>Kalıcı hatalar</strong> (4xx): kuyruğa alınmaz. Şifre içeren <em>giriş bilgileri</em> e-postası ile <em>tanılama/test</em> istekleri de hiçbir zaman kuyruğa alınmaz.</li>
+  </ul>
+  <div class="callout warn"><p>Kuyruk <strong>kullanıcının tarayıcısına</strong> bağlıdır: tarayıcı kapanır veya yerel veriler silinirse bekleyen e-postalar kaybolur ve başka cihazda görünmez.</p></div>
+  <table class="fields w3b">
+    <thead><tr><th>Hata kodu</th><th>Ekranda görünen</th><th>Ne yapmalı?</th></tr></thead>
+    <tbody>
+      <tr><td><code>not_configured</code></td><td>E-posta servisi yapılandırılmamış (RESEND_API_KEY).</td><td>Anahtarı ekleyip yeniden dağıtın.</td></tr>
+      <tr><td><code>invalid_api_key</code> · 401</td><td>Resend API anahtarı geçersiz veya yetkisiz.</td><td>Anahtarı yenileyin.</td></tr>
+      <tr><td><code>domain_not_verified</code></td><td>Gönderen alan adı Resend'de doğrulanmamış.</td><td>DNS kayıtlarını tamamlayın.</td></tr>
+      <tr><td><code>rate_limited</code> · 429</td><td>E-posta servisi yoğun, lütfen tekrar deneyin.</td><td>Geçicidir; kuyruk yeniden dener.</td></tr>
+      <tr><td><code>validation_error</code></td><td>E-posta içeriği veya alıcı kabul edilmedi.</td><td>Alıcı adresini kontrol edin.</td></tr>
+      <tr><td><code>recipient_not_allowed</code></td><td>Alıcı bu ticket'ın muhatapları arasında değil.</td><td>Talep sahibinin e-postasını / atamayı kontrol edin.</td></tr>
+      <tr><td><code>status_mismatch</code></td><td>Talep durumu bu bildirimle uyuşmuyor.</td><td>Talebi yenileyin; durum bu arada değişmiş olabilir.</td></tr>
+      <tr><td><code>origin_denied</code></td><td>İstek kaynağı kabul edilmedi.</td><td>Site alan adını <code>ALLOWED_ORIGINS</code>'e ekleyin.</td></tr>
+      <tr><td><code>no_session</code> · <code>no_token</code></td><td>Oturum bulunamadı; yeniden giriş yapın.</td><td>Çıkış yapıp tekrar girin.</td></tr>
+      <tr><td><code>endpoint_missing</code> · 404</td><td>E-posta servisi bu sitede bulunamadı.</td><td>Netlify Function'ı dağıtın.</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Veri Bakımı</h2>
+  <p class="perm"><span class="lbl">Kimler yapabilir</span><span class="rb sa">Süper Admin</span></p>
+  <p>Genel Bakış'taki <strong>Veri Bakımı</strong> kartı yalnızca Süper Admin'e görünür ve tek bir araç içerir: <strong>İç Notları Taşı</strong>. Eski portal sürümü iç notları müşteriye de açık olan mesaj düğümünde saklıyordu; araç bu kayıtları yalnızca personelin okuyabildiği ayrı alana (<code>ticket_internal_notes</code>) taşır ve eski yerinden siler.</p>
+  <div class="shot-row">
+    <figure class="shot shot--bare shot--nonum"><img src="screens/a06-veri-bakimi.png" alt="Taşıma sonrası: 2 iç not 1 talepten taşındı."><span class="pin" style="left:86%;top:19.7%">1</span><figcaption>Taşıma sonrası: 2 iç not 1 talepten taşındı.</figcaption><ol class="pin-legend"><li><strong>İç Notları Taşı</strong> — onay sorar, sonra tüm talepleri tarar.</li></ol></figure>
+    <div>
+      <ul>
+        <li>Onay penceresinden sonra sonuç kartta yazar: <em>“N dahili not M talepten taşındı”</em> veya <em>“Taşınacak eski dahili not bulunmadı”</em>.</li>
+        <li>İşlem <strong>tekrar çalıştırılabilir</strong>; taşınacak kayıt yoksa hiçbir şey değiştirmez.</li>
+        <li>İşlem tarayıcıdan tüm talepleri okuyarak yürür; çok talep varsa bitene kadar sekmeyi kapatmayın.</li>
+      </ul>
+      <div class="callout tip"><p>Yeni sürümde iç notlar zaten ayrı düğüme yazılır; bu aracı yalnızca eski sürümden kalan veriler için, bir kez çalıştırmanız yeter.</p></div>
+    </div>
+  </div>
+
+  <h2>Veritabanı kuralları ve dağıtım</h2>
+  <p>Tüm yetkilendirme Firebase Realtime Database kurallarıyla uygulanır; arayüzde bir düğmenin gizlenmesi tek başına güvenlik sağlamaz. Kuralların kaynağı <code>tests/rules/generate-rules.js</code>, çıktısı <code>database.rules.json</code>'dur (<code>firebase.json</code> bu dosyayı yayınlar).</p>
+  <ol class="steps">
+    <li><h4>Kuralı düzenleyin ve üretin</h4><p><code>generate-rules.js</code> içinde değişikliği yapın, ardından <code>node tests/rules/generate-rules.js</code> ile <code>database.rules.json</code>'u yeniden üretin.</p></li>
+    <li><h4>Testleri çalıştırın</h4><p><code>cd tests/rules &amp;&amp; npm install &amp;&amp; npm test</code> — kuralları ve JSON'un güncelliğini doğrular.</p></li>
+    <li><h4>Yayınlayın</h4><p><code>firebase deploy --only database</code>. Önce siteyi, sonra kuralları yayınlamak güvenlidir.</p></li>
+    <li><h4>Duman testi yapın</h4><p>Müşteri girişiyle talep açıp yanıtlayın; ardından personel girişiyle atayıp yanıtlayın. Sorun olursa önceki sürümü geri yükleyip yeniden yayınlayın: <code>git show &lt;eski-commit&gt;:database.rules.json &gt; database.rules.json &amp;&amp; firebase deploy --only database</code>.</p></li>
+  </ol>
+  <div class="callout info" data-title="İzin hatası"><p>Arayüzde <em>“Veritabanı erişim izni reddedildi … kuralları yayınladığınızdan emin olun”</em> uyarısı çıkıyorsa, güncel kurallar yayınlanmamış veya bir rol yetkisiz işlem yapıyordur.</p></div>
+
+  <h3>Güvenlik notları</h3>
+  <ul>
+    <li><strong>Roller:</strong> kullanıcı kendi profilinde yalnızca son giriş, güncelleme zamanı ve (<em>false</em> yaparak) şifre-değiştirme bayrağını yazabilir; rol ve yetkiler yalnızca Süper Admin/Destek Atayıcı tarafından değiştirilir. Süper Admin rolü yalnızca Süper Admin tarafından verilir.</li>
+    <li><strong>Gizlilik:</strong> müşteri yalnızca kendi taleplerini (Firma Yöneticisi: firmasınınkileri) okur; iç notlar ve onların ekleri yalnızca personele açıktır. Mesajlar ve aktivite kayıtları eklenir, değiştirilemez; mesaj silme yalnızca Süper Admin'dedir.</li>
+    <li><strong>E-posta ucu:</strong> geçerli bir Firebase kimlik jetonu ister; pasif hesapları reddeder; e-posta içeriği ve alıcılar sunucuda veritabanından türetilir (alıcılar yalnızca talep tarafları, destek kutusu ve — personel gönderenler için — aktif personel olabilir).</li>
+    <li><strong>Ek dosyalar</strong> veritabanında base64 olarak tutulur (en çok 3 dosya × 2 MB); çok sayıda ek veritabanı boyutunu büyütür. <strong>Talep silme</strong> yalnızca talep kaydını kaldırır; mesaj, geçmiş, efor ve ek düğümleri yetim kalır.</li>
+  </ul>
+
+  <h3>Yedekleme ve kontrol</h3>
+  <ul>
+    <li><strong>Veri yedeği:</strong> düzenli aralıklarla Firebase Console → Realtime Database → <em>Veri</em> sekmesindeki kök düğümden JSON dışa aktarımı alın ve güvenli bir yerde saklayın (Firebase Console özelliği; portal bunu otomatik yapmaz). Ticketlar ve Raporlar sayfalarındaki CSV/Excel dışa aktarmaları kısmi bir döküm olarak işe yarar.</li>
+    <li><strong>Otomatik testler</strong> (geliştirme ortamında): <code>node --test netlify/tests/send-email.test.js</code>, <code>node --test netlify/tests/client-email-service.test.mjs</code>, <code>cd tests/rules &amp;&amp; npm test</code> ve <code>node tests/e2e/lifecycle.e2e.cjs</code> (ayrıca <code>bell-sla</code>, <code>attachments</code>, <code>smoke-all</code>).</li>
+    <li><strong>Bu kılavuzu yenilemek:</strong> <code>node docs/manuals/capture-screens.cjs admin</code> (ekran görüntüleri), <code>node docs/manuals/content/admin/make.cjs &amp;&amp; node docs/manuals/build.cjs admin</code> (PDF). Çıktı <code>docs/manuals/out/</code> altına yazılır; portaldaki bağlantılar <code>support-v2/docs/</code> klasörünü kullanır.</li>
+  </ul>
+</section>
+
+
+<section class="chapter cont" data-opener="false" data-title="Sorun Giderme ve Sözlük"
+         data-intro="Sık karşılaşılan uyarılar ve çözümleri, sık sorulan sorular ve terimler sözlüğü.">
+  <h1>Sorun Giderme ve Sözlük</h1>
+
+  <h2>Sorun giderme</h2>
+  <table class="fields w3b">
+    <thead><tr><th>Belirti</th><th>Olası neden</th><th>Çözüm</th></tr></thead>
+    <tbody>
+      <tr><td>Muhataplar'a tıklayınca Genel Bakış'a dönüyorum</td><td>Sayfayı yalnızca Süper Admin ve Destek Atayıcı açabilir.</td><td>Rolünüzü Süper Admin / Destek Atayıcı'dan kontrol ettirin.</td></tr>
+      <tr><td>“Bu ticket size atanmadığı için yalnızca görüntüleyebilirsiniz”</td><td>Danışman rolü yalnızca atandığı talepte işlem yapar; atama, e-postanızın <em>Danışmanlar</em> kaydıyla eşleşmesine dayanır.</td><td>Atama isteyin; personel kaydının e-postası giriş e-postanızla aynı olmalı.</td></tr>
+      <tr><td>“Personel kaydınız bulunamadı. E-posta eşleşmesini kontrol edin.”</td><td>Efor eklerken oturum e-postanız hiçbir <em>Danışmanlar</em> kaydıyla eşleşmiyor.</td><td>Personel kaydı açın veya e-postasını düzeltin (Bölüm 3.3).</td></tr>
+      <tr><td>Bildirim zilim hiç dolmuyor</td><td>Zil, birincil danışmanı siz olduğunuz talepler için çalışır; personel kaydınız yoksa kişisel uyarı üretilmez.</td><td>Personel kaydı e-postasını ve birincil atamayı kontrol edin.</td></tr>
+      <tr><td>“Bu işlem için yetkiniz yok” / “Veritabanı erişim izni reddedildi”</td><td>Rolünüz bu işleme izin vermiyor (ör. Danışman firma düzenliyor) veya güncel kurallar yayınlanmamış.</td><td>Yetki matrisine bakın (Bölüm 1.1); kurallar için Bölüm 6.4.</td></tr>
+      <tr><td>Kullanıcı oluşturulamadı: “Bu e-posta adresi zaten kayıtlı / kullanımda”</td><td>E-posta Firebase kimlik doğrulamasında (profili olmasa bile) ya da kullanıcı listesinde zaten var.</td><td>Mevcut hesabı <em>Aktive Et</em> veya <em>Şifre Sıfırla</em> ile kurtarın.</td></tr>
+      <tr><td>“Bu e-posta adresi bir danışman kaydına ait; müşteri kullanıcısı olarak eklenemez”</td><td>Aynı e-posta hem personel hem müşteri olamaz.</td><td>Müşteri için farklı bir e-posta kullanın.</td></tr>
+      <tr><td>Kullanıcı giriş yapamıyor</td><td>Hesap pasif, şifre hatalı veya “Çok fazla başarısız deneme” kilidi.</td><td>Hesabı <em>Aktive Et</em>; birkaç dakika bekleyin; <em>Şifre Sıfırla</em> gönderin.</td></tr>
+      <tr><td>“Gönderilemedi” uyarısı ve Aktiviteler'de E-posta Gönderilemedi</td><td>E-posta hattında sorun.</td><td>Köşeli parantezdeki hata koduna göre Bölüm 6.2 tablosuna bakın; <em>Test E-postası</em> ile deneyin.</td></tr>
+                      </tbody>
+  </table>
+
+  <h2>Sık sorulan sorular</h2>
+  <div class="faq"><div class="qa"><p class="q">Müşteri adına talep açtım ama müşteri e-posta almadı.</p><div class="a"><p>Müşteriye “Talebiniz alındı” e-postası yalnızca <strong>Muhatap</strong> seçtiyseniz gider. Muhatap boşsa talep sizin adınıza açılır (Bölüm 2.2).</p></div></div><div class="qa"><p class="q">Bir danışmanın tüm taleplerini başkasına nasıl devrederim?</p><div class="a"><p>Toplu devir aracı yoktur. Her talepte Admin Paneli'nden yeni danışmanı işaretleyip birincil yapın; atama listesi tamamen o seçime göre yenilenir.</p></div></div><div class="qa"><p class="q">Yanlış durum seçtim, geri alabilir miyim?</p><div class="a"><p>Yöneticiler Admin Paneli'ndeki Durum listesinden (en az 10 karakterlik notla) herhangi bir duruma geçebilir; danışmanlar <em>İşleme Geri Al</em> kullanır. Gönderilmiş e-posta geri alınamaz.</p></div></div><div class="qa"><p class="q">İç not müşteriye görünür mü?</p><div class="a"><p>Hayır. İç notlar ve ekleri ayrı düğümde, yalnızca personel okuma kuralıyla tutulur; e-posta da üretmez.</p></div></div><div class="qa"><p class="q">Firma veya kullanıcıyı silebilir miyim?</p><div class="a"><p>Hayır. Firma, kullanıcı ve danışman kayıtları <em>pasife alınır</em>; departmandaki <em>Sil</em> de pasifleştirir. Böylece eski talepler ve raporlar bozulmaz.</p></div></div></div>
+
+  <h2>Sözlük</h2>
+  <table class="glossary">
+    <thead><tr><th>Terim</th><th>Açıklama</th></tr></thead>
+    <tbody>
+      <tr><td>Muhatap</td><td>Portalda hesabı olan kişi; <em>Muhataplar</em> sayfası müşteri ve personel hesaplarının listesidir.</td></tr>
+      <tr><td>Ticket / Talep</td><td>Portal üzerinden açılan destek, arıza veya iş kaydı.</td></tr>
+      <tr><td>Birincil danışman</td><td>Talepteki sorumlu danışman; liste, iş yükü, performans ve bildirim hesaplarında esas alınır.</td></tr>
+      <tr><td>Hızlı İşlem</td><td>Mevcut duruma uygun sonraki adımı tek düğmeyle (notla) uygulayan Admin Paneli kısayolu.</td></tr>
+      <tr><td>İç not</td><td>Yalnızca personelin gördüğü, e-posta üretmeyen not.</td></tr>
+      <tr><td>SLA<small>hizmet seviyesi hedefi</small></td><td>Önceliğe göre ilk yanıt ve çözüm için takvim saati hedefi (SUP, ARZ, BUG).</td></tr>
+      <tr><td>Resend</td><td>E-postaları gönderen servis; gönderen alan adı doğrulanmış olmalıdır (SPF/DKIM).</td></tr>
+      <tr><td>Netlify Function</td><td><code>/api/send-email</code> adresini sunan, e-postayı üreten ve Resend'e ileten sunucu işlevi.</td></tr>
+      <tr><td>Aktivite günlüğü</td><td>Değiştirilemez denetim kaydı (Aktiviteler sayfası).</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Bize ulaşın</h2>
+  <div class="cards cols-2">
+    <div class="card blue"><div class="ico" data-ico="mail"></div><h4>E-posta</h4><p>info@parlabilgiteknolojileri.net<br>Destek kutusu; talep numarasını konuya yazın.</p></div>
+    <div class="card red"><div class="ico" data-ico="phone"></div><h4>Telefon</h4><p>+90 530 226 77 98<br>Üretimi durduran acil sorunlarda.</p></div>
+  </div>
+</section>

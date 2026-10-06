@@ -2,6 +2,7 @@
  * Parla BT Ticket V2 — Admin Firma Yönetimi
  */
 import ParlaDb from "../firebase-client.js";
+import { canWrite } from "../access-control.js";
 import { requireAuth, PATHS } from "../auth-guard.js";
 import {
   renderShell,
@@ -87,9 +88,9 @@ function buildContent() {
     <div class="sv2-section">
       <div class="sv2-section-header">
         <h3>Müşteriler</h3>
-        <button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-company">
+        ${canWrite(session, "admin") ? `<button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-company">
           <i class="fas fa-plus"></i> Yeni Firma
-        </button>
+        </button>` : ""}
       </div>
       <div class="sv2-section-body">
         ${renderFilterBar({

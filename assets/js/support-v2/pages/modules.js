@@ -2,6 +2,7 @@
  * Parla BT Ticket V2 — SAP Modülleri (admin)
  */
 import ParlaDb from "../firebase-client.js";
+import { canWrite } from "../access-control.js";
 import { requireAuth } from "../auth-guard.js";
 import {
   renderShell,
@@ -34,9 +35,9 @@ async function init() {
         <div class="sv2-section">
           <div class="sv2-section-header">
             <h3>SAP Modülleri</h3>
-            <button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-module">
+            ${canWrite(session, "super") ? `<button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-module">
               <i class="fas fa-plus"></i> Yeni Modül
-            </button>
+            </button>` : ""}
           </div>
           <div class="sv2-section-body" id="modules-table"></div>
         </div>`,
@@ -120,9 +121,9 @@ function renderTable() {
         key: "actions",
         label: "İŞLEMLER",
         render: (_, row) =>
-          `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-code="${escapeHtml(row.code || row.module_code)}">
+          `${canWrite(session, "super") ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-code="${escapeHtml(row.code || row.module_code)}">
             <i class="fas fa-edit"></i> Düzenle
-          </button>`,
+          </button>` : ""}`,
       },
     ],
     rows: sorted.map((m) => ({

@@ -2,6 +2,7 @@
  * Parla BT Ticket V2 — Destek Türleri (admin)
  */
 import ParlaDb from "../firebase-client.js";
+import { canWrite } from "../access-control.js";
 import { requireAuth } from "../auth-guard.js";
 import {
   renderShell,
@@ -33,9 +34,9 @@ async function init() {
         <div class="sv2-section">
           <div class="sv2-section-header">
             <h3>Destek Türleri</h3>
-            <button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-type">
+            ${canWrite(session, "super") ? `<button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-type">
               <i class="fas fa-plus"></i> Yeni Tür
-            </button>
+            </button>` : ""}
           </div>
           <div class="sv2-section-body" id="types-table"></div>
         </div>`,
@@ -110,9 +111,9 @@ function renderTable() {
         key: "actions",
         label: "İŞLEMLER",
         render: (_, row) =>
-          `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-code="${escapeHtml(row.code || row.type_code)}">
+          `${canWrite(session, "super") ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-code="${escapeHtml(row.code || row.type_code)}">
             <i class="fas fa-edit"></i> Düzenle
-          </button>`,
+          </button>` : ""}`,
       },
     ],
     rows: sorted.map((t) => ({ ...t, id: t.id || t.type_code || t.code })),

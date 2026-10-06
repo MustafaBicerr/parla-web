@@ -2,6 +2,7 @@
  * Parla BT Ticket V2 — Admin Personel Detayı
  */
 import ParlaDb from "../firebase-client.js";
+import { canWrite } from "../access-control.js";
 import { requireAuth, PATHS } from "../auth-guard.js";
 import {
   renderShell,
@@ -130,12 +131,12 @@ function buildContent() {
               <div class="sv2-meta-item"><label>Durum</label><span>${active ? '<span class="sv2-badge sv2-badge-resolved">Aktif</span>' : '<span class="sv2-badge sv2-badge-closed">Pasif</span>'}</span></div>
             </div>
           </div>
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+          ${canWrite(session, "admin") ? `<div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
             <button type="button" class="sv2-btn sv2-btn-primary" id="btn-edit-person"><i class="fas fa-edit"></i> Düzenle</button>
             <button type="button" class="sv2-btn ${active ? "sv2-btn-danger" : "sv2-btn-outline"}" id="btn-toggle-person">
               ${active ? "Pasife Al" : "Aktive Et"}
             </button>
-          </div>
+          </div>` : ""}
         </div>
       </div>
     </div>

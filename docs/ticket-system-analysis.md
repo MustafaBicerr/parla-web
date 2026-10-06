@@ -122,7 +122,8 @@ cd tests/rules && npm install && npm test              # RTDB kuralları (targar
 node tests/e2e/lifecycle.e2e.cjs                       # tarayıcı: talep yaşam döngüsü (34)
 node tests/e2e/bell-sla.e2e.cjs                        # bildirim zili, SLA, e-posta kuyruğu (22)
 node tests/e2e/attachments.e2e.cjs                     # dosya ekleri (22)
-node tests/e2e/guides.e2e.cjs                          # PDF kılavuz bağlantıları
+node tests/e2e/guides.e2e.cjs                          # PDF kılavuz bağlantıları ve dosyalar (18)
+node tests/e2e/permissions-ui.e2e.cjs                  # rol bazlı yazma düğmeleri (52)
 node tests/e2e/smoke-all.e2e.cjs                       # tüm roller × tüm sayfalar (75)
 ```
 

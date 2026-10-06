@@ -27,6 +27,11 @@ import { reportEmailResult } from "../email-report.js";
 
 const ADMIN_ROLES = ["super_admin", "service_admin", "project_manager", "consultant"];
 
+/** Danışman rolü atama yapamaz (ticket sayfasındaki Admin Paneli ile aynı kural). */
+function canAssignTickets() {
+  return ["super_admin", "service_admin", "project_manager"].includes(String(session?.role || "").toLowerCase());
+}
+
 let session = null;
 let allTickets = [];
 let allPersonnel = [];
@@ -494,7 +499,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
                     <td>${renderPriorityBadge(r.priority)}</td>
                     <td>${renderStatusBadge(r.status)}</td>
                     <td>${escapeHtml(formatDateTime(r.created))}</td>
-                    <td><button type="button" class="sv2-btn sv2-btn-sm sv2-btn-primary sv2-quick-assign" data-id="${escapeHtml(r.id)}">Ata</button></td>
+                    <td>${canAssignTickets() ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-primary sv2-quick-assign" data-id="${escapeHtml(r.id)}">Ata</button>` : `<a href="${PATHS.adminTicketDetail}?id=${encodeURIComponent(r.id)}" class="sv2-btn sv2-btn-sm sv2-btn-outline">Aç</a>`}</td>
                   </tr>`
                   )
                   .join("")}

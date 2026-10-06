@@ -2,6 +2,7 @@
  * Parla BT Ticket V2 — Projeler (admin)
  */
 import ParlaDb from "../firebase-client.js";
+import { canWrite } from "../access-control.js";
 import { requireAuth, PATHS } from "../auth-guard.js";
 import {
   renderShell,
@@ -48,9 +49,9 @@ async function init() {
         <div class="sv2-section">
           <div class="sv2-section-header">
             <h3>Proje Listesi</h3>
-            <button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-project">
+            ${canWrite(session, "project") ? `<button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-project">
               <i class="fas fa-plus"></i> Yeni Proje
-            </button>
+            </button>` : ""}
           </div>
           <div class="sv2-section-body">
             <div class="sv2-search-bar" style="margin-bottom:1.25rem">
@@ -199,9 +200,9 @@ function renderTable() {
             <a href="${PATHS.adminProjectDetail}?id=${encodeURIComponent(row.id || row.project_id)}" class="sv2-btn sv2-btn-sm sv2-btn-secondary">
               <i class="fas fa-eye"></i> Detay
             </a>
-            <button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-id="${escapeHtml(row.id || row.project_id)}">
+            ${canWrite(session, "project") ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-id="${escapeHtml(row.id || row.project_id)}">
               <i class="fas fa-edit"></i> Düzenle
-            </button>
+            </button>` : ""}
           </div>`,
       },
     ],

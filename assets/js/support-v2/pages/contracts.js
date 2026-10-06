@@ -2,6 +2,7 @@
  * Parla BT Ticket V2 — Sözleşmeler (admin)
  */
 import ParlaDb from "../firebase-client.js";
+import { canWrite } from "../access-control.js";
 import { requireAuth, PATHS } from "../auth-guard.js";
 import {
   renderShell,
@@ -55,9 +56,9 @@ async function init() {
         <div class="sv2-section">
           <div class="sv2-section-header">
             <h3>Sözleşme Listesi</h3>
-            <button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-contract">
+            ${canWrite(session, "admin") ? `<button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-contract">
               <i class="fas fa-plus"></i> Yeni Sözleşme
-            </button>
+            </button>` : ""}
           </div>
           <div class="sv2-section-body">
             <div id="contracts-filters"></div>
@@ -232,9 +233,9 @@ function renderTable() {
         label: "İŞLEMLER",
         render: (_, row) =>
           `<div class="sv2-actions">
-            <button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-id="${escapeHtml(row.id)}">
+            ${canWrite(session, "admin") ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-id="${escapeHtml(row.id)}">
               <i class="fas fa-edit"></i> Düzenle
-            </button>
+            </button>` : ""}
           </div>`,
       },
     ],

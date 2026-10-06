@@ -1,0 +1,106 @@
+/* Sistem Adminleri Kılavuzu — rol rozetleri ve yetki matrisi (tema üzerine ek bileşenler) */
+
+/* Rol rozeti: <span class="rb sa">Süper Admin</span> */
+.rb {
+  --c: var(--navy);
+  display: inline-block; padding: 0.55mm 2.4mm 0.25mm; margin: 0 0.3mm; border-radius: 99px;
+  background: var(--c); color: #fff; vertical-align: baseline; white-space: nowrap;
+  font: 700 0.76em/1.3 var(--font-text); letter-spacing: 0.01em;
+}
+.rb.sa { --c: #B71C34; }
+.rb.da { --c: #C2570F; }
+.rb.pm { --c: #1D4ED8; }
+.rb.dn { --c: #0D7D4D; }
+
+/* "Kimler yapabilir" şeridi (bölüm başında) */
+p.perm {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1.2mm;
+  margin: 0 0 4.2mm; padding: 1.8mm 3.4mm; background: var(--paper-2); border-left: 1.4pt solid var(--orange);
+  border-radius: 0 1.6mm 1.6mm 0; font-size: 8.8pt; color: var(--muted); break-inside: avoid; break-after: avoid;
+}
+p.perm .lbl { font: 800 6.8pt/1 var(--font-display); letter-spacing: 0.13em; text-transform: uppercase; color: var(--orange-ink); margin-right: 1.4mm; }
+p.perm .sep { margin: 0 1.4mm; color: #B9B3A8; }
+
+/* Yetki matrisi */
+table.matrix { border-collapse: separate; border-spacing: 0; width: 100%; margin: 4mm 0 3mm; font-size: 8.9pt; line-height: 1.38; }
+table.matrix thead { display: table-header-group; }
+table.matrix tr { break-inside: avoid; }
+table.matrix th {
+  padding: 2.2mm 1.2mm 2mm; text-align: center; vertical-align: bottom; width: 12.5%;
+  font: 700 7pt/1.2 var(--font-display); letter-spacing: 0.04em; color: var(--muted); border-bottom: 1.6pt solid var(--orange);
+}
+table.matrix th:first-child { text-align: left; width: 50%; padding-left: 3.2mm; letter-spacing: 0.09em; text-transform: uppercase; }
+table.matrix th .rb { display: block; margin: 0 auto 0.8mm; width: max-content; font-size: 7.4pt; }
+table.matrix th small { display: block; font: 400 6.4pt/1.2 var(--font-mono); color: #8A909B; letter-spacing: 0; text-transform: none; }
+table.matrix td { padding: 1.9mm 1.2mm; text-align: center; vertical-align: middle; border-bottom: 0.5pt solid var(--line); }
+table.matrix td:first-child { text-align: left; padding-left: 3.2mm; color: var(--ink); font-weight: 500; }
+table.matrix td:first-child small { display: block; margin-top: 0.3mm; font: 400 7.6pt/1.35 var(--font-text); color: var(--muted); }
+table.matrix tr.grp td {
+  padding: 1.5mm 3.2mm; background: var(--navy); color: #fff; text-align: left;
+  font: 700 6.9pt/1.2 var(--font-display); letter-spacing: 0.13em; text-transform: uppercase; border-bottom: 0;
+}
+table.matrix tr.grp { break-after: avoid; }
+table.matrix tbody tr:not(.grp):nth-child(even) td { background: var(--paper-2); }
+.mk { display: inline-block; width: 4.1mm; height: 4.1mm; border-radius: 50%; vertical-align: middle; position: relative; }
+.mk.y { background: var(--green) var(--tick-white) center / 72% no-repeat; }
+.mk.n { background: #ECEAE5; }
+.mk.n::after { content: ""; position: absolute; left: 27%; right: 27%; top: 46%; height: 0.55mm; border-radius: 1mm; background: #9AA1AD; }
+.mk.p { background: var(--amber-50); border: 0.7pt solid var(--amber); box-sizing: border-box; }
+.mk.p::after { content: ""; position: absolute; left: 50%; top: 50%; width: 1.5mm; height: 1.5mm; border-radius: 50%; background: var(--amber); transform: translate(-50%, -50%); }
+.matrix-legend { display: flex; flex-wrap: wrap; gap: 1mm 6mm; margin: 0 0 5mm; font-size: 8.4pt; color: var(--muted); break-inside: avoid; }
+.matrix-legend span { display: inline-flex; align-items: center; gap: 1.6mm; }
+
+/* Sık kullanılan küçük bileşenler */
+.shot-row.three { grid-template-columns: repeat(3, 1fr); }
+.shot-row.quick { grid-template-columns: 1fr 1fr; gap: 2mm 4mm; }
+.shot-row.quick figure.shot { margin: 0 0 1mm; }
+code.k { white-space: nowrap; }
+
+/* ---- Yoğun yerleşim: yan yana ekran görüntüsü + açıklama (side) ---- */
+.shot-row.side { grid-template-columns: var(--lc, 83mm) 1fr; gap: 5mm; margin: 4mm 0; }
+.shot-row.side .side-body { min-width: 0; }
+.shot-row.side .side-body > :first-child { margin-top: 0; }
+.shot-row.side .pin-legend { margin: 0 0 3mm; gap: 1.6mm; font-size: 9pt; line-height: 1.4; }
+.shot-row.side .callout { margin: 3mm 0; padding: 2.8mm 4mm 2.4mm 13mm; font-size: 9.2pt; background-position: 3.6mm 3.4mm; background-size: 6mm 6mm; }
+.shot-row.side .callout::before { font-size: 9.2pt; }
+.shot-row.side table.fields { margin: 0 0 3mm; font-size: 8.8pt; }
+.shot-row.side table.fields td, .shot-row.side table.fields th { padding: 2mm 2.4mm; }
+.shot-row.side table.fields td:first-child { width: 30%; }
+.shot-row.side table.fields th:last-child, .shot-row.side table.fields td:last-child { width: auto; }
+.shot-row.side p { margin: 0 0 2.4mm; font-size: 9.4pt; line-height: 1.5; }
+.shot-row.side ul { margin: 0 0 2.4mm; padding-left: 4.4mm; font-size: 9.2pt; line-height: 1.45; }
+.shot-row.side ul li { margin-bottom: 1mm; }
+.shot-row.three { grid-template-columns: repeat(3, 1fr); gap: 4mm; }
+.shot-row.three figure.shot figcaption { font-size: 7.8pt; margin-top: 2mm; }
+
+/* ---- Genel sıkıştırma (kılavuz uzunluğu için) ---- */
+figure.shot { margin: 3mm auto; }
+.shot-row { margin: 4mm 0; }
+table.fields, table.glossary { margin: 4mm 0; font-size: 9.2pt; }
+table.fields td, table.glossary td { padding: 2.2mm 3.2mm; }
+table.fields th, table.glossary th { padding: 2.2mm 3.2mm 2mm; }
+.callout { margin: 3.5mm 0; }
+.pin-legend { margin-top: 3mm; font-size: 9.1pt; }
+.pin-legend.cols-2 { gap: 1.6mm 6mm; }
+.cards { margin: 4mm 0; gap: 3.5mm; }
+.card { padding: 3.6mm 4mm 3.2mm; }
+ol.steps > li { padding-bottom: 3.4mm; }
+.flow { margin: 4mm 0; }
+.in-this-chapter { margin-bottom: 5mm; }
+
+/* Üç sütunlu tablolarda son sütun daha geniş (tema son sütunu %20'ye sıkıştırır) */
+table.fields.w3 th:first-child, table.fields.w3 td:first-child { width: 20%; }
+table.fields.w3 th:last-child, table.fields.w3 td:last-child { width: 38%; }
+table.fields.w3b th:first-child, table.fields.w3b td:first-child { width: 26%; }
+table.fields.w3b th:last-child, table.fields.w3b td:last-child { width: 32%; }
+/* İki sütunlu tablolarda açıklama sütunu geniş olsun */
+table.fields th:first-child:nth-last-child(2), table.fields td:first-child:nth-last-child(2) { width: 27%; }
+table.fields th:last-child:nth-child(2), table.fields td:last-child:nth-child(2) { width: 73%; }
+.rb.mgr { --c: #1B3359; }
+
+/* "BÖLÜM 0X" üst başlığının noktaları (Ö/Ü) satır kutusunun üstüne taşıp önceki sayfanın altında görünüyordu */
+.chapter > h1[data-num]::before { padding-top: 1.4mm; }
+
+/* Adım numarasının dış halkası sayfa başında önceki sayfanın altına taşmasın */
+ol.steps > li::before { top: 1.4mm; }
+ol.steps > li::after { top: 13.2mm; }

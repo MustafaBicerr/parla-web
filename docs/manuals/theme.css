@@ -355,6 +355,7 @@ p:has(+ .checklist), p:has(+ .callout), p:has(+ ol.steps), p:has(+ .faq) { break
 .chapter > h1[data-num]::before {
   content: "Bölüm " attr(data-num); display: block; margin-bottom: 3mm;
   font: 700 8pt/1 var(--font-display); letter-spacing: 0.18em; text-transform: uppercase; color: var(--orange-ink);
+  padding-top: 1.4mm; /* Ö/Ü noktaları satır kutusunun üstüne taşıp önceki sayfanın altında görünmesin */
 }
 .no-numbering .chapter > h1[data-num]::before { content: none; }
 
@@ -401,7 +402,7 @@ ol.steps > li:last-child { padding-bottom: 1mm; }
 ol.steps > li::marker { content: none; }
 ol.steps > li::before {
   content: counter(step);
-  position: absolute; left: 0; top: 0;
+  position: absolute; left: 0; top: 1.4mm; /* dış halka önceki sayfaya taşmasın */
   width: 9.6mm; height: 9.6mm; border-radius: 50%;
   background: linear-gradient(145deg, #F37021, #E5631A);
   color: #fff; text-align: center;
@@ -409,7 +410,7 @@ ol.steps > li::before {
   box-shadow: 0 0 0 1.3mm var(--orange-50);
 }
 ol.steps > li::after {
-  content: ""; position: absolute; left: 4.8mm; top: 11.8mm; bottom: 1.6mm;
+  content: ""; position: absolute; left: 4.8mm; top: 13.2mm; bottom: 1.6mm;
   width: 0; border-left: 1.3pt dashed #F5BE9E;
 }
 ol.steps > li:last-child::after { display: none; }

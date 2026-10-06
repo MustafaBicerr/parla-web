@@ -2,6 +2,7 @@
  * Parla BT Ticket V2 — Departmanlar (admin)
  */
 import ParlaDb from "../firebase-client.js";
+import { canWrite } from "../access-control.js";
 import { requireAuth } from "../auth-guard.js";
 import {
   renderShell,
@@ -35,9 +36,9 @@ async function init() {
         <div class="sv2-section">
           <div class="sv2-section-header">
             <h3>Departman Yönetimi</h3>
-            <button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-dept">
+            ${canWrite(session, "super") ? `<button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-dept">
               <i class="fas fa-plus"></i> Yeni Departman
-            </button>
+            </button>` : ""}
           </div>
           <div class="sv2-section-body" id="departments-table"></div>
         </div>`,
@@ -115,12 +116,12 @@ function renderTable() {
         label: "İŞLEMLER",
         render: (_, row) =>
           `<div class="sv2-actions">
-            <button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-id="${escapeHtml(row.id || row.department_id)}">
+            ${canWrite(session, "super") ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-id="${escapeHtml(row.id || row.department_id)}">
               <i class="fas fa-edit"></i> Düzenle
-            </button>
-            <button type="button" class="sv2-btn sv2-btn-sm sv2-btn-danger btn-delete" data-id="${escapeHtml(row.id || row.department_id)}">
+            </button>` : ""}
+            ${canWrite(session, "super") ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-danger btn-delete" data-id="${escapeHtml(row.id || row.department_id)}">
               <i class="fas fa-trash"></i> Sil
-            </button>
+            </button>` : ""}
           </div>`,
       },
     ],
