@@ -125,6 +125,9 @@ function renderSidebar(activePage, profile, isAdmin) {
             <span class="sv2-user-role">${escapeHtml(roleLabel)}</span>
           </div>
         </div>
+        <a href="${PATHS.changePassword}" class="sv2-btn-logout" id="sv2-change-password-link" style="text-decoration:none;display:block;margin-bottom:0.5rem">
+          <i class="fas fa-key"></i> Şifre Değiştir
+        </a>
         <button type="button" class="sv2-btn-logout" id="sv2-logout-btn">
           <i class="fas fa-sign-out-alt"></i> Çıkış Yap
         </button>

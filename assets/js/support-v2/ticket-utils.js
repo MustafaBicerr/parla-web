@@ -234,6 +234,23 @@ export function generateTempPassword(length) {
     .join("");
 }
 
+/** Arama için normalize: küçük harf (tr), noktasız ı -> i, aksan/diakritik temizliği (Öztürk -> ozturk). */
+export function normalizeSearch(value) {
+  return String(value == null ? "" : value)
+    .toLocaleLowerCase("tr")
+    .replace(/ı/g, "i")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+/** Boşlukla ayrılmış her arama sözcüğü alanların birleşiminde geçiyorsa true döner. */
+export function matchesSearch(query, fields) {
+  const tokens = normalizeSearch(query).split(/\s+/).filter(Boolean);
+  if (!tokens.length) return true;
+  const haystack = normalizeSearch((fields || []).filter((v) => v != null && v !== "").join(" "));
+  return tokens.every((token) => haystack.includes(token));
+}
+
 export function nowIso() {
   return new Date().toISOString();
 }

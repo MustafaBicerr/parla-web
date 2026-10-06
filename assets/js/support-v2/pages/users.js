@@ -493,6 +493,10 @@ async function submitNewUser() {
     );
 
     closeModal("modal-new-user");
+    // Önce liste yenilenir: refreshView() tüm modal kökünü yeniden çizdiğinden, geçici şifre penceresi
+    // ancak ondan SONRA gösterilmelidir (aksi halde pencere veri yüklenince kaybolur).
+    await loadData();
+    refreshView();
     showSuccessCredentials(data.email, data.temp_password, fullName(data));
     if (resetMailFailed) {
       toast(
@@ -500,8 +504,6 @@ async function submitNewUser() {
         "warning"
       );
     }
-    await loadData();
-    refreshView();
   } catch (err) {
     handleError(err, "Kullanıcı oluşturulamadı");
   } finally {
@@ -623,7 +625,11 @@ async function init() {
     }
     refreshView();
   } catch (err) {
-    if (err.message !== "not_authenticated" && err.message !== "not_admin") {
+    if (
+      err.message !== "not_authenticated" &&
+      err.message !== "not_admin" &&
+      err.message !== "role_denied"
+    ) {
       handleError(err, "Sayfa yüklenemedi");
     }
   } finally {

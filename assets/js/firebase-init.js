@@ -16,6 +16,8 @@ import {
   confirmPasswordReset,
   checkActionCode,
   applyActionCode,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import {
   getDatabase,
@@ -80,6 +82,8 @@ const firebaseApi = {
     confirmPasswordReset,
     checkActionCode,
     applyActionCode,
+    reauthenticateWithCredential,
+    EmailAuthProvider,
   },
 };
 

@@ -6,6 +6,7 @@ import { isAdminRole, isCustomerRole } from "./ticket-utils.js";
 
 export const PATHS = {
   login: "/support-v2/login.html",
+  changePassword: "/support-v2/change-password.html",
   customerDashboard: "/support-v2/customer/dashboard.html",
   customerTickets: "/support-v2/customer/tickets.html",
   customerTicketDetail: "/support-v2/customer/ticket-detail.html",
@@ -45,6 +46,7 @@ const AUTH_ERROR_MESSAGES = {
     "E-posta veya şifre hatalı. Lütfen bilgilerinizi kontrol edin.",
   "auth/email-already-in-use": "Bu e-posta adresi zaten kullanımda.",
   "auth/weak-password": "Şifre çok zayıf. En az 8 karakter kullanın.",
+  "auth/requires-recent-login": "Güvenlik nedeniyle yeniden giriş yapmanız gerekiyor.",
 };
 
 function mapAuthError(error) {
@@ -158,6 +160,13 @@ async function requireAuth(options) {
 
     const session = { uid: authUser.uid, email: authUser.email, ...profile, authUser };
 
+    // Geçici şifreyle açılmış hesaplar şifresini değiştirmeden portalı kullanamaz.
+    if (profile.must_change_password === true && !options.allowPasswordChange) {
+      window.location.href = PATHS.changePassword;
+      // Yönlendirme sürerken çağıran sayfanın devam edip hata göstermesini engelle.
+      return new Promise(() => {});
+    }
+
     if (options.adminOnly && !isAdminRole(profile.role)) {
       window.location.href = PATHS.customerDashboard;
       throw new Error("not_admin");
@@ -248,6 +257,27 @@ async function resetPassword(email) {
 }
 
 /**
+ * Oturum açmış kullanıcının şifresini değiştirir (mevcut şifre ile yeniden doğrulama gerekir)
+ * ve must_change_password bayrağını kaldırır.
+ */
+async function changePassword(currentPassword, newPassword) {
+  await ParlaDb.waitForFirebase();
+  const fb = window.__PARLA_FIREBASE;
+  const user = fb.auth.currentUser;
+  if (!user || !user.email) throw new Error("Oturum bulunamadı. Lütfen yeniden giriş yapın.");
+
+  try {
+    const credential = fb.authFn.EmailAuthProvider.credential(user.email, String(currentPassword || ""));
+    await fb.authFn.reauthenticateWithCredential(user, credential);
+    await fb.authFn.updatePassword(user, String(newPassword || ""));
+  } catch (err) {
+    throw new Error(mapAuthError(err));
+  }
+
+  await ParlaDb.updateUserProfile(user.uid, { must_change_password: false });
+}
+
+/**
  * Admin kullanıcı oluşturma — ikincil Firebase app ile mevcut oturumu bozmaz.
  */
 async function createUser(email, password) {
@@ -290,6 +320,7 @@ export {
   signIn,
   signOutUser,
   resetPassword,
+  changePassword,
   createUser,
   mapAuthError,
 };

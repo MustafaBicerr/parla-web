@@ -123,6 +123,7 @@ const ParlaDb = {
       company_name: data.company_name || "",
       customer_code: data.customer_code || "",
       is_active: data.is_active !== false,
+      must_change_password: !!data.must_change_password,
       last_login_at: data.last_login_at || null,
       created_at: ts,
       created_by: data.created_by || "",
@@ -477,6 +478,31 @@ const ParlaDb = {
     }
 
     return { id, ...payload };
+  },
+
+  /**
+   * Aynı e-posta adresinin hem personel hem müşteri olarak kullanılmasını engeller.
+   * @returns {Promise<string>} çakışma varsa kullanıcıya gösterilecek mesaj, yoksa ""
+   */
+  async emailHasConflictingRole(email, role) {
+    const e = String(email || "").trim().toLowerCase();
+    if (!e) return "";
+    const isCustomerRole = role === "customer" || role === "arizi_customer";
+
+    const personnel = await this.findPersonnelByEmail(e);
+    if (personnel && isCustomerRole) {
+      return "Bu e-posta adresi bir danışman (personel) kaydına ait; müşteri kullanıcısı olarak eklenemez.";
+    }
+
+    const users = await this.getAllUsers();
+    const existing = users.find((u) => String(u.email || "").trim().toLowerCase() === e);
+    if (existing) {
+      const wasCustomer = existing.role === "customer" || existing.role === "arizi_customer";
+      if (wasCustomer !== isCustomerRole) {
+        return `Bu e-posta adresi farklı türde bir kullanıcıya (${existing.role}) ait.`;
+      }
+    }
+    return "";
   },
 
   async findPersonnelByEmail(email) {
