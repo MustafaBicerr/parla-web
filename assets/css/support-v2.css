@@ -2580,3 +2580,33 @@
 .sv2-lifecycle--reopened .sv2-lifecycle-icon { background: #ffedd5; color: #c2410c; }
 .sv2-lifecycle--closed { border-left-color: var(--sv2-gray-500); background: var(--sv2-gray-50, #f9fafb); }
 .sv2-lifecycle--closed .sv2-lifecycle-icon { background: var(--sv2-gray-200); color: var(--sv2-gray-700); }
+
+/* ─── SLA rozetleri ───────────────────────────────────────────────────────── */
+.sv2-sla {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sv2-sla--ok { background: var(--sv2-success-soft); color: #047857; }
+.sv2-sla--warn { background: var(--sv2-warning-soft); color: #b45309; }
+.sv2-sla--breach, .sv2-sla--late { background: #fee2e2; color: #b91c1c; }
+.sv2-sla--met { background: var(--sv2-success-soft); color: #047857; }
+.sv2-sla--paused { background: var(--sv2-gray-200); color: var(--sv2-gray-700); }
+
+/* ─── Bildirim zili (türetilmiş bildirimler) ──────────────────────────────── */
+.sv2-notif-panel--fixed { position: fixed; top: 64px; right: 16px; width: min(380px, calc(100vw - 32px)); }
+.sv2-notif-panel a.sv2-notif-item { text-decoration: none; color: inherit; align-items: flex-start; }
+.sv2-notif-item .sv2-notif-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.sv2-notif-item .sv2-notif-text strong { color: var(--sv2-navy); font-weight: 600; }
+.sv2-notif-item .sv2-notif-text span { color: var(--sv2-gray-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sv2-notif-item .sv2-notif-text em { font-style: normal; font-size: 0.6875rem; color: var(--sv2-gray-400); }
+.sv2-notif-item.is-action .sv2-notif-icon { background: #fff1e6; color: #c2410c; }
+.sv2-notif-readall { background: none; border: none; color: var(--sv2-accent); cursor: pointer; font-size: 0.75rem; font-weight: 600; }
+.sv2-notif-empty { padding: 2rem 1rem; text-align: center; color: var(--sv2-gray-500); }
+.sv2-notif-empty i { font-size: 1.5rem; color: #0d7d4d; }
+.sv2-notif-empty p { margin: 0.5rem 0 0; font-size: 0.875rem; }

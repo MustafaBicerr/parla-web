@@ -21,7 +21,7 @@ import {
   formatTicketTypeLabel,
   escapeHtml,
 } from "../ui-shell.js";
-import { TICKET_TYPE_LABELS, getTicketKey } from "../ticket-utils.js";
+import { TICKET_TYPE_LABELS, getTicketKey, computeSla } from "../ticket-utils.js";
 import ParlaEmailService from "../email-service.js";
 import { reportEmailResult } from "../email-report.js";
 
@@ -89,6 +89,10 @@ function computeStats(tickets) {
     unassigned: unassigned.length,
     monthResolved: monthResolved.length,
     avgResolution: avgResolutionLabel(tickets),
+    slaBreached: open.filter((t) => {
+      const sla = computeSla(t);
+      return sla && !sla.paused && sla.active && (sla.response.state === "breached" || sla.resolution.state === "breached");
+    }).length,
   };
 }
 
@@ -411,6 +415,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
     { label: "Bugün Açılan", value: stats.todayOpened, variant: "" },
     { label: "Bugün Kapanan", value: stats.todayClosed, variant: "success" },
     { label: "Atanmamış", value: stats.unassigned, variant: "waiting" },
+    { label: "SLA Aşımı", value: stats.slaBreached, variant: "critical", hint: "Açık taleplerde hedef süre aşıldı" },
     { label: "Bu Ay Çözülen", value: stats.monthResolved, variant: "resolved" },
     { label: "Ort. Çözüm Süresi", value: stats.avgResolution, variant: "" },
   ];

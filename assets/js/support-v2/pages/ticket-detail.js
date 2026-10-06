@@ -3,6 +3,7 @@
  */
 import ParlaDb from "../firebase-client.js";
 import ParlaEmailService from "../email-service.js";
+import { markTicketSeen } from "../notifications.js";
 import { reportEmailResult, reportEmailResults } from "../email-report.js";
 import { requireAuth, PATHS } from "../auth-guard.js";
 import {
@@ -22,6 +23,7 @@ import {
   closeModal,
 } from "../ui-shell.js";
 import {
+  computeSla,
   customerLifecycle,
   REOPEN_WINDOW_DAYS,
   nowIso,
@@ -400,6 +402,14 @@ function renderPage() {
             <label>Danışman</label>
             <span>${escapeHtml(ticket.assigned_to_name || "—")}</span>
           </div>
+          ${
+            computeSla(ticket)
+              ? `<div class="sv2-meta-item">
+            <label>Hedef Süreler</label>
+            <span>İlk yanıt: ${computeSla(ticket).target.response} sa · Çözüm: ${computeSla(ticket).target.resolution} sa</span>
+          </div>`
+              : ""
+          }
           <div class="sv2-meta-item">
             <label>Oluşturulma</label>
             <span>${escapeHtml(formatDateTime(ticket.created_at))}</span>
@@ -640,6 +650,7 @@ async function loadTicket(ticketId) {
       ParlaDb.getTicketAssignments(ticketId).catch(() => []),
     ]);
 
+    markTicketSeen(session.uid, ticket);
     renderPage();
   } catch (err) {
     handleError(err, "Talep yükleme");

@@ -10,6 +10,9 @@ import {
   formatPriorityLabel,
   formatTicketTypeLabel,
   formatRoleLabel,
+  computeSla,
+  formatDuration,
+  isAdminRole,
 } from "./ticket-utils.js";
 
 let toastContainer = null;
@@ -211,36 +214,11 @@ function bindShellEvents(profile) {
   });
 
   if (profile?.uid) {
-    bindNotificationBadge(profile.uid);
-  }
-}
-
-async function bindNotificationBadge(uid) {
-  try {
-    const { default: ParlaDb } = await import("./firebase-client.js");
-    await ParlaDb.waitForFirebase();
-    const fb = window.__PARLA_FIREBASE;
-    const notifRef = fb.db.ref(fb.database, `v2/notifications/${uid}`);
-
-    fb.db.onValue(notifRef, (snap) => {
-      const badge = document.getElementById("sv2-notif-badge");
-      if (!badge) return;
-      let unread = 0;
-      if (snap.exists()) {
-        const val = snap.val();
-        Object.keys(val).forEach((key) => {
-          if (!val[key].is_read) unread++;
-        });
-      }
-      if (unread > 0) {
-        badge.hidden = false;
-        badge.textContent = unread > 99 ? "99+" : String(unread);
-      } else {
-        badge.hidden = true;
-      }
-    });
-  } catch {
-    /* bildirim dinleyicisi opsiyonel */
+    import("./notifications.js")
+      .then((m) => m.initNotifications(profile))
+      .catch(() => {
+        /* bildirim zili opsiyonel */
+      });
   }
 }
 
@@ -452,6 +430,35 @@ function renderStatusBadge(status) {
   const known = ["open", "assigned", "in_progress", "waiting_customer", "pending_close", "resolved", "closed", "reopened"];
   const cls = known.includes(key) ? key : "open";
   return `<span class="sv2-badge sv2-badge-${cls}">${escapeHtml(formatStatusLabel(status))}</span>`;
+}
+
+/**
+ * SLA rozeti. Açık talepte en yakın hedefi (önce ilk yanıt, sonra çözüm) gösterir;
+ * kapanmış talepte hedeflerin karşılanıp karşılanmadığını özetler.
+ */
+function renderSlaBadge(ticket) {
+  const sla = computeSla(ticket);
+  if (!sla) return '<span class="sv2-text-muted">—</span>';
+  const badge = (cls, icon, text, title) =>
+    `<span class="sv2-sla sv2-sla--${cls}" title="${escapeHtml(title || "")}"><i class="fas ${icon}"></i> ${escapeHtml(text)}</span>`;
+  const status = String(ticket.status || "").toLowerCase();
+
+  if (status === "closed" || status === "resolved") {
+    return sla.breached
+      ? badge("late", "fa-exclamation-circle", "SLA aşıldı", "Hedef süreler aşılarak tamamlandı")
+      : badge("met", "fa-check-circle", "SLA karşılandı", "Hedef sürelerde tamamlandı");
+  }
+  if (sla.paused) return badge("paused", "fa-pause-circle", "SLA duraklatıldı", "Müşteri yanıtı bekleniyor");
+
+  const phase = sla.response.state === "pending" || sla.response.state === "breached" ? "response" : "resolution";
+  const p = sla[phase];
+  const label = phase === "response" ? "İlk yanıt" : "Çözüm";
+  const totalMs = sla.target[phase] * 3600000;
+  if (p.state === "breached") {
+    return badge("breach", "fa-exclamation-triangle", `${label} aşıldı +${formatDuration(p.remainingMs)}`, `${label} hedefi ${sla.target[phase]} saat`);
+  }
+  const warn = p.remainingMs / totalMs < 0.25;
+  return badge(warn ? "warn" : "ok", "fa-stopwatch", `${label}: ${formatDuration(p.remainingMs)} kaldı`, `${label} hedefi ${sla.target[phase]} saat`);
 }
 
 function renderPriorityBadge(priority) {
@@ -769,6 +776,7 @@ export {
   renderEmptyState,
   renderStatusBadge,
   renderPriorityBadge,
+  renderSlaBadge,
   renderTypeBadge,
   renderAutocomplete,
   bindFilterChips,

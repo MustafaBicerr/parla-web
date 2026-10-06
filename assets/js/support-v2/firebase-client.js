@@ -292,6 +292,14 @@ const ParlaDb = {
     }));
   },
 
+  /** Son güncellenen n talep (personel; bildirim zili için). */
+  async getRecentTickets(n) {
+    const fb = getFirebase();
+    const q = fb.db.query(v2Ref("tickets"), fb.db.orderByChild("updated_at"), fb.db.limitToLast(n || 50));
+    const snap = await fb.db.get(q);
+    return snapshotToArray(snap).map((t) => ({ ...t, ticket_id: getTicketKey(t) }));
+  },
+
   /** Müşteri tarafı liste: firma yöneticisi firmanın tüm talepleri, diğerleri yalnızca kendi talepleri. */
   async getTicketsForSession(session) {
     if (session?.role === "company_admin" && session.company_id) {

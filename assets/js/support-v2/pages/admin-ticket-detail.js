@@ -10,6 +10,7 @@ import {
   renderTimeline,
   renderStatusBadge,
   renderPriorityBadge,
+  renderSlaBadge,
   renderTypeBadge,
   renderEmptyState,
   renderDataTable,
@@ -39,6 +40,7 @@ import {
 } from "../ticket-utils.js";
 import { minLength } from "../validators.js";
 import ParlaEmailService from "../email-service.js";
+import { markTicketSeen } from "../notifications.js";
 import { reportEmailResults } from "../email-report.js";
 
 const ADMIN_ROLES = ["super_admin", "service_admin", "project_manager", "consultant"];
@@ -537,6 +539,8 @@ function buildContent() {
           <div class="sv2-meta-item"><label>Oluşturma</label><span>${escapeHtml(formatDateTime(ticket.created_at))}</span></div>
           <div class="sv2-meta-item"><label>Atama Tarihi</label><span>${escapeHtml(formatDateTime(ticket.assigned_at))}</span></div>
           <div class="sv2-meta-item"><label>Güncelleme</label><span>${escapeHtml(formatDateTime(ticket.updated_at))}</span></div>
+          <div class="sv2-meta-item"><label>SLA</label><div>${renderSlaBadge(ticket)}</div></div>
+          <div class="sv2-meta-item"><label>İlk Yanıt</label><span>${escapeHtml(ticket.first_response_at ? formatDateTime(ticket.first_response_at) : "Henüz yanıtlanmadı")}</span></div>
           <div class="sv2-meta-item"><label>Toplam Efor</label><span><strong>${escapeHtml(String(parseFloat(ticket.total_work_hours) || 0))} saat</strong></span></div>
         </div>
       </div>
@@ -999,6 +1003,7 @@ async function loadTicket() {
     allPersonnel = personnel;
     assignments = assign;
     efforts = eff;
+    markTicketSeen(session.uid, ticket);
     renderPage();
 
     // Eski atama kayıtlarında personel e-postası yoktur; müşteri yanıt bildirimleri için tamamla.

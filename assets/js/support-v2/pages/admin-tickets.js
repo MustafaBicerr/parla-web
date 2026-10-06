@@ -12,6 +12,7 @@ import {
   closeModal,
   renderConfirmDialog,
   renderStatusBadge,
+  renderSlaBadge,
   renderPriorityBadge,
   renderAutocomplete,
   toast,
@@ -273,6 +274,11 @@ function advancedFiltersHtml() {
     </div>`;
 }
 
+/** Silme yetkisi veritabanı kurallarıyla uyumlu: yalnızca süper admin ve destek atayıcı. */
+function canDeleteTickets() {
+  return ["super_admin", "service_admin"].includes(String(session?.role || "").toLowerCase());
+}
+
 function buildTableRows(tickets) {
   return tickets.map((t) => {
     const id = getTicketKey(t);
@@ -335,11 +341,20 @@ function renderTableSection(paged) {
       render: (v) => renderStatusBadge(v),
     },
     {
+      key: "sla",
+      label: "SLA",
+      render: (_, row) => renderSlaBadge(row._raw),
+    },
+    {
       key: "actions",
       label: "İŞLEMLER",
       render: (_, row) => `
         <a href="${PATHS.adminTicketDetail}?id=${encodeURIComponent(row.id)}" class="sv2-btn sv2-btn-sm sv2-btn-outline">Düzenle</a>
-        <button type="button" class="sv2-btn sv2-btn-sm sv2-btn-danger sv2-delete-ticket" data-id="${escapeHtml(row.id)}" data-number="${escapeHtml(row.ticket_number)}">Sil</button>`,
+        ${
+          canDeleteTickets()
+            ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-danger sv2-delete-ticket" data-id="${escapeHtml(row.id)}" data-number="${escapeHtml(row.ticket_number)}">Sil</button>`
+            : ""
+        }`,
     },
   ];
 

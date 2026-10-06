@@ -93,6 +93,61 @@ export function isOpenStatus(status) {
 /** Açık sayılan tüm durumlar (atandı, kapanış onayı bekliyor, tekrar açıldı dahil). */
 export const OPEN_STATUSES = Object.values(STATUSES).filter(isOpenStatus);
 
+/**
+ * SLA hedefleri (takvim saati). Yalnızca müşteri kaynaklı talep tiplerine uygulanır.
+ * "Müşteri Bekleniyor" durumunda saat duraklatılmış sayılır.
+ */
+export const SLA_TARGETS_HOURS = {
+  critical: { response: 1, resolution: 8 },
+  high: { response: 4, resolution: 24 },
+  medium: { response: 8, resolution: 72 },
+  low: { response: 24, resolution: 120 },
+};
+export const SLA_TICKET_TYPES = ["SUP", "ARZ", "BUG"];
+
+function slaPhase(dueMs, doneMs, nowMs, paused) {
+  if (doneMs) {
+    return { state: doneMs <= dueMs ? "met" : "late", dueMs, doneMs, remainingMs: dueMs - doneMs };
+  }
+  const remainingMs = dueMs - nowMs;
+  if (paused) return { state: "paused", dueMs, remainingMs };
+  return { state: remainingMs < 0 ? "breached" : "pending", dueMs, remainingMs };
+}
+
+/**
+ * Talebin SLA durumu. null: SLA uygulanmaz (iç/proje talepleri).
+ * state: pending | breached | met | late | paused
+ */
+export function computeSla(ticket, now) {
+  if (!ticket || !SLA_TICKET_TYPES.includes(String(ticket.ticket_type || "SUP").toUpperCase())) return null;
+  const target = SLA_TARGETS_HOURS[String(ticket.priority || "medium").toLowerCase()] || SLA_TARGETS_HOURS.medium;
+  const createdMs = new Date(ticket.created_at || 0).getTime();
+  if (!createdMs) return null;
+  const nowMs = now instanceof Date ? now.getTime() : typeof now === "number" ? now : Date.now();
+  const status = String(ticket.status || "").toLowerCase();
+  const paused = status === STATUSES.WAITING_CUSTOMER;
+  const finishedMs = new Date(ticket.resolved_at || ticket.closed_at || 0).getTime() || (status === STATUSES.CLOSED || status === STATUSES.RESOLVED ? new Date(ticket.updated_at || 0).getTime() : 0);
+  const firstMs = new Date(ticket.first_response_at || 0).getTime();
+
+  const response = slaPhase(createdMs + target.response * 3600000, firstMs || 0, nowMs, paused);
+  const resolution = slaPhase(createdMs + target.resolution * 3600000, finishedMs || 0, nowMs, paused);
+  const breached = response.state === "breached" || resolution.state === "breached" || response.state === "late" || resolution.state === "late";
+  const active = response.state === "pending" || resolution.state === "pending" || response.state === "breached" || resolution.state === "breached";
+  return { response, resolution, target, breached, active, paused };
+}
+
+/** "2 sa 15 dk" biçiminde süre (negatifse mutlak değer). */
+export function formatDuration(ms) {
+  const abs = Math.abs(ms);
+  const totalMin = Math.round(abs / 60000);
+  const d = Math.floor(totalMin / 1440);
+  const h = Math.floor((totalMin % 1440) / 60);
+  const m = totalMin % 60;
+  if (d > 0) return `${d} gün${h ? ` ${h} sa` : ""}`;
+  if (h > 0) return `${h} sa${m ? ` ${m} dk` : ""}`;
+  return `${m} dk`;
+}
+
 /** Müşterinin kapanmış/çözülmüş talebi yeniden açabileceği süre (gün). */
 export const REOPEN_WINDOW_DAYS = 14;
 

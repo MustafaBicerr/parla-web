@@ -73,14 +73,48 @@ function uniqueEmails(list, excludeEmail) {
   return out;
 }
 
+const OUTBOX_PREFIX = "sv2_email_outbox_";
+const OUTBOX_MAX_ATTEMPTS = 6;
+const OUTBOX_MAX_AGE_MS = 24 * 3600 * 1000;
+let flushing = false;
+
+function currentUid() {
+  return window.__PARLA_FIREBASE?.auth?.currentUser?.uid || "";
+}
+
+function readOutbox(uid) {
+  try {
+    const raw = window.localStorage?.getItem(OUTBOX_PREFIX + uid);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeOutbox(uid, list) {
+  try {
+    if (!list.length) window.localStorage?.removeItem(OUTBOX_PREFIX + uid);
+    else window.localStorage?.setItem(OUTBOX_PREFIX + uid, JSON.stringify(list.slice(-50)));
+  } catch {
+    /* depolama kapalı/dolu: kuyruk devre dışı kalır, gönderim yine denenmiştir */
+  }
+}
+
+/** Yeniden denenmeye değer hata mı? (ağ kesintisi, sunucu hatası, yoğunluk) */
+function isRetryable(result) {
+  if (!result || result.success) return false;
+  if (result.code === "network" || result.code === "rate_limited") return true;
+  return typeof result.status === "number" && result.status >= 500;
+}
+
 const ParlaEmailService = {
   uniqueEmails,
 
   /**
-   * @param {{ type: string, to: string|string[], ticketData?: object, extra?: object, requestId?: string }} params
-   * @returns {Promise<{success: boolean, message: string, code?: string, partial?: boolean, data?: object}>}
+   * Tek bir gönderim denemesi (en fazla `attempts` kez, üstel bekleme ile).
    */
-  async send(params) {
+  async attemptSend(payload, attempts) {
     const url = getEmailApiUrl();
     if (!url) {
       console.warn("ParlaEmailService: EMAIL_API_URL tanımlı değil.");
@@ -96,18 +130,11 @@ const ParlaEmailService = {
       };
     }
 
-    const payload = {
-      type: params.type || "",
-      to: params.to,
-      ticketData: params.ticketData || null,
-      extra: params.extra || null,
-      requestId: params.requestId || newRequestId(),
-    };
-
     let lastError = { success: false, code: "unknown", message: "E-posta gönderilemedi." };
     let refreshed = false;
+    const maxAttempts = attempts || 3;
 
-    for (let attempt = 0; attempt < 3; attempt += 1) {
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       try {
         const res = await fetch(url, {
           method: "POST",
@@ -127,12 +154,14 @@ const ParlaEmailService = {
           lastError = {
             success: false,
             code: json.code || "",
+            status: res.status,
             partial: !!json.partial,
             message: json.message || "E-posta gönderilemedi.",
           };
           if (res.status >= 400 && res.status < 500 && res.status !== 429) {
             return lastError;
           }
+          if (res.status === 429) lastError.code = "rate_limited";
         } else {
           return {
             success: true,
@@ -148,10 +177,99 @@ const ParlaEmailService = {
           message: "E-posta gönderilirken bağlantı hatası oluştu.",
         };
       }
-      await sleep(400 * 2 ** attempt);
+      if (attempt < maxAttempts - 1) await sleep(400 * 2 ** attempt);
     }
 
     return lastError;
+  },
+
+  /**
+   * @param {{ type: string, to: string|string[], ticketData?: object, extra?: object, requestId?: string, noQueue?: boolean }} params
+   * @returns {Promise<{success: boolean, message: string, code?: string, partial?: boolean, queued?: boolean, data?: object}>}
+   *
+   * Geçici hatalarda (ağ, 5xx, 429) istek tarayıcıda kuyruğa alınır ve otomatik yeniden denenir;
+   * aynı requestId kullanıldığından e-posta mükerrer gitmez (Resend idempotency).
+   */
+  async send(params) {
+    const payload = {
+      type: params.type || "",
+      to: params.to,
+      ticketData: params.ticketData || null,
+      extra: params.extra || null,
+      requestId: params.requestId || newRequestId(),
+    };
+
+    const result = await this.attemptSend(payload, 3);
+    // Parola içeren kimlik bilgisi e-postaları ve yönetici tanılama istekleri asla kuyruğa (localStorage) alınmaz.
+    const neverQueue = params.noQueue || payload.type === "user_credentials" || payload.type === "diagnostic" || payload.type === "test_email";
+    if (!neverQueue && isRetryable(result)) {
+      const uid = currentUid();
+      if (uid) {
+        const list = readOutbox(uid);
+        list.push({ payload, attempts: 3, firstAt: Date.now(), lastAt: Date.now() });
+        writeOutbox(uid, list);
+        return { ...result, queued: true, message: `${result.message} Otomatik olarak yeniden denenecek.` };
+      }
+    }
+    return result;
+  },
+
+  /** Kuyruktaki e-postaları yeniden dener (çevrimiçi olunca ve periyodik olarak çağrılır). */
+  async flushOutbox() {
+    const uid = currentUid();
+    if (!uid || flushing) return { sent: 0, dropped: 0, pending: 0 };
+    let list = readOutbox(uid);
+    if (!list.length) return { sent: 0, dropped: 0, pending: 0 };
+
+    flushing = true;
+    let sent = 0;
+    let dropped = 0;
+    const keep = [];
+    try {
+      for (const item of list) {
+        const expired = Date.now() - item.firstAt > OUTBOX_MAX_AGE_MS || item.attempts >= OUTBOX_MAX_ATTEMPTS;
+        if (expired) {
+          dropped += 1;
+          this._reportDropped(item, "Yeniden deneme süresi/sayısı doldu.");
+          continue;
+        }
+        const res = await this.attemptSend(item.payload, 1);
+        if (res.success) {
+          sent += 1;
+        } else if (isRetryable(res) || res.code === "no_session") {
+          keep.push({ ...item, attempts: item.attempts + 1, lastAt: Date.now() });
+        } else {
+          dropped += 1;
+          this._reportDropped(item, res.message);
+        }
+      }
+    } finally {
+      writeOutbox(uid, keep);
+      flushing = false;
+    }
+    return { sent, dropped, pending: keep.length };
+  },
+
+  outboxSize() {
+    const uid = currentUid();
+    return uid ? readOutbox(uid).length : 0;
+  },
+
+  /** Kuyruktan kalıcı olarak düşen e-postayı aktivite kaydına yazar (kalıcı başarısızlık görünür olsun). */
+  async _reportDropped(item, reason) {
+    try {
+      const { default: ParlaDb } = await import("./firebase-client.js");
+      await ParlaDb.logActivity(
+        "email_failed",
+        "ticket",
+        item.payload?.ticketData?.ticket_id || "",
+        "",
+        `${item.payload?.type || "e-posta"} — kuyruktan düşürüldü: ${reason}`.slice(0, 300),
+        { uid: currentUid() }
+      );
+    } catch {
+      /* günlük yazılamadıysa sessiz geç */
+    }
   },
 
   /**
@@ -200,6 +318,13 @@ const ParlaEmailService = {
     return this.send({ type: "test_email", to: me || "test@invalid.local" });
   },
 };
+
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  window.addEventListener("online", () => ParlaEmailService.flushOutbox().catch(() => {}));
+  setTimeout(() => ParlaEmailService.flushOutbox().catch(() => {}), 4000);
+  const timer = setInterval(() => ParlaEmailService.flushOutbox().catch(() => {}), 60000);
+  if (timer && typeof timer.unref === "function") timer.unref();
+}
 
 export { ParlaEmailService, uniqueEmails };
 export default ParlaEmailService;
