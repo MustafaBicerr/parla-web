@@ -6,6 +6,7 @@
 import { requireAuth, changePassword, redirectByRole } from "../auth-guard.js";
 import { renderShell, showLoading, toast } from "../ui-shell.js";
 import { isAdminRole } from "../ticket-utils.js";
+import { password as passwordPolicyOk } from "../validators.js";
 
 const MIN_PASSWORD_LENGTH = 8;
 let session = null;
@@ -29,6 +30,7 @@ function render() {
           <div class="sv2-form-group">
             <label for="sv2-cp-new">Yeni şifre</label>
             <input type="password" id="sv2-cp-new" autocomplete="new-password" minlength="${MIN_PASSWORD_LENGTH}" required>
+            <small class="sv2-text-muted">En az ${MIN_PASSWORD_LENGTH} karakter; en az bir büyük harf ve bir rakam.</small>
           </div>
           <div class="sv2-form-group">
             <label for="sv2-cp-new2">Yeni şifre (tekrar)</label>
@@ -65,7 +67,7 @@ function render() {
     const next2 = document.getElementById("sv2-cp-new2").value;
 
     if (!current) return showError("Mevcut şifrenizi girin.");
-    if (next.length < MIN_PASSWORD_LENGTH) return showError(`Yeni şifre en az ${MIN_PASSWORD_LENGTH} karakter olmalıdır.`);
+    if (!passwordPolicyOk(next)) return showError(`Yeni şifre en az ${MIN_PASSWORD_LENGTH} karakter olmalı; en az bir büyük harf ve bir rakam içermelidir.`);
     if (next === current) return showError("Yeni şifre mevcut şifreden farklı olmalıdır.");
     if (next !== next2) return showError("Yeni şifreler eşleşmiyor.");
 

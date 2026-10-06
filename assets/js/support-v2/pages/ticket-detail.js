@@ -74,7 +74,9 @@ function formatHistoryMessage(entry) {
     return `Talep oluşturuldu: ${entry.new_value}`;
   }
   if (field === "status") {
-    return `Durum değişti: ${formatStatusLabel(entry.old_value)} → ${formatStatusLabel(entry.new_value)}`;
+    const base = `Durum değişti: ${formatStatusLabel(entry.old_value)} → ${formatStatusLabel(entry.new_value)}`;
+    // Personelin/müşterinin durum değişikliği notu (ör. çözüm özeti) geçmişte de görünsün.
+    return action === "status_note" && entry.note ? `${base} — ${entry.note}` : base;
   }
   if (field === "priority") {
     return `Öncelik değişti: ${formatPriorityLabel(entry.old_value)} → ${formatPriorityLabel(entry.new_value)}`;
@@ -87,7 +89,20 @@ function formatHistoryMessage(entry) {
 }
 
 function historyToTimeline(items) {
-  return items.map((h) => ({
+  // Aynı geçişin hem otomatik (status_changed) hem de notlu (status_note) kaydı varsa yalnızca notlu olanı göster.
+  const noted = items.filter((h) => h.action === "status_note");
+  const visible = items.filter(
+    (h) =>
+      !(
+        h.action === "status_changed" &&
+        noted.some(
+          (n) =>
+            formatStatusLabel(n.new_value) === formatStatusLabel(h.new_value) &&
+            Math.abs(new Date(n.changed_at) - new Date(h.changed_at)) < 60000
+        )
+      )
+  );
+  return visible.map((h) => ({
     author: h.changed_by_name || "Sistem",
     created_at: h.changed_at,
     message: formatHistoryMessage(h),

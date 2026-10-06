@@ -2630,3 +2630,91 @@
 .sv2-file-list small { color: var(--sv2-gray-500); }
 .sv2-file-remove { background: none; border: none; cursor: pointer; font-size: 1.1rem; line-height: 1; color: var(--sv2-gray-500); padding: 0 0.3rem; }
 .sv2-file-picker .sv2-field-error { flex-basis: 100%; }
+
+/* ─── UI kabuğu tamamlayıcıları (JS'in ürettiği, daha önce stili olmayan sınıflar) ─── */
+.sv2-nav-divider {
+  margin: 1rem 0.875rem 0.35rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+.sv2-nav-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+.sv2-avatar {
+  width: 36px; height: 36px; border-radius: var(--sv2-radius-full);
+  background: var(--sv2-accent); color: var(--sv2-white);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.8125rem; font-weight: 700; letter-spacing: 0.02em; flex-shrink: 0;
+}
+.sv2-avatar-sm { width: 32px; height: 32px; font-size: 0.75rem; }
+
+.sv2-user-mini { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; min-width: 0; }
+.sv2-sidebar-footer .sv2-user-role { display: block; font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.sv2-btn-logout {
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  width: 100%; padding: 0.5rem; margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12); border-radius: var(--sv2-radius-sm);
+  background: rgba(255, 255, 255, 0.05); color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8125rem; font-family: inherit; cursor: pointer; text-decoration: none;
+  transition: background var(--sv2-duration) var(--sv2-ease), color var(--sv2-duration) var(--sv2-ease);
+}
+.sv2-btn-logout:hover { background: rgba(255, 255, 255, 0.12); color: var(--sv2-white); }
+.sv2-btn-logout:visited { color: rgba(255, 255, 255, 0.8); }
+
+.sv2-notif-btn {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border: none; border-radius: var(--sv2-radius-full);
+  background: transparent; color: var(--sv2-gray-600); font-size: 1.05rem; cursor: pointer;
+  transition: background var(--sv2-duration) var(--sv2-ease);
+}
+.sv2-notif-btn:hover { background: var(--sv2-gray-100); }
+.sv2-notif-badge {
+  position: absolute; top: 2px; right: 0; min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 9px; background: var(--sv2-danger); color: var(--sv2-white);
+  font-size: 0.6875rem; font-weight: 700; line-height: 18px; text-align: center;
+  box-shadow: 0 0 0 2px var(--sv2-white);
+}
+.sv2-notif-badge[hidden] { display: none; }
+.sv2-topbar-user { display: flex; align-items: center; gap: 0.6rem; }
+.sv2-topbar-name { font-size: 0.875rem; font-weight: 600; color: var(--sv2-gray-700); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.sv2-stat-hint { margin-top: 0.25rem; font-size: 0.6875rem; color: var(--sv2-gray-400); }
+
+.sv2-pagination-info { font-size: 0.8125rem; color: var(--sv2-gray-500); }
+.sv2-pagination-btns { display: flex; gap: 0.5rem; }
+
+.sv2-breadcrumb-link { color: var(--sv2-accent); text-decoration: none; font-size: 0.8125rem; }
+.sv2-breadcrumb-link:hover { text-decoration: underline; }
+.sv2-breadcrumb-sep { margin: 0 0.4rem; color: var(--sv2-gray-400); }
+.sv2-breadcrumb-current { font-size: 0.8125rem; color: var(--sv2-gray-600); font-weight: 600; }
+
+.sv2-filter-sort { display: inline-flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+.sv2-advanced-panel { margin-top: 0.75rem; padding: 1rem; border: 1px solid var(--sv2-gray-200); border-radius: var(--sv2-radius); background: var(--sv2-gray-50); }
+.sv2-advanced-panel[hidden] { display: none; }
+
+.sv2-priority {
+  display: inline-flex; align-items: center; padding: 0.15rem 0.55rem; border-radius: 999px;
+  font-size: 0.75rem; font-weight: 600; white-space: nowrap;
+}
+.sv2-priority-low { background: var(--sv2-gray-100); color: var(--sv2-gray-600); }
+.sv2-priority-medium { background: var(--sv2-accent-soft); color: var(--sv2-accent-hover); }
+.sv2-priority-high { background: var(--sv2-warning-soft); color: #b45309; }
+.sv2-priority-critical { background: var(--sv2-danger-soft); color: #b91c1c; }
+
+.sv2-type-badge {
+  display: inline-block; padding: 0.1rem 0.45rem; border-radius: var(--sv2-radius-sm);
+  background: var(--sv2-gray-100); color: var(--sv2-gray-700);
+  font-family: var(--sv2-font-mono); font-size: 0.75rem; font-weight: 700;
+}
+.sv2-form-error { color: var(--sv2-danger); font-size: 0.8125rem; margin-top: 0.35rem; }
+.sv2-confirm-modal { max-width: 420px; }
+
+/* ─── Tablo yoğunluğu: talep numaraları satıra bölünmesin, hücre boşlukları daha dar ─── */
+.sv2-table th,
+.sv2-table td { padding: 0.65rem 0.75rem; }
+.sv2-table td:first-child a,
+.sv2-table td:first-child { white-space: nowrap; }
+.sv2-table td .sv2-badge { white-space: nowrap; }

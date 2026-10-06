@@ -18,6 +18,7 @@ function buildSeed(now) {
     u_cust: { uid: "u_cust", role: "customer", first_name: "Ayşe", last_name: "Demir", email: "ayse.demir@ornekholding.com", phone: "+905321112233", company_id: "cA", company_name: "Örnek Holding A.Ş.", customer_code: "ORN", is_active: true, created_at: iso(60 * D), last_login_at: iso(5 * H) },
     u_cust2: { uid: "u_cust2", role: "customer", first_name: "Kemal", last_name: "Yurt", email: "kemal.yurt@ornekholding.com", phone: "+905321112244", company_id: "cA", company_name: "Örnek Holding A.Ş.", customer_code: "ORN", is_active: true, created_at: iso(55 * D) },
     u_cadmin: { uid: "u_cadmin", role: "company_admin", first_name: "Selin", last_name: "Yıldız", email: "selin.yildiz@ornekholding.com", phone: "+905321112255", company_id: "cA", company_name: "Örnek Holding A.Ş.", customer_code: "ORN", is_active: true, created_at: iso(58 * D) },
+    u_new: { uid: "u_new", role: "customer", first_name: "Ahmet", last_name: "Güler", email: "ahmet.guler@ornekholding.com", phone: "+905321112277", company_id: "cA", company_name: "Örnek Holding A.Ş.", customer_code: "ORN", is_active: true, must_change_password: true, created_at: iso(1 * D) },
     u_custB: { uid: "u_custB", role: "customer", first_name: "Deniz", last_name: "Koç", email: "deniz.koc@demircelik.com", phone: "+905331112266", company_id: "cB", company_name: "Demir Çelik San. A.Ş.", customer_code: "DMR", is_active: true, created_at: iso(40 * D) },
   };
 
@@ -57,7 +58,7 @@ function buildSeed(now) {
 
   const mk = (id, n, o) => ({
     ticket_id: id,
-    ticket_number: `SUP-ORN-${o.module || "FI"}-2610-${String(n).padStart(4, "0")}`,
+    ticket_number: `${o.type || "SUP"}-${o.code || "ORN"}-${o.module || "FI"}-2610-${String(n).padStart(4, "0")}`,
     ticket_type: o.type || "SUP",
     customer_code: o.code || "ORN",
     company_id: o.company_id || "cA",

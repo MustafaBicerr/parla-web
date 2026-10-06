@@ -174,7 +174,7 @@ window.__PARLA_FIREBASE = {
     onAuthStateChanged: (a, cb) => { setTimeout(() => cb(authUser), 0); return () => {}; },
     signOut: async () => {},
     sendPasswordResetEmail: async () => {},
-    verifyPasswordResetCode: async () => "",
+    verifyPasswordResetCode: async () => "ayse.demir@ornekholding.com",
     confirmPasswordReset: async () => {},
     EmailAuthProvider: { credential: (e, p) => ({ e, p }) },
     reauthenticateWithCredential: async () => {},
@@ -228,7 +228,17 @@ async function startServer(world, options) {
     await page.route("**/firebase-init.js", (r) => r.fulfill({ contentType: "text/javascript", body: BROWSER_STUB(uid) }));
     await page.route(/gstatic\.com\/firebasejs\/.*\/firebase-app\.js/, (r) => r.fulfill({ contentType: "text/javascript", body: "export const initializeApp=(o,n)=>({n});export const deleteApp=async()=>{};" }));
     await page.route(/gstatic\.com\/firebasejs\/.*\/firebase-auth\.js/, (r) => r.fulfill({ contentType: "text/javascript", body: "export const getAuth=()=>({});export const createUserWithEmailAndPassword=async(a,e)=>({user:{uid:'new-'+Date.now(),email:e}});" }));
-    await page.route(/cdnjs\.cloudflare\.com|fonts\.(googleapis|gstatic)\.com|cdn\.jsdelivr\.net.*\.css/, (r) => r.fulfill({ contentType: "text/css", body: options.fontAwesomeCss || "" }));
+    if (options.fontAwesomeDir) {
+      // İkon yazı tipi yerelden sunulur (ekran görüntüleri için gerçekçi görünüm).
+      await page.route(/cdnjs\.cloudflare\.com\/ajax\/libs\/font-awesome\/[^/]+\/css\/all\.min\.css/, (r) => r.fulfill({ contentType: "text/css", body: fs.readFileSync(path.join(options.fontAwesomeDir, "css", "all.min.css")) }));
+      await page.route(/cdnjs\.cloudflare\.com\/ajax\/libs\/font-awesome\/[^/]+\/webfonts\/([^?]+)/, (r) => {
+        const file = path.join(options.fontAwesomeDir, "webfonts", decodeURIComponent(/webfonts\/([^?]+)/.exec(r.request().url())[1]));
+        if (fs.existsSync(file)) return r.fulfill({ contentType: "font/woff2", body: fs.readFileSync(file) });
+        return r.fulfill({ status: 404, body: "" });
+      });
+    }
+    await page.route(/fonts\.(googleapis|gstatic)\.com|cdn\.jsdelivr\.net.*\.css|cdnjs\.cloudflare\.com(?!\/ajax\/libs\/font-awesome)/, (r) => r.fulfill({ contentType: "text/css", body: "" }));
+    if (!options.fontAwesomeDir) await page.route(/cdnjs\.cloudflare\.com\/ajax\/libs\/font-awesome/, (r) => r.fulfill({ contentType: "text/css", body: "" }));
     await page.route(/cdn\.jsdelivr\.net.*\.js/, (r) => r.fulfill({ contentType: "text/javascript", body: "window.intlTelInput=(e)=>({isValidNumber:()=>true,getNumber:()=>'+905301112233',getSelectedCountryData:()=>({dialCode:'90'}),setNumber:()=>{}});" }));
     await page.route("**/api/send-email", async (route) => {
       const req = route.request();

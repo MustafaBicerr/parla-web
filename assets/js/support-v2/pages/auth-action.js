@@ -8,6 +8,7 @@
 import ParlaDb from "../firebase-client.js";
 import { PATHS } from "../auth-guard.js";
 import { escapeHtml } from "../ticket-utils.js";
+import { password as passwordPolicyOk } from "../validators.js";
 
 const app = document.getElementById("sv2-app");
 const MIN_PASSWORD_LENGTH = 8;
@@ -58,6 +59,7 @@ function renderResetForm(email, auth, oobCode) {
       <div class="sv2-form-group">
         <label for="sv2-new-password">Yeni şifre</label>
         <input type="password" id="sv2-new-password" autocomplete="new-password" minlength="${MIN_PASSWORD_LENGTH}" required>
+        <small class="sv2-text-muted">En az ${MIN_PASSWORD_LENGTH} karakter; en az bir büyük harf ve bir rakam.</small>
       </div>
       <div class="sv2-form-group">
         <label for="sv2-new-password2">Yeni şifre (tekrar)</label>
@@ -82,8 +84,8 @@ function renderResetForm(email, auth, oobCode) {
     const p1 = document.getElementById("sv2-new-password").value;
     const p2 = document.getElementById("sv2-new-password2").value;
 
-    if (p1.length < MIN_PASSWORD_LENGTH) {
-      showError(`Şifre en az ${MIN_PASSWORD_LENGTH} karakter olmalıdır.`);
+    if (!passwordPolicyOk(p1)) {
+      showError(`Şifre en az ${MIN_PASSWORD_LENGTH} karakter olmalı; en az bir büyük harf ve bir rakam içermelidir.`);
       return;
     }
     if (p1 !== p2) {
