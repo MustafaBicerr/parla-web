@@ -45,3 +45,9 @@
   for = "/assets/js/site-config.js"
   [headers.values]
     Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/support-v2/docs/*"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+    X-Content-Type-Options = "nosniff"

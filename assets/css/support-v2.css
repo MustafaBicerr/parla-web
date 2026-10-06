@@ -2718,3 +2718,45 @@
 .sv2-table td:first-child a,
 .sv2-table td:first-child { white-space: nowrap; }
 .sv2-table td .sv2-badge { white-space: nowrap; }
+
+/* ---------- PDF kılavuz bağlantıları ---------- */
+.sv2-nav-guide { display: flex; align-items: center; gap: 0.25rem; }
+.sv2-nav-guide .sv2-nav-guide-open { flex: 1; min-width: 0; }
+.sv2-nav-guide-dl {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 30px; height: 30px; margin-right: 0.5rem; border-radius: var(--sv2-radius-full);
+  color: rgba(255, 255, 255, 0.55); font-size: 0.8rem; text-decoration: none;
+  transition: background var(--sv2-duration) var(--sv2-ease), color var(--sv2-duration) var(--sv2-ease);
+}
+.sv2-nav-guide-dl:hover { background: rgba(255, 255, 255, 0.12); color: var(--sv2-white); }
+.sv2-topbar-guide {
+  display: inline-flex; align-items: center; gap: 0.4rem; margin-right: 0.35rem; padding: 0.4rem 0.75rem;
+  border-radius: var(--sv2-radius-full); background: var(--sv2-gray-100); color: var(--sv2-gray-700);
+  font-size: 0.8125rem; font-weight: 600; text-decoration: none;
+  transition: background var(--sv2-duration) var(--sv2-ease);
+}
+.sv2-topbar-guide:hover { background: var(--sv2-gray-200); }
+@media (max-width: 720px) { .sv2-topbar-guide span { display: none; } .sv2-topbar-guide { padding: 0.5rem; } }
+
+.sv2-auth-guides { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--sv2-gray-200); }
+.sv2-auth-guides h3 { margin: 0 0 0.6rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sv2-gray-500); }
+.sv2-guide-card {
+  display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.85rem; margin-bottom: 0.5rem;
+  border: 1px solid var(--sv2-gray-200); border-radius: var(--sv2-radius-lg, 10px); background: var(--sv2-white);
+}
+.sv2-guide-card:hover { border-color: var(--sv2-accent); }
+.sv2-guide-icon {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px;
+  border-radius: 10px; background: var(--sv2-gray-100); color: var(--sv2-accent); font-size: 1.05rem;
+}
+.sv2-guide-text { flex: 1; min-width: 0; }
+.sv2-guide-text strong { display: block; font-size: 0.875rem; color: var(--sv2-gray-800, #1f2937); }
+.sv2-guide-text span { font-size: 0.75rem; color: var(--sv2-gray-500); }
+.sv2-guide-actions { display: flex; gap: 0.35rem; flex: 0 0 auto; }
+.sv2-guide-actions a {
+  display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.4rem 0.65rem; border-radius: 8px;
+  font-size: 0.75rem; font-weight: 600; text-decoration: none; color: var(--sv2-gray-700); background: var(--sv2-gray-100);
+}
+.sv2-guide-actions a:hover { background: var(--sv2-gray-200); }
+.sv2-guide-actions a.is-primary { background: var(--sv2-accent); color: var(--sv2-white); }
+.sv2-guide-actions a.is-primary:hover { filter: brightness(1.08); }

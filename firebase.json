@@ -61,6 +61,15 @@
         ]
       },
       {
+        "source": "/support-v2/docs/**",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, must-revalidate"
+          }
+        ]
+      },
+      {
         "source": "/assets/**",
         "headers": [
           {

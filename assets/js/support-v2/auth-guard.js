@@ -28,6 +28,8 @@ export const PATHS = {
   adminSupportTypes: "/support-v2/admin/support-types.html",
   adminActivities: "/support-v2/admin/activities.html",
   adminReports: "/support-v2/admin/reports.html",
+  guideUser: "/support-v2/docs/Kullanici-Kilavuzu.pdf",
+  guideAdmin: "/support-v2/docs/Sistem-Adminleri-Kullanim-Kilavuzu.pdf",
 };
 
 const AUTH_ERROR_MESSAGES = {

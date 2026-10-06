@@ -45,6 +45,33 @@ function escapeHtml(str) {
   return utilEscapeHtml(str);
 }
 
+/** PDF kılavuzlar: yöneticiler iki kılavuzu da, müşteriler yalnızca kullanıcı kılavuzunu görür. */
+function guidesFor(isAdmin) {
+  const guides = [{ label: "Kullanıcı Kılavuzu", href: PATHS.guideUser, file: "Parla-BT-Kullanici-Kilavuzu.pdf" }];
+  if (isAdmin) {
+    guides.unshift({ label: "Sistem Adminleri Kılavuzu", href: PATHS.guideAdmin, file: "Parla-BT-Sistem-Adminleri-Kilavuzu.pdf" });
+  }
+  return guides;
+}
+
+function renderGuideLinks(isAdmin) {
+  const items = guidesFor(isAdmin)
+    .map(
+      (g) => `
+      <div class="sv2-nav-guide">
+        <a href="${g.href}" target="_blank" rel="noopener" class="sv2-nav-item sv2-nav-guide-open" data-guide="${escapeHtml(g.file)}" title="${escapeHtml(g.label)} (PDF) — yeni sekmede aç">
+          <i class="fas fa-book-open"></i>
+          <span class="sv2-nav-label">${escapeHtml(g.label)}</span>
+        </a>
+        <a href="${g.href}" download="${escapeHtml(g.file)}" class="sv2-nav-guide-dl" aria-label="${escapeHtml(g.label)} PDF indir" title="PDF olarak indir">
+          <i class="fas fa-download"></i>
+        </a>
+      </div>`
+    )
+    .join("");
+  return `<div class="sv2-nav-divider">KILAVUZLAR</div>${items}`;
+}
+
 function ensureToastContainer() {
   if (!document.getElementById("sv2-toast-container")) {
     toastContainer = document.createElement("div");
@@ -109,6 +136,8 @@ function renderSidebar(activePage, profile, isAdmin) {
       </a>`;
   }
 
+  navHtml += renderGuideLinks(isAdmin);
+
   return `
     <aside class="sv2-sidebar" id="sv2-sidebar">
       <div class="sv2-sidebar-header">
@@ -139,8 +168,9 @@ function renderSidebar(activePage, profile, isAdmin) {
     <div class="sv2-sidebar-overlay" id="sv2-sidebar-backdrop"></div>`;
 }
 
-function renderTopbar(title, profile) {
+function renderTopbar(title, profile, isAdmin) {
   const name = getDisplayName(profile);
+  const primaryGuide = guidesFor(isAdmin)[0];
   return `
     <header class="sv2-topbar">
       <div class="sv2-topbar-left">
@@ -150,6 +180,9 @@ function renderTopbar(title, profile) {
         <h1 class="sv2-page-title">${escapeHtml(title || "")}</h1>
       </div>
       <div class="sv2-topbar-right">
+        <a href="${primaryGuide.href}" target="_blank" rel="noopener" class="sv2-topbar-guide" id="sv2-topbar-guide" title="${escapeHtml(primaryGuide.label)} (PDF)">
+          <i class="fas fa-book-open"></i><span>Kılavuz</span>
+        </a>
         <button type="button" class="sv2-notif-btn" id="sv2-notif-btn" aria-label="Bildirimler">
           <i class="fas fa-bell"></i>
           <span class="sv2-notif-badge" id="sv2-notif-badge" hidden>0</span>
@@ -173,7 +206,7 @@ function renderShell(container, options) {
     <div class="sv2-app">
       ${renderSidebar(activePage, profile, isAdmin)}
       <div class="sv2-main">
-        ${renderTopbar(title, profile)}
+        ${renderTopbar(title, profile, isAdmin)}
         <div class="sv2-content">${content || ""}</div>
       </div>
     </div>

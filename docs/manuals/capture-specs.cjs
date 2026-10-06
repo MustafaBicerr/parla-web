@@ -30,7 +30,7 @@ const MODAL = "#sv2-create-ticket-modal .sv2-modal";
 exports.user = async ({ shot, emailShot, world, sleep }) => {
   // ---------- 1. Başlangıç
   await shot({ guide: "user", name: "01-giris", as: null, url: "/support-v2/login.html", wait: "#sv2-login-form", vp: [1100, 640], scale: 2.4, target: ".sv2-auth-panel .sv2-card", pad: 14,
-    pins: { 1: ["#sv2-email", "l"], 2: ["#sv2-password", "l"], 3: ["#sv2-login-submit", "l"], 4: ["#sv2-forgot-password", "r"] } });
+    pins: { 1: ["#sv2-email", "l"], 2: ["#sv2-password", "l"], 3: ["#sv2-login-submit", "l"], 4: ["#sv2-forgot-password", "r"], 5: ["#sv2-guide-user-dl", "l"] } });
 
   await shot({ guide: "user", name: "01-sifre-degistir", as: "u_new", url: "/support-v2/change-password.html", wait: "#sv2-change-password-form", vp: [1100, 760], scale: 2.2, target: ".sv2-content .sv2-section", pad: 8,
     pins: { 1: ["#sv2-cp-current", "tl"], 2: ["#sv2-cp-new", "tl"], 3: ["#sv2-cp-new2", "tl"], 4: ["#sv2-cp-submit", "r"] } });
@@ -39,10 +39,10 @@ exports.user = async ({ shot, emailShot, world, sleep }) => {
     pins: { 1: ["#sv2-new-password", "tl"], 2: ["#sv2-new-password2", "tl"], 3: ["#sv2-reset-submit", "r"] } });
 
   await shot({ guide: "user", name: "01-genel-bakis", as: "u_cust", url: "/support-v2/customer/dashboard.html", wait: ".sv2-stats-grid", vp: [1366, 800],
-    pins: { 1: ["#sv2-sidebar .sv2-nav", "r"], 2: ["#sv2-notif-btn", "b"], 3: [".sv2-stats-grid", "tl"], 4: ["#sv2-new-ticket-btn", "l"], 5: ["#sv2-recent-tickets tbody tr .sv2-badge", "r"], 6: [".sv2-topbar-user", "b"], 7: ["#sv2-change-password-link", "r"] } });
+    pins: { 1: ["#sv2-sidebar .sv2-nav", "r"], 2: ["#sv2-notif-btn", "b"], 3: [".sv2-stats-grid", "tl"], 4: ["#sv2-new-ticket-btn", "l"], 5: ["#sv2-recent-tickets tbody tr .sv2-badge", "r"], 6: [".sv2-topbar-user", "b"], 7: ["#sv2-change-password-link", "r"], 8: ["#sv2-topbar-guide", "b"] } });
 
   await shot({ guide: "user", name: "01-menu", as: "u_cust", url: "/support-v2/customer/dashboard.html", wait: ".sv2-stats-grid", vp: [1100, 760], target: "#sv2-sidebar .sv2-nav", pad: 8, scale: 2.4,
-    pins: { 1: ["#sv2-sidebar .sv2-nav-item", "r", 0], 2: ["#sv2-sidebar .sv2-nav-item", "r", 1], 3: ["#sv2-sidebar .sv2-nav-item", "r", 2] } });
+    pins: { 1: ["#sv2-sidebar .sv2-nav-item", "r", 0], 2: ["#sv2-sidebar .sv2-nav-item", "r", 1], 3: ["#sv2-sidebar .sv2-nav-item", "r", 2], 4: ["#sv2-sidebar .sv2-nav-guide-open", "r"] } });
   await shot({ guide: "user", name: "01-kullanici-kutusu", as: "u_cust", url: "/support-v2/customer/dashboard.html", wait: ".sv2-stats-grid", vp: [1100, 760], target: "#sv2-sidebar .sv2-sidebar-footer", pad: 0, scale: 2.4,
     pins: { 1: ["#sv2-sidebar .sv2-user-mini", "r"], 2: ["#sv2-change-password-link", "r"], 3: ["#sv2-logout-btn", "r"] } });
 

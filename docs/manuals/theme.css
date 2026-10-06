@@ -164,6 +164,7 @@ small, .small { font-size: 9pt; }
 a { color: var(--navy); text-decoration: underline; text-decoration-color: var(--orange); text-underline-offset: 0.6mm; text-decoration-thickness: 0.7pt; }
 
 h1, h2, h3, h4, .h4 {
+  break-inside: avoid;
   font-family: var(--font-display);
   color: var(--navy);
   letter-spacing: -0.012em;
@@ -350,7 +351,7 @@ p:has(+ .checklist), p:has(+ .callout), p:has(+ ol.steps), p:has(+ .faq) { break
 .co-foot::after { content: var(--manual-name); color: #F9A875; }
 
 /* açılışı olmayan bölümlerde (data-opener="false") h1 sayfa başında büyük başlık olur */
-.chapter > h1:first-child { padding-bottom: 4mm; border-bottom: 1.4pt solid var(--orange); }
+.chapter > h1:first-child { break-inside: avoid; break-after: avoid; padding-bottom: 4mm; border-bottom: 1.4pt solid var(--orange); }
 .chapter > h1[data-num]::before {
   content: "Bölüm " attr(data-num); display: block; margin-bottom: 3mm;
   font: 700 8pt/1 var(--font-display); letter-spacing: 0.18em; text-transform: uppercase; color: var(--orange-ink);

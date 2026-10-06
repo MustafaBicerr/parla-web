@@ -40,7 +40,7 @@ module.exports = (L) => `
   ])}
 
   ${L.fig("01-giris", { half: true, bare: true, caption: "Giriş kartı: oturum açmak için gereken her şey burada.",
-    legend: ["<strong>E-posta</strong> — hesabınıza bağlı kurumsal adres.", "<strong>Şifre</strong> — göz simgesi şifreyi gösterir/gizler.", "<strong>Giriş Yap</strong> — oturumu başlatır.", "<strong>Şifremi Unuttum</strong> — sıfırlama e-postası gönderir."], cols2: true })}
+    legend: ["<strong>E-posta</strong> — hesabınıza bağlı kurumsal adres.", "<strong>Şifre</strong> — göz simgesi şifreyi gösterir/gizler.", "<strong>Giriş Yap</strong> — oturumu başlatır.", "<strong>Şifremi Unuttum</strong> — sıfırlama e-postası gönderir.", "<strong>Kılavuzlar</strong> — bu kılavuzu PDF olarak açın (<em>Aç</em>) veya bilgisayarınıza kaydedin (<em>İndir</em>)."], cols2: true })}
 
   ${L.tip("Giriş yapamıyorsanız önce <kbd>Caps Lock</kbd> tuşunun kapalı olduğundan emin olun; şifre büyük/küçük harfe duyarlıdır. Birkaç başarısız denemeden sonra hesap kısa süre kilitlenebilir — beklemeniz yeterlidir.")}
   ${L.warn("Şifrenizi kimseyle paylaşmayın. Parla BT çalışanları sizden şifrenizi hiçbir zaman istemez.")}
@@ -75,10 +75,12 @@ module.exports = (L) => `
   <p>Giriş yaptığınızda ilk olarak <strong>Genel Bakış</strong> sayfasını görürsünüz. Ekran üç ana bölgeden oluşur: soldaki <strong>menü</strong>, üstteki <strong>başlık çubuğu</strong> ve ortadaki <strong>çalışma alanı</strong>.</p>
 
   ${L.fig("01-genel-bakis", { wide: true, url: "www.parlabilgiteknolojileri.net/support-v2/customer/dashboard.html", caption: "Genel Bakış sayfası.",
-    legend: ["<strong>Menü</strong> — Genel Bakış, Taleplerim ve Profil sayfaları.", "<strong>Bildirim zili</strong> — sizden beklenen işlemler ve yeni gelişmeler.", "<strong>Özet kartları</strong> — aktif, yanıt bekleyen, bu ay çözülen ve toplam talep sayınız.", "<strong>Yeni Talep</strong> — talep formunu açar.", "<strong>Durum rozeti</strong> — talebin güncel aşaması.", "<strong>Hesabınız</strong> — adınız ve ilk harfleriniz.", "<strong>Şifre Değiştir / Çıkış Yap</strong> — menünün altında."], cols2: true })}
+    legend: ["<strong>Menü</strong> — Genel Bakış, Taleplerim ve Profil sayfaları.", "<strong>Bildirim zili</strong> — sizden beklenen işlemler ve yeni gelişmeler.", "<strong>Özet kartları</strong> — aktif, yanıt bekleyen, bu ay çözülen ve toplam talep sayınız.", "<strong>Yeni Talep</strong> — talep formunu açar.", "<strong>Durum rozeti</strong> — talebin güncel aşaması.", "<strong>Hesabınız</strong> — adınız ve ilk harfleriniz.", "<strong>Şifre Değiştir / Çıkış Yap</strong> — menünün altında.", "<strong>Kılavuz</strong> — bu kılavuzu PDF olarak yeni sekmede açar."], cols2: true })}
+
+  ${L.tip("Bu kılavuza istediğiniz an ulaşabilirsiniz: giriş sayfasındaki <strong>Kılavuzlar</strong> bölümünden, menünün altındaki <strong>Kullanıcı Kılavuzu</strong> satırından ya da üst çubuktaki <strong>Kılavuz</strong> düğmesinden. Yanındaki indirme simgesi PDF'i bilgisayarınıza kaydeder.")}
 
   <div class="shot-row">
-    ${L.fig("01-menu", { bare: true, nonum: true, caption: "Menü", legend: ["<strong>Genel Bakış</strong> — özet ve son talepler.", "<strong>Taleplerim</strong> — tüm talepler, arama ve filtreler.", "<strong>Profil</strong> — hesap bilgileriniz."] })}
+    ${L.fig("01-menu", { bare: true, nonum: true, caption: "Menü", legend: ["<strong>Genel Bakış</strong> — özet ve son talepler.", "<strong>Taleplerim</strong> — tüm talepler, arama ve filtreler.", "<strong>Profil</strong> — hesap bilgileriniz.", "<strong>Kullanıcı Kılavuzu</strong> — bu PDF kılavuzu açar; yanındaki ok simgesi dosyayı indirir."] })}
     ${L.fig("01-kullanici-kutusu", { bare: true, nonum: true, caption: "Kullanıcı kutusu", legend: ["<strong>Adınız ve rolünüz</strong>.", "<strong>Şifre Değiştir</strong> — istediğiniz zaman şifrenizi yenileyin.", "<strong>Çıkış Yap</strong> — oturumu kapatır."] })}
   </div>
 </section>`;

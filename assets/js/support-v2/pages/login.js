@@ -55,6 +55,25 @@ function renderLoginPage() {
               Şifremi Unuttum
             </button>
           </p>
+          <div class="sv2-auth-guides" id="sv2-auth-guides">
+            <h3>Kılavuzlar</h3>
+            <div class="sv2-guide-card">
+              <span class="sv2-guide-icon"><i class="fas fa-book-open"></i></span>
+              <span class="sv2-guide-text"><strong>Kullanıcı Kılavuzu</strong><span>Talep açma ve takip · PDF</span></span>
+              <span class="sv2-guide-actions">
+                <a href="/support-v2/docs/Kullanici-Kilavuzu.pdf" target="_blank" rel="noopener" id="sv2-guide-user-open">Aç</a>
+                <a href="/support-v2/docs/Kullanici-Kilavuzu.pdf" download="Parla-BT-Kullanici-Kilavuzu.pdf" class="is-primary" id="sv2-guide-user-dl"><i class="fas fa-download"></i> İndir</a>
+              </span>
+            </div>
+            <div class="sv2-guide-card">
+              <span class="sv2-guide-icon"><i class="fas fa-user-shield"></i></span>
+              <span class="sv2-guide-text"><strong>Sistem Adminleri Kılavuzu</strong><span>Parla BT personeli için · PDF</span></span>
+              <span class="sv2-guide-actions">
+                <a href="/support-v2/docs/Sistem-Adminleri-Kullanim-Kilavuzu.pdf" target="_blank" rel="noopener" id="sv2-guide-admin-open">Aç</a>
+                <a href="/support-v2/docs/Sistem-Adminleri-Kullanim-Kilavuzu.pdf" download="Parla-BT-Sistem-Adminleri-Kilavuzu.pdf" class="is-primary" id="sv2-guide-admin-dl"><i class="fas fa-download"></i> İndir</a>
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
