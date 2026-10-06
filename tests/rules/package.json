@@ -3,7 +3,8 @@
   "private": true,
   "description": "database.rules.json için yerel (emülatörsüz) kural testleri",
   "scripts": {
-    "test": "node --test database-rules.test.js"
+    "test": "node --test database-rules.test.js matrix.test.js scan-existing-data.test.js",
+    "scan": "node scan-existing-data.cjs"
   },
   "devDependencies": {
     "targaryen": "^3.1.0"

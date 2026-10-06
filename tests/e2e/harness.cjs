@@ -72,7 +72,7 @@ function createWorld(seedData, options) {
       this.db = res.newDatabase.with({ rules: { rules: this.rules.rules } });
     },
     dbOp(op) {
-      const auth = op.uid ? { uid: op.uid } : null;
+      const auth = op.uid ? { uid: op.uid, token: { email: String((this.valueAt(`v2/users/${op.uid}`) || {}).email || "").toLowerCase() } } : null;
       const db = this.enforceRules ? this.db : this.db.with({ rules: { rules: { ".read": true, ".write": true } } });
       const as = db.as(auth);
       const path_ = "/" + String(op.path || "").replace(/^\/+/, "");
@@ -134,7 +134,7 @@ async function callEmailFunction(world, req) {
       const m = /\.app\/(.+)\.json\?auth=(.*)$/.exec(u);
       const token = decodeURIComponent(m[2]);
       const sub = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString()).sub;
-      const res = world.db.as({ uid: sub }).read("/" + m[1]);
+      const res = world.db.as({ uid: sub, token: { email: String((world.valueAt(`v2/users/${sub}`) || {}).email || "").toLowerCase() } }).read("/" + m[1]);
       if (!res.allowed) return json(401, { error: "Permission denied" });
       const val = world.valueAt(m[1]);
       return json(200, val === undefined ? null : val);
