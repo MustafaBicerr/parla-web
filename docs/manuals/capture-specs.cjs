@@ -122,4 +122,74 @@ exports.user = async ({ shot, emailShot, world, sleep }) => {
     pins: { 1: [".sv2-meta-grid", "tl"], 2: [".sv2-stats-grid", "tl"], 3: ["#sv2-change-password-link", "r"] } });
 };
 
-exports.admin = async () => {};
+
+/* ====================================================================================================
+ * SİSTEM ADMİNLERİ KILAVUZU — ekran görüntüleri
+ * Roller: u_root (Süper Admin), u_service (Destek Atayıcı), u_pm (Proje Yöneticisi), u_cons1/u_cons2 (Danışman).
+ * Örnek verinin bir kısmı (etkinlik günlüğü, ek dosya, ek efor kayıtları) burada world.seed ile eklenir
+ * (kurallar atlanır; yalnızca bu kılavuzun çekimleri içindir, e2e tohum verisi değişmez).
+ * ================================================================================================== */
+const sec = (t) => `.sv2-section:has(.sv2-section-header h3:text-is("${t}"))`;
+const statCard = (label) => `.sv2-stat-card:has(.sv2-stat-label:text-is("${label}"))`;
+const metaItem = (label) => `.sv2-meta-item:has(label:text-is("${label}"))`;
+const nav = (id) => `#sv2-sidebar .sv2-nav-item[data-page="${id}"]`;
+const modal = (id) => `#${id} .sv2-modal`;
+const tab = (id) => `.sv2-tab[data-tab="${id}"]`;
+/** Kenar menüyü gizleyip içeriği tam genişliğe yayar (geniş tablolar için). */
+const noSidebar = async (page) => { await page.addStyleTag({ content: ".sv2-sidebar{display:none !important}.sv2-main{margin-left:0 !important}" }); };
+/** Tüm tablolar tek satıra sığsın diye uzun metinler kısaltılmaz; yalnızca yatay taşmayı önler. */
+const IFRAME_OK = true;
+
+exports.admin = async ({ shot, emailShot, world, sleep }) => {
+  const now = Date.now();
+  const H = 3600 * 1000;
+  const iso = (ms) => new Date(now - ms).toISOString();
+  const today = new Date(now).toISOString().slice(0, 10);
+
+  // ---------- Ek örnek veri
+  const act = (id, o) => world.seed(`v2/activities/${id}`, { activity_id: id, user_uid: o.uid, user_name: o.name, action: o.action, entity_type: o.type, entity_id: o.eid || "", entity_label: o.label || "", details: o.details || "", created_at: iso(o.age) });
+  act("a4", { uid: "u_service", name: "Mehmet Kaya", action: "ticket_updated", type: "ticket", eid: "t1", label: "SUP-ORN-SD-2610-0001", details: "Ticket güncellendi", age: 50 * 60000 });
+  act("a5", { uid: "u_cons1", name: "Zeynep Arslan", action: "email_failed", type: "ticket", eid: "t6", label: "SUP-ORN-FI-2610-0006", details: "ticket_message — [rate_limited] E-posta servisi yoğun, lütfen tekrar deneyin.", age: 70 * 60000 });
+  act("a6", { uid: "u_root", name: "Murat Aydın", action: "user_created", type: "user", eid: "u_new", label: "Ahmet Güler", details: "ahmet.guler@ornekholding.com — Müşteri Kullanıcısı", age: 20 * H });
+  act("a7", { uid: "u_root", name: "Murat Aydın", action: "company_created", type: "company", eid: "cB", label: "Demir Çelik San. A.Ş.", details: "DMR0001", age: 26 * H });
+  act("a8", { uid: "u_service", name: "Mehmet Kaya", action: "created", type: "contract", eid: "k2", label: "SZL-2026-007", details: "Yeni sözleşme: SZL-2026-007", age: 30 * H });
+  act("a9", { uid: "u_service", name: "Mehmet Kaya", action: "email_failed", type: "ticket", eid: "t3", label: "SUP-ORN-FI-2610-0003", details: "send_to_customer — [domain_not_verified] Gönderen alan adı Resend'de doğrulanmamış (DNS kayıtlarını kontrol edin).", age: 5 * H });
+  act("a10", { uid: "u_pm", name: "Burak Şahin", action: "updated", type: "project", eid: "pr1", label: "PRJ-ORN-01", details: "Proje güncellendi: S/4HANA Geçiş Projesi", age: 3 * 24 * H });
+  act("a11", { uid: "u_cons2", name: "Can Öztürk", action: "ticket_updated", type: "ticket", eid: "t4", label: "SUP-ORN-MM-2610-0004", details: "Kapanış Onayı Bekliyor", age: 5 * H });
+  act("a12", { uid: "u_root", name: "Murat Aydın", action: "updated", type: "department", eid: "d2", label: "SAP Geliştirme", details: "Departman güncellendi: SAP Geliştirme", age: 4 * 24 * H });
+  // t1: iki ek dosya (veri ayrı düğümde)
+  const attData = Buffer.from("demo").toString("base64");
+  world.seed("v2/ticket_attachments/t1/att1", { att_id: "att1", name: "vf01-hata-ekrani.png", type: "image/png", size: 184320, data: attData, uploader_uid: "u_cust", uploader_name: "Ayşe Demir", created_at: iso(6 * H) });
+  world.seed("v2/ticket_attachments/t1/att2", { att_id: "att2", name: "islem-kaydi.pdf", type: "application/pdf", size: 96256, data: attData, uploader_uid: "u_cust", uploader_name: "Ayşe Demir", created_at: iso(6 * H) });
+  world.seed("v2/ticket_messages/t1/m2/attachments", [{ id: "att1", name: "vf01-hata-ekrani.png", type: "image/png", size: 184320 }, { id: "att2", name: "islem-kaydi.pdf", type: "application/pdf", size: 96256 }]);
+  // Diğer taleplere efor kayıtları (rapor ve firma eforu sekmeleri dolu görünsün)
+  const eff = (tid, id, p, name, hours, note) => world.seed(`v2/ticket_efforts/${tid}/${id}`, { effort_id: id, personnel_id: p, personnel_name: name, hours, work_date: today, note, created_at: iso(2 * H), created_by_uid: "u_cons1", created_by_name: name });
+  eff("t3", "e3", "p1", "Zeynep Arslan", 2, "Dönem kontrolü ve test");
+  eff("t4", "e4", "p2", "Can Öztürk", 3, "Hata analizi");
+  eff("t4", "e5", "p2", "Can Öztürk", 2, "Düzeltme ve transport");
+  eff("t9", "e6", "p2", "Can Öztürk", 1, "KSB1 inceleme");
+  eff("t8", "e7", "p1", "Zeynep Arslan", 4.5, "Onay akışı kurgusu");
+
+  // ================================================================ 1. Başlangıç
+  await shot({ guide: "admin", name: "a01-giris", as: null, url: "/support-v2/login.html", wait: "#sv2-login-form", vp: [1100, 700], scale: 2.4, target: ".sv2-auth-panel .sv2-card", pad: 14,
+    before: async (page) => { await page.fill("#sv2-email", "mehmet.kaya@parla-demo.com"); await page.fill("#sv2-password", "Gecici-Sifre1"); },
+    pins: { 1: ["#sv2-email", "l"], 2: ["#sv2-password", "l"], 3: ["#sv2-login-submit", "l"], 4: ["#sv2-forgot-password", "r"] } });
+
+  await shot({ guide: "admin", name: "a01-genel-bakis", as: "u_root", url: "/support-v2/admin/dashboard.html", wait: ".sv2-stats-grid", vp: [1366, 1800], scale: 1.5, settle: 900,
+    clip: { x: 0, y: 0, width: 1366, height: 820 },
+    pins: { 1: [nav("dashboard"), "r"], 2: ["#sv2-topbar-guide", "b"], 3: ["#sv2-notif-btn", "b"], 4: [".sv2-stats-grid", "tl"], 5: [statCard("SLA Aşımı"), "tr"], 6: [sec("Ticket Tipi Dağılımı"), "tl"], 7: [sec("Son Aktiviteler"), "tl"], 8: [".sv2-topbar-user", "b"] } });
+
+  await shot({ guide: "admin", name: "a01-genel-bakis-alt", as: "u_root", url: "/support-v2/admin/dashboard.html", wait: ".sv2-stats-grid", vp: [1366, 1800], scale: 1.5, settle: 900,
+    targets: [sec("Danışman İş Yükü"), "#sv2-email-health", "#sv2-maintenance", sec("Atanmamış Ticketlar")], pad: 10,
+    pins: { 1: [sec("Danışman İş Yükü"), "tl"], 2: ["#sv2-email-diagnose", "l"], 3: ["#sv2-email-test", "l"], 4: ["#sv2-migrate-notes", "l"], 5: [".sv2-quick-assign", "l", 0], 6: [sec("Atanmamış Ticketlar") + " a.sv2-btn", "l"] } });
+
+  await shot({ guide: "admin", name: "a01-atama-penceresi", as: "u_root", url: "/support-v2/admin/dashboard.html", wait: ".sv2-stats-grid", vp: [1366, 1800], scale: 2,
+    before: async (page) => { await page.click(".sv2-quick-assign >> nth=0"); await page.waitForSelector("#sv2-assign-modal.is-open .sv2-modal"); await page.selectOption("#sv2-assign-personnel", "p3"); await sleep(250); },
+    target: modal("sv2-assign-modal"), pad: 8,
+    pins: { 1: ["#sv2-assign-personnel", "tl"], 2: ["#sv2-assign-save", "tl"] } });
+
+  await shot({ guide: "admin", name: "a01-menu", as: "u_root", url: "/support-v2/admin/dashboard.html", wait: ".sv2-stats-grid", vp: [1100, 1000], scale: 2.4, target: "#sv2-sidebar .sv2-nav", pad: 6,
+    pins: { 1: [nav("dashboard"), "r"], 2: [nav("tickets"), "r"], 3: [nav("users"), "r"], 4: [nav("companies"), "r"], 5: ["#sv2-sidebar .sv2-nav-divider >> nth=0", "r"], 6: [nav("reports"), "r"], 7: ["#sv2-sidebar .sv2-nav-guide-open >> nth=0", "r"] } });
+  await shot({ guide: "admin", name: "a01-kullanici-kutusu", as: "u_service", url: "/support-v2/admin/dashboard.html", wait: ".sv2-stats-grid", vp: [1100, 1000], scale: 2.4, target: "#sv2-sidebar .sv2-sidebar-footer", pad: 0,
+    pins: { 1: ["#sv2-sidebar .sv2-user-mini", "r"], 2: ["#sv2-change-password-link", "r"], 3: ["#sv2-logout-btn", "r"] } });
+};

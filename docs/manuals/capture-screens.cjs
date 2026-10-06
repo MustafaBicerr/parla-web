@@ -58,11 +58,20 @@ async function main() {
     for (const sel of spec.hide || []) await page.addStyleTag({ content: `${sel}{visibility:hidden !important}` });
 
     let clip;
-    if (spec.target) {
-      const loc = page.locator(spec.target).first();
-      await loc.scrollIntoViewIfNeeded();
+    if (spec.clip) {
+      clip = { ...spec.clip };
+    } else if (spec.target || spec.targets) {
+      // target: tek öğe; targets: birden çok öğenin birleşik sınır kutusu (ilki görünüme kaydırılır)
+      const sels = spec.targets || [spec.target];
+      const first = page.locator(sels[0]).first();
+      await first.scrollIntoViewIfNeeded();
       await sleep(150);
-      const b = await loc.boundingBox();
+      let b = null;
+      for (const sel of sels) {
+        const bb = await page.locator(sel).first().boundingBox();
+        if (!bb) continue;
+        b = b ? { x: Math.min(b.x, bb.x), y: Math.min(b.y, bb.y), width: Math.max(b.x + b.width, bb.x + bb.width) - Math.min(b.x, bb.x), height: Math.max(b.y + b.height, bb.y + bb.height) - Math.min(b.y, bb.y) } : bb;
+      }
       const pad = spec.pad === undefined ? 12 : spec.pad;
       clip = { x: Math.max(0, b.x - pad), y: Math.max(0, b.y - pad), width: b.width + pad * 2, height: b.height + pad * 2 };
       clip.width = Math.min(clip.width, w - clip.x);
