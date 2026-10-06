@@ -58,7 +58,16 @@
           ".read": "auth != null && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || root.child('v2/tickets').child($ticketId).child('user_id').val() === auth.uid)",
           "$messageId": {
             ".write": "auth != null && ((!data.exists() && newData.exists() && ((root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager') || root.child('v2/tickets').child($ticketId).child('user_id').val() === auth.uid)) || root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin')",
-            ".validate": "newData.hasChildren(['message', 'created_at', 'user_id']) && newData.child('user_id').val() === auth.uid && newData.child('message').isString() && newData.child('message').val().length <= 10000"
+            ".validate": "newData.hasChildren(['message', 'created_at', 'user_id']) && newData.child('user_id').val() === auth.uid && newData.child('message').isString() && newData.child('message').val().length <= 10000 && newData.child('is_internal').val() !== true"
+          }
+        }
+      },
+      "ticket_internal_notes": {
+        "$ticketId": {
+          ".read": "auth != null && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')",
+          "$noteId": {
+            ".write": "auth != null && ((!data.exists() && newData.exists() && (root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'service_admin' || root.child('v2/users').child(auth.uid).child('role').val() === 'consultant' || root.child('v2/users').child(auth.uid).child('role').val() === 'project_manager')) || root.child('v2/users').child(auth.uid).child('role').val() === 'super_admin')",
+            ".validate": "newData.hasChildren(['message', 'created_at', 'user_id']) && newData.child('message').isString() && newData.child('message').val().length <= 10000"
           }
         }
       },

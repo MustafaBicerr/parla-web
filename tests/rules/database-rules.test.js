@@ -46,6 +46,7 @@ const data = {
         m2: { message_id: "m2", user_id: "cons", message: "İç not", created_at: "x", is_internal: true },
       },
     },
+    ticket_internal_notes: { t1: { n0: { message_id: "n0", user_id: "cons", message: "mevcut iç not", created_at: "x" } } },
     ticket_history: { t1: { h1: { history_id: "h1", action: "created", changed_at: "x" } } },
     ticket_assignments: { t1: { p1: { personnel_id: "p1", personnel_name: "P1", personnel_email: "p1@parla.com", is_primary: true } } },
     ticket_efforts: { t1: { e1: { effort_id: "e1", hours: 1, created_at: "x" } } },
@@ -215,10 +216,33 @@ test("müşteri kendi ticket'ına kendi adına mesaj ekleyebilir; başkasına ek
   assertDenied(as(U.intruder).write("/v2/ticket_messages/t1/m9", { ...msg, user_id: "intruder" }));
 });
 
-test("personel herhangi bir ticket'a mesaj/iç not ekleyebilir", () => {
-  const msg = { message_id: "m8", user_id: "cons", message: "not", created_at: "now", is_internal: true };
+test("personel herhangi bir ticket'a mesaj ve iç not ekleyebilir", () => {
+  const msg = { message_id: "m8", user_id: "cons", message: "not", created_at: "now", is_internal: false };
   assertAllowed(as(U.cons).write("/v2/ticket_messages/t1/m8", msg));
   assertAllowed(as(U.cons).write("/v2/ticket_messages/t2/m8", msg));
+  assertAllowed(as(U.cons).write("/v2/ticket_internal_notes/t2/n8", { ...msg, message_id: "n8" }));
+});
+
+// ------------------------------------------------- ticket_internal_notes
+test("[kritik] iç notlar yalnızca personel tarafından okunur/yazılır; müşteri okuyamaz", () => {
+  const note = { message_id: "n1", user_id: "cons", message: "iç not", created_at: "now" };
+  assertAllowed(as(U.cons).write("/v2/ticket_internal_notes/t1/n1", note));
+  assertAllowed(as(U.pm).read("/v2/ticket_internal_notes/t1"));
+  assertDenied(as(U.custA).read("/v2/ticket_internal_notes/t1"), "ticket sahibi müşteri iç notu okuyamaz");
+  assertDenied(as(U.custA).write("/v2/ticket_internal_notes/t1/n2", { ...note, user_id: "custA" }));
+  assertDenied(as(U.intruder).read("/v2/ticket_internal_notes/t1"));
+});
+
+test("iç notlar silinemez/düzenlenemez (super_admin hariç)", () => {
+  assertDenied(as(U.cons).write("/v2/ticket_internal_notes/t1/n0", null));
+  assertDenied(as(U.cons).write("/v2/ticket_internal_notes/t1", null));
+  assertAllowed(as(U.root).write("/v2/ticket_internal_notes/t1/n0", null));
+});
+
+test("herkese açık mesaj düğümüne yeni iç not yazılamaz (eski istemciler sızıntı yapamaz)", () => {
+  const msg = { message_id: "m7", user_id: "cons", message: "gizli", created_at: "now", is_internal: true };
+  assertDenied(as(U.cons).write("/v2/ticket_messages/t1/m7", msg));
+  assertAllowed(as(U.cons).write("/v2/ticket_messages/t1/m7", { ...msg, is_internal: false }));
 });
 
 // ------------------------------------------------------- ticket_history
@@ -318,4 +342,10 @@ test("kök seviyede hiçbir şey okunamaz/yazılamaz", () => {
   assertDenied(as(U.root).read("/"));
   assertDenied(as(U.root).write("/x", 1));
   assertDenied(as(null).read("/v2/tickets/t1"));
+});
+
+test("database.rules.json, generate-rules.js çıktısıyla birebir aynı (JSON'u elle düzenlemeyin)", () => {
+  const { output } = require("./generate-rules.js");
+  const onDisk = require("node:fs").readFileSync(path.join(__dirname, "..", "..", "database.rules.json"), "utf8");
+  assert.equal(onDisk, output, "node tests/rules/generate-rules.js çalıştırıp çıktıyı commit edin");
 });

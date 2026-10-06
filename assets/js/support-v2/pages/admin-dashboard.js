@@ -298,6 +298,43 @@ function renderEmailHealthSection() {
     </div>`;
 }
 
+function renderMaintenanceSection() {
+  if (String(session?.role || "").toLowerCase() !== "super_admin") return "";
+  return `
+    <div class="sv2-section sv2-mb-1" id="sv2-maintenance">
+      <div class="sv2-section-header">
+        <h3><i class="fas fa-tools"></i> Veri Bakımı</h3>
+        <button type="button" class="sv2-btn sv2-btn-sm sv2-btn-outline" id="sv2-migrate-notes">İç Notları Taşı</button>
+      </div>
+      <div class="sv2-section-body">
+        <p class="sv2-text-muted" style="margin:0" id="sv2-maintenance-status">
+          Eski sürümde mesajlarla birlikte saklanan dahili notları, yalnızca personelin okuyabildiği ayrı alana taşır.
+          Güvenle tekrar çalıştırılabilir.
+        </p>
+      </div>
+    </div>`;
+}
+
+function bindMaintenance() {
+  document.getElementById("sv2-migrate-notes")?.addEventListener("click", async () => {
+    if (!window.confirm("Eski dahili notlar yalnızca personelin görebileceği alana taşınacak. Devam edilsin mi?")) return;
+    showLoading(true);
+    const status = document.getElementById("sv2-maintenance-status");
+    try {
+      const { tickets, moved } = await ParlaDb.migrateInternalMessages();
+      status.textContent = moved
+        ? `${moved} dahili not ${tickets} talepten taşındı.`
+        : "Taşınacak eski dahili not bulunmadı.";
+      toast(status.textContent, "success");
+    } catch (err) {
+      status.textContent = "Taşıma başarısız: " + (err.message || err);
+      handleError(err, "Veri bakımı");
+    } finally {
+      showLoading(false);
+    }
+  });
+}
+
 function setEmailHealthStatus(kind, message) {
   const el = document.getElementById("sv2-email-health-status");
   if (!el) return;
@@ -429,6 +466,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
       </div>
     </div>
     ${renderEmailHealthSection()}
+    ${renderMaintenanceSection()}
     <div class="sv2-section">
       <div class="sv2-section-header">
         <h3>Atanmamış Ticketlar</h3>
@@ -492,6 +530,7 @@ async function loadAndRender() {
     });
 
     bindEmailHealth();
+    bindMaintenance();
 
     document.querySelectorAll(".sv2-quick-assign").forEach((btn) => {
       btn.addEventListener("click", () => {

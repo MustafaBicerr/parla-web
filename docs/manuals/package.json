@@ -1,0 +1,20 @@
+{
+  "name": "parla-manuals",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Parla BT Destek Portalı kılavuzları için PDF üretim altyapısı",
+  "scripts": {
+    "build": "node build.cjs",
+    "build:sample": "node build.cjs _sample"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/plus-jakarta-sans": "^5.3.0",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.4.299"
+  }
+}

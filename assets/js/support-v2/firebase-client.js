@@ -424,19 +424,66 @@ const ParlaDb = {
     await fb.db.remove(v2Ref(`tickets/${id}`));
   },
 
-  async getTicketMessages(ticketId) {
+  /**
+   * Talep mesajları. İç notlar ayrı düğümde (ticket_internal_notes, yalnızca personel) tutulur;
+   * `includeInternal` yalnızca personel için kullanılmalıdır. Müşteri çağrılarında eski
+   * (ayrılmadan önce yazılmış) is_internal kayıtları da güvenlik için ayıklanır.
+   */
+  async getTicketMessages(ticketId, options) {
+    const includeInternal = !!(options && options.includeInternal);
     const fb = getFirebase();
-    const snap = await fb.db.get(v2Ref(`ticket_messages/${ticketId}`));
-    const items = snapshotToArray(snap);
-    return items
+    const reads = [fb.db.get(v2Ref(`ticket_messages/${ticketId}`))];
+    if (includeInternal) {
+      reads.push(fb.db.get(v2Ref(`ticket_internal_notes/${ticketId}`)).catch(() => null));
+    }
+    const [publicSnap, internalSnap] = await Promise.all(reads);
+
+    const byId = new Map();
+    snapshotToArray(publicSnap).forEach((m) => byId.set(m.message_id || m.id, m));
+    if (internalSnap) {
+      snapshotToArray(internalSnap).forEach((m) =>
+        byId.set(m.message_id || m.id, { ...m, is_internal: true })
+      );
+    }
+
+    return [...byId.values()]
+      .filter((m) => includeInternal || !m.is_internal)
       .map((m) => ({ ...m, message_id: m.message_id || m.id }))
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  },
+
+  /**
+   * (super_admin) Eski is_internal mesajlarını ticket_messages'tan ticket_internal_notes'a taşır.
+   * @returns {Promise<{tickets: number, moved: number}>}
+   */
+  async migrateInternalMessages() {
+    const fb = getFirebase();
+    const tickets = await this.getAllTickets();
+    let moved = 0;
+    let touched = 0;
+    for (const ticket of tickets) {
+      const tid = getTicketKey(ticket);
+      const snap = await fb.db.get(v2Ref(`ticket_messages/${tid}`));
+      const internal = snapshotToArray(snap).filter((m) => m.is_internal === true);
+      if (!internal.length) continue;
+      touched += 1;
+      for (const m of internal) {
+        const key = m.message_id || m.id;
+        const { id: _drop, ...payload } = m;
+        await fb.db.set(v2Ref(`ticket_internal_notes/${tid}/${key}`), { ...payload, message_id: key, is_internal: true });
+        await fb.db.remove(v2Ref(`ticket_messages/${tid}/${key}`));
+        moved += 1;
+      }
+    }
+    return { tickets: touched, moved };
   },
 
   async addTicketMessage(ticketId, data) {
     const fb = getFirebase();
     const ts = nowIso();
-    const ref = fb.db.push(v2Ref(`ticket_messages/${ticketId}`));
+    // İç notlar müşterinin okuyamadığı ayrı düğüme yazılır.
+    const collection = data.is_internal ? "ticket_internal_notes" : "ticket_messages";
+    const ref = fb.db.push(v2Ref(`${collection}/${ticketId}`));
     const id = ref.key;
     const payload = {
       message_id: id,

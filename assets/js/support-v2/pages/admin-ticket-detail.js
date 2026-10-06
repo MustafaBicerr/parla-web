@@ -749,7 +749,7 @@ async function handleReply() {
       personnel_name: me ? [me.first_name, me.last_name].filter(Boolean).join(" ") : actorName(),
     });
 
-    messages = await ParlaDb.getTicketMessages(id);
+    messages = await ParlaDb.getTicketMessages(id, { includeInternal: true });
     ticket = await ParlaDb.getTicket(id);
     efforts = await ParlaDb.getTicketEfforts(id);
 
@@ -851,7 +851,7 @@ async function loadTicket() {
   try {
     const [t, msgs, hist, personnel, assign, eff] = await Promise.all([
       ParlaDb.getTicket(id),
-      ParlaDb.getTicketMessages(id),
+      ParlaDb.getTicketMessages(id, { includeInternal: true }),
       ParlaDb.getTicketHistory(id),
       ParlaDb.getAllPersonnel(),
       ParlaDb.getTicketAssignments(id),

@@ -431,7 +431,7 @@ async function reloadTicket() {
   const id = getTicketKey(ticket);
   const [t, msgs, hist] = await Promise.all([
     ParlaDb.getTicket(id),
-    ParlaDb.getTicketMessages(id),
+    ParlaDb.getTicketMessages(id, { includeInternal: isAdminRole(session.role) }),
     getTicketHistory(id),
   ]);
   ticket = t;
@@ -458,7 +458,7 @@ async function loadTicket(ticketId) {
 
     // Atamalar müşteri için de gerekli: yanıt bildirimi atanan danışmanlara gider.
     [messages, history, personnel, assignments] = await Promise.all([
-      ParlaDb.getTicketMessages(ticketId),
+      ParlaDb.getTicketMessages(ticketId, { includeInternal: isAdmin }),
       getTicketHistory(ticketId),
       isAdmin ? ParlaDb.getAllPersonnel() : Promise.resolve([]),
       ParlaDb.getTicketAssignments(ticketId).catch(() => []),
