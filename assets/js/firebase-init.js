@@ -12,6 +12,10 @@ import {
   sendPasswordResetEmail,
   createUserWithEmailAndPassword,
   updatePassword,
+  verifyPasswordResetCode,
+  confirmPasswordReset,
+  checkActionCode,
+  applyActionCode,
 } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import {
   getDatabase,
@@ -72,6 +76,10 @@ const firebaseApi = {
     sendPasswordResetEmail,
     createUserWithEmailAndPassword,
     updatePassword,
+    verifyPasswordResetCode,
+    confirmPasswordReset,
+    checkActionCode,
+    applyActionCode,
   },
 };
 
