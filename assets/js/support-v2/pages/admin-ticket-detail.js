@@ -36,6 +36,7 @@ import {
 } from "../ticket-utils.js";
 import { minLength } from "../validators.js";
 import ParlaEmailService from "../email-service.js";
+import { reportEmailResults } from "../email-report.js";
 
 const ADMIN_ROLES = ["super_admin", "service_admin", "project_manager", "consultant"];
 
@@ -509,16 +510,42 @@ function collectAssignmentSelection() {
   return selected;
 }
 
-async function sendNotifications(eventType, updatedTicket, extra) {
-  const recipients = new Set();
-  if (updatedTicket.user_email) recipients.add(updatedTicket.user_email);
-  for (const a of assignments) {
-    const person = allPersonnel.find((p) => (p.personnel_id || p.id) === (a.personnel_id || a.id));
-    if (person?.email) recipients.add(person.email);
+function personnelEmails(ids) {
+  const wanted = new Set(ids);
+  return allPersonnel
+    .filter((p) => wanted.has(p.personnel_id || p.id) && p.is_active !== false)
+    .map((p) => p.email);
+}
+
+/**
+ * Bildirimleri doğru muhataplara gönderir ve başarısızlıkları raporlar.
+ *  - assigned: yalnızca yeni atanan danışmanlar (müşteriye "size atandı" gitmez)
+ *  - durum olayları: talep sahibi + atanmış danışmanlar (işlemi yapan hariç)
+ */
+async function sendNotifications(eventType, updatedTicket, extra, newlyAssignedIds) {
+  const me = session.email;
+  let recipients;
+  if (eventType === "ticket_assigned") {
+    recipients = personnelEmails(newlyAssignedIds || []);
+  } else if (eventType === "send_to_customer") {
+    recipients = [updatedTicket.user_email];
+  } else {
+    recipients = [
+      updatedTicket.user_email,
+      ...personnelEmails(assignments.map((a) => a.personnel_id || a.id)),
+    ];
   }
-  for (const email of recipients) {
-    await ParlaEmailService.notifyTicketEvent(eventType, email, updatedTicket, extra || {});
-  }
+
+  const emails = ParlaEmailService.uniqueEmails(recipients, me);
+  if (!emails.length) return true;
+
+  const result = await ParlaEmailService.notifyTicketEvent(eventType, emails, updatedTicket, extra || {});
+  return reportEmailResults([result], {
+    eventType,
+    label: "Bildirim e-postası",
+    ticket: updatedTicket,
+    actor: session,
+  });
 }
 
 async function handleAdminUpdate() {
@@ -546,6 +573,11 @@ async function handleAdminUpdate() {
   showLoading(true);
   try {
     const id = getTicketKey(ticket);
+
+    const previousAssignedIds = new Set(assignments.map((a) => a.personnel_id || a.id));
+    const newlyAssignedIds = selectedAssignments
+      .map((a) => a.personnel_id)
+      .filter((pid) => !previousAssignedIds.has(pid));
 
     if (assignmentChanged && selectedAssignments.length) {
       ticket = await ParlaDb.assignConsultants(id, selectedAssignments, session);
@@ -578,13 +610,30 @@ async function handleAdminUpdate() {
     ticket = updated;
     history = await ParlaDb.getTicketHistory(id);
 
-    if (assignmentChanged) {
-      await sendNotifications("ticket_assigned", updated, { note: statusNote || `${updated.ticket_number} atandı.` });
-    } else if (statusChanged) {
-      const eventType =
-        newStatus === "resolved" ? "ticket_resolved" : newStatus === "closed" ? "ticket_closed" : "ticket_status_changed";
-      await sendNotifications(eventType, updated, { note: statusNote });
+    // Atama ve durum değişikliği birlikte olduysa ikisi de bildirilir (eskiden durum maili atlanıyordu).
+    const notifyResults = [];
+    if (assignmentChanged && newlyAssignedIds.length) {
+      notifyResults.push(
+        sendNotifications(
+          "ticket_assigned",
+          updated,
+          { note: statusNote || `${updated.ticket_number} atandı.` },
+          newlyAssignedIds
+        )
+      );
     }
+    if (statusChanged) {
+      const eventType =
+        newStatus === "resolved"
+          ? "ticket_resolved"
+          : newStatus === "closed"
+            ? "ticket_closed"
+            : newStatus === "waiting_customer"
+              ? "send_to_customer"
+              : "ticket_status_changed";
+      notifyResults.push(sendNotifications(eventType, updated, { note: statusNote }));
+    }
+    await Promise.all(notifyResults);
 
     toast("Ticket güncellendi.", "success");
     document.getElementById("sv2-admin-status-note").value = "";
@@ -702,8 +751,16 @@ async function handleReply() {
     ticket = await ParlaDb.getTicket(id);
     efforts = await ParlaDb.getTicketEfforts(id);
 
-    if (!isInternal && ticket.user_email) {
-      await ParlaEmailService.notifyTicketEvent("ticket_message", ticket.user_email, ticket, { note: message });
+    if (!isInternal && ticket.user_email && ticket.user_email !== session.email) {
+      const result = await ParlaEmailService.notifyTicketEvent("ticket_message", ticket.user_email, ticket, {
+        note: message.slice(0, 500),
+      });
+      await reportEmailResults([result], {
+        eventType: "ticket_message",
+        label: "Yanıt bildirimi",
+        ticket,
+        actor: session,
+      });
     }
 
     document.getElementById("sv2-reply-message").value = "";

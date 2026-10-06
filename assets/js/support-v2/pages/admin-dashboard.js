@@ -23,6 +23,7 @@ import {
 } from "../ui-shell.js";
 import { TICKET_TYPE_LABELS, getTicketKey } from "../ticket-utils.js";
 import ParlaEmailService from "../email-service.js";
+import { reportEmailResult } from "../email-report.js";
 
 const ADMIN_ROLES = ["super_admin", "service_admin", "project_manager", "consultant"];
 
@@ -251,9 +252,15 @@ function openAssignModal(ticket) {
         `${name} atandı`,
         session
       );
-      if (person?.email) {
-        await ParlaEmailService.notifyTicketEvent("ticket_assigned", person.email, updated, {
+      if (person?.email && person.email.toLowerCase() !== String(session.email || "").toLowerCase()) {
+        const mailResult = await ParlaEmailService.notifyTicketEvent("ticket_assigned", person.email, updated, {
           note: `${ticket.ticket_number} numaralı ticket size atandı.`,
+        });
+        await reportEmailResult(mailResult, {
+          eventType: "ticket_assigned",
+          label: "Atama e-postası",
+          ticket: updated,
+          actor: session,
         });
       }
       toast("Danışman ataması kaydedildi.", "success");
@@ -265,6 +272,98 @@ function openAssignModal(ticket) {
       showLoading(false);
     }
   });
+}
+
+const EMAIL_ADMIN_ROLES = ["super_admin", "service_admin"];
+
+function canSeeEmailHealth() {
+  return EMAIL_ADMIN_ROLES.includes(String(session?.role || "").toLowerCase());
+}
+
+function renderEmailHealthSection() {
+  if (!canSeeEmailHealth()) return "";
+  return `
+    <div class="sv2-section sv2-mb-1" id="sv2-email-health">
+      <div class="sv2-section-header">
+        <h3><i class="fas fa-envelope"></i> E-posta Servisi</h3>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+          <button type="button" class="sv2-btn sv2-btn-sm sv2-btn-outline" id="sv2-email-diagnose">Durumu Kontrol Et</button>
+          <button type="button" class="sv2-btn sv2-btn-sm sv2-btn-primary" id="sv2-email-test">Test E-postası Gönder</button>
+        </div>
+      </div>
+      <div class="sv2-section-body">
+        <p id="sv2-email-health-status" class="sv2-text-muted" style="margin:0">Kontrol ediliyor…</p>
+      </div>
+    </div>`;
+}
+
+function setEmailHealthStatus(kind, message) {
+  const el = document.getElementById("sv2-email-health-status");
+  if (!el) return;
+  const icon = kind === "ok" ? "fa-check-circle" : kind === "warn" ? "fa-exclamation-triangle" : "fa-times-circle";
+  const color = kind === "ok" ? "#0d7d4d" : kind === "warn" ? "#c47a00" : "#c41e3a";
+  el.innerHTML = `<i class="fas ${icon}" style="color:${color}"></i> ${escapeHtml(message)}`;
+}
+
+async function refreshEmailHealth() {
+  if (!canSeeEmailHealth()) return;
+  const health = await ParlaEmailService.health();
+  if (!health.reachable) {
+    setEmailHealthStatus(
+      "error",
+      "E-posta servisine ulaşılamıyor: /api/send-email bu sitede yayında değil (Netlify function deploy edilmemiş veya site Firebase Hosting'de çalışıyor olabilir)."
+    );
+  } else if (!health.configured) {
+    setEmailHealthStatus("error", "Servis yayında ama RESEND_API_KEY tanımlı değil (Netlify → Environment variables).");
+  } else {
+    setEmailHealthStatus(
+      "ok",
+      `Servis yayında ve anahtar tanımlı (gönderen: ${health.from}). Alan adı doğrulamasını görmek için "Durumu Kontrol Et" düğmesini kullanın.`
+    );
+  }
+}
+
+function bindEmailHealth() {
+  if (!canSeeEmailHealth()) return;
+
+  document.getElementById("sv2-email-diagnose")?.addEventListener("click", async () => {
+    showLoading(true);
+    try {
+      const res = await ParlaEmailService.diagnose();
+      if (!res.success) {
+        setEmailHealthStatus("error", res.message || "Tanılama başarısız.");
+        return;
+      }
+      const d = res.data || {};
+      if (d.domain_status === "verified") {
+        setEmailHealthStatus("ok", `${d.domain} alan adı Resend'de doğrulanmış. Test e-postası ile uçtan uca doğrulayabilirsiniz.`);
+      } else if (d.domain_status === "unknown") {
+        setEmailHealthStatus(d.key_valid === false ? "error" : "warn", d.note || "Alan adı durumu okunamadı.");
+      } else {
+        setEmailHealthStatus("error", `${d.domain}: ${d.domain_status}. ${d.note || ""}`.trim());
+      }
+    } finally {
+      showLoading(false);
+    }
+  });
+
+  document.getElementById("sv2-email-test")?.addEventListener("click", async () => {
+    showLoading(true);
+    try {
+      const res = await ParlaEmailService.sendTest();
+      if (res.success) {
+        setEmailHealthStatus("ok", `Test e-postası ${session.email} adresine gönderildi. Gelen kutusunu ve spam klasörünü kontrol edin.`);
+        toast("Test e-postası gönderildi.", "success");
+      } else {
+        setEmailHealthStatus("error", res.message || "Test e-postası gönderilemedi.");
+        toast(res.message || "Test e-postası gönderilemedi.", "error");
+      }
+    } finally {
+      showLoading(false);
+    }
+  });
+
+  refreshEmailHealth();
 }
 
 function buildContent(stats, typeCounts, workload, unassigned, activities) {
@@ -328,6 +427,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
         }
       </div>
     </div>
+    ${renderEmailHealthSection()}
     <div class="sv2-section">
       <div class="sv2-section-header">
         <h3>Atanmamış Ticketlar</h3>
@@ -389,6 +489,8 @@ async function loadAndRender() {
       isAdmin: true,
       content,
     });
+
+    bindEmailHealth();
 
     document.querySelectorAll(".sv2-quick-assign").forEach((btn) => {
       btn.addEventListener("click", () => {

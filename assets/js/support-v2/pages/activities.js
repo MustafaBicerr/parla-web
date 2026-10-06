@@ -21,6 +21,13 @@ const ACTION_LABELS = {
   status_changed: "Durum Değişti",
   assigned: "Atandı",
   login: "Giriş",
+  ticket_created: "Talep Oluşturuldu",
+  ticket_updated: "Talep Güncellendi",
+  ticket_assigned: "Talep Atandı",
+  ticket_message: "Yeni Mesaj",
+  user_created: "Kullanıcı Oluşturuldu",
+  company_created: "Firma Oluşturuldu",
+  email_failed: "E-posta Gönderilemedi",
 };
 
 const ENTITY_LABELS = {

@@ -3,6 +3,7 @@
  */
 import ParlaDb from "../firebase-client.js";
 import ParlaEmailService from "../email-service.js";
+import { reportEmailResult, reportEmailResults } from "../email-report.js";
 import { requireAuth, PATHS } from "../auth-guard.js";
 import {
   renderShell,
@@ -34,6 +35,7 @@ let ticket = null;
 let messages = [];
 let history = [];
 let personnel = [];
+let assignments = [];
 
 function getTicketId() {
   const params = new URLSearchParams(window.location.search);
@@ -279,6 +281,18 @@ function getActor() {
   return { uid: session.uid, name: name || session.email, email: session.email };
 }
 
+/** Müşteri yanıtının bildirileceği ekip: destek kutusu + atanmış tüm danışmanlar. */
+function staffRecipients() {
+  const cfg = window.__PARLA_SITE_CONFIG || {};
+  const emails = [cfg.CONTACT_EMAIL];
+  const assignedIds = new Set(assignments.map((a) => a.personnel_id || a.id));
+  if (ticket.assigned_to_id) assignedIds.add(ticket.assigned_to_id);
+  personnel.forEach((p) => {
+    if (assignedIds.has(p.personnel_id || p.id) && p.is_active !== false) emails.push(p.email);
+  });
+  return emails;
+}
+
 function bindReply(isAdmin) {
   document.getElementById("sv2-send-reply")?.addEventListener("click", async () => {
     const text = document.getElementById("sv2-reply-message")?.value?.trim();
@@ -322,17 +336,18 @@ function bindReply(isAdmin) {
         actor
       );
 
-      const cfg = window.__PARLA_SITE_CONFIG || {};
-      const notifyEmail = isAdmin
-        ? ticket.user_email
-        : ticket.assigned_to_id
-          ? personnel.find((p) => (p.personnel_id || p.id) === ticket.assigned_to_id)?.email
-          : cfg.CONTACT_EMAIL;
-
-      if (notifyEmail && !isInternal) {
-        ParlaEmailService.notifyTicketEvent("ticket_message", notifyEmail, ticket, {
-          note: text.slice(0, 200),
-        }).catch(() => {});
+      if (!isInternal) {
+        const recipients = isAdmin ? [ticket.user_email] : staffRecipients();
+        ParlaEmailService.notifyTicketEvent(
+          "ticket_message",
+          ParlaEmailService.uniqueEmails(recipients, session.email),
+          ticket,
+          { note: text.slice(0, 500) }
+        )
+          .then((res) =>
+            reportEmailResult(res, { eventType: "ticket_message", label: "Yanıt bildirimi", ticket, actor })
+          )
+          .catch(() => {});
       }
 
       toast("Yanıtınız gönderildi.", "success");
@@ -373,15 +388,15 @@ function bindAdminForm() {
         actor
       );
 
+      const notifications = [];
       if (assignedId && assignedId !== ticket.assigned_to_id) {
         const assignedPerson = personnel.find((p) => (p.personnel_id || p.id) === assignedId);
-        if (assignedPerson?.email) {
-          ParlaEmailService.notifyTicketEvent(
-            "ticket_assigned",
-            assignedPerson.email,
-            updated,
-            { note: "Size yeni bir talep atandı." }
-          ).catch(() => {});
+        if (assignedPerson?.email && assignedPerson.email !== session.email) {
+          notifications.push(
+            ParlaEmailService.notifyTicketEvent("ticket_assigned", assignedPerson.email, updated, {
+              note: "Size yeni bir talep atandı.",
+            })
+          );
         }
       }
 
@@ -391,8 +406,18 @@ function bindAdminForm() {
             ? "ticket_resolved"
             : status === STATUSES.CLOSED
               ? "ticket_closed"
-              : "ticket_status_changed";
-        ParlaEmailService.notifyTicketEvent(eventType, ticket.user_email, updated).catch(() => {});
+              : status === STATUSES.WAITING_CUSTOMER
+                ? "send_to_customer"
+                : "ticket_status_changed";
+        notifications.push(ParlaEmailService.notifyTicketEvent(eventType, ticket.user_email, updated));
+      }
+
+      if (notifications.length) {
+        Promise.all(notifications)
+          .then((results) =>
+            reportEmailResults(results, { eventType: "ticket_updated", label: "Güncelleme bildirimi", ticket, actor })
+          )
+          .catch(() => {});
       }
 
       toast("Talep güncellendi.", "success");
@@ -434,10 +459,12 @@ async function loadTicket(ticketId) {
       return;
     }
 
-    [messages, history, personnel] = await Promise.all([
+    // Personel ve atamalar müşteri için de gerekli: yanıt bildirimi atanan danışmanlara gider.
+    [messages, history, personnel, assignments] = await Promise.all([
       ParlaDb.getTicketMessages(ticketId),
       getTicketHistory(ticketId),
-      isAdmin ? ParlaDb.getAllPersonnel() : Promise.resolve([]),
+      ParlaDb.getAllPersonnel().catch(() => []),
+      ParlaDb.getTicketAssignments(ticketId).catch(() => []),
     ]);
 
     renderPage();

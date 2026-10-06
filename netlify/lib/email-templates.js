@@ -312,6 +312,15 @@ const COPY = {
       `Merhaba${d.name ? ` ${d.name}` : ""}, Parla BT Destek sisteminde hesabınız oluşturuldu. Aşağıdaki bilgilerle giriş yapabilirsiniz; ilk oturumda şifrenizi değiştirmenizi öneririz.`,
     cta: "Portala giriş yap",
   },
+  test_email: {
+    subject: "Parla BT Destek — test e-postası",
+    preview: "E-posta servisi çalışıyor.",
+    eyebrow: "Test",
+    title: "E-posta servisi çalışıyor",
+    intro: (d) =>
+      `Merhaba${d.name ? ` ${d.name}` : ""}, bu ileti destek portalından gönderilen bir test e-postasıdır. Bunu görüyorsanız Resend yapılandırması ve gönderen alan adı doğru çalışıyor.`,
+    cta: null,
+  },
   contact_form: {
     subject: (d) => `Yeni iletişim mesajı${d.subject ? ` · ${d.subject}` : ""}`,
     preview: (d) => `${d.name || "Ziyaretçi"} siteden mesaj bıraktı.`,

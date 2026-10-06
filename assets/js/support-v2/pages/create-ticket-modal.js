@@ -3,6 +3,7 @@
  */
 import ParlaDb from "../firebase-client.js";
 import ParlaEmailService from "../email-service.js";
+import { reportEmailResults } from "../email-report.js";
 import { validateTicketForm } from "../validators.js";
 import {
   TICKET_TYPE_LABELS,
@@ -193,16 +194,29 @@ export function mountCreateTicketModal(session) {
         actor
       );
 
-      const cfg = window.__PARLA_SITE_CONFIG || {};
-      if (cfg.CONTACT_EMAIL) {
-        ParlaEmailService.notifyTicketEvent("ticket_created", cfg.CONTACT_EMAIL, ticket, {
-          note: `${actor.name} tarafından yeni talep oluşturuldu.`,
-        }).catch(() => {});
-      }
-
       closeModal(CREATE_TICKET_MODAL_ID);
       form.reset();
       toast("Talebiniz başarıyla oluşturuldu.", "success");
+
+      // Müşteriye kayıt onayı + destek ekibine yeni talep bildirimi.
+      // Gönderim sonucu beklenmez (arayüz bloklanmasın) ama başarısızlık raporlanır.
+      const cfg = window.__PARLA_SITE_CONFIG || {};
+      const notifications = [];
+      if (cfg.CONTACT_EMAIL) {
+        notifications.push(
+          ParlaEmailService.notifyTicketEvent("ticket_created", cfg.CONTACT_EMAIL, ticket, {
+            note: `${actor.name} tarafından yeni talep oluşturuldu.`,
+          })
+        );
+      }
+      if (session.email) {
+        notifications.push(ParlaEmailService.notifyTicketEvent("ticket_created", session.email, ticket));
+      }
+      Promise.all(notifications)
+        .then((results) =>
+          reportEmailResults(results, { eventType: "ticket_created", label: "Talep bildirimi", ticket, actor })
+        )
+        .catch(() => {});
 
       onTicketCreatedCallback?.(ticket);
     } catch (err) {

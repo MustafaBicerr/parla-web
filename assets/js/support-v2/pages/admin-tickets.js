@@ -40,6 +40,7 @@ import {
 } from "../ticket-utils.js";
 import { validateTicketForm } from "../validators.js";
 import ParlaEmailService from "../email-service.js";
+import { reportEmailResult } from "../email-report.js";
 import { downloadExcel } from "../export-utils.js";
 
 const ADMIN_ROLES = ["super_admin", "service_admin", "project_manager", "consultant"];
@@ -995,10 +996,17 @@ async function saveNewTicket() {
       session
     );
 
+    // Talep sahibine kayıt onayı (talebi açan yönetici kendisi ise tekrar mail gönderilmez).
     const notifyEmail = user?.email || session.email;
-    if (notifyEmail) {
-      await ParlaEmailService.notifyTicketEvent("ticket_created", notifyEmail, ticket, {
-        note: "Yeni destek talebi oluşturuldu.",
+    if (notifyEmail && notifyEmail.toLowerCase() !== String(session.email || "").toLowerCase()) {
+      const mailResult = await ParlaEmailService.notifyTicketEvent("ticket_created", notifyEmail, ticket, {
+        note: "Destek ekibimiz sizin adınıza yeni bir destek talebi oluşturdu.",
+      });
+      await reportEmailResult(mailResult, {
+        eventType: "ticket_created",
+        label: "Talep onay e-postası",
+        ticket,
+        actor: session,
       });
     }
 

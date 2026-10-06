@@ -476,10 +476,12 @@ async function submitNewUser() {
       created_by: session.uid,
       updated_by: session.uid,
     });
+    let resetMailFailed = false;
     try {
       await resetPassword(data.email);
     } catch {
-      /* davet maili opsiyonel */
+      // Davet maili opsiyonel ama sessizce yutulmaz: yönetici bilgilendirilir.
+      resetMailFailed = true;
     }
     await ParlaDb.logActivity(
       "user_created",
@@ -492,6 +494,12 @@ async function submitNewUser() {
 
     closeModal("modal-new-user");
     showSuccessCredentials(data.email, data.temp_password, fullName(data));
+    if (resetMailFailed) {
+      toast(
+        "Şifre belirleme e-postası gönderilemedi. Giriş bilgilerini 'E-posta Gönder' ile iletin.",
+        "warning"
+      );
+    }
     await loadData();
     refreshView();
   } catch (err) {

@@ -1,5 +1,8 @@
 /**
  * Parla BT Ticket V2 — e-posta bildirim servisi (Netlify Function + Resend)
+ *
+ * Her istek giriş yapmış kullanıcının Firebase ID token'ını taşır; sunucu içeriği
+ * (numara, başlık, durum...) veritabanından okur, alıcıları ticket muhataplarıyla sınırlar.
  */
 
 function getEmailApiUrl() {
@@ -17,7 +20,7 @@ function newRequestId() {
 async function parseResponse(res) {
   const text = await res.text();
   if (!text) {
-    return { success: false, message: "Boş yanıt" };
+    return { success: false, message: "Boş yanıt", code: "empty_response" };
   }
   try {
     return JSON.parse(text);
@@ -31,33 +34,66 @@ async function parseResponse(res) {
       }
     }
   }
-  return { success: false, message: "Sunucu yanıtı işlenemedi." };
+  // JSON değilse genelde HTML 404/500 sayfasıdır: fonksiyon bu sunucuda yayında değildir.
+  return {
+    success: false,
+    code: res.status === 404 ? "endpoint_missing" : "bad_response",
+    message:
+      res.status === 404
+        ? "E-posta servisi bu sitede bulunamadı (/api/send-email 404). Netlify function yayında mı?"
+        : "Sunucu yanıtı işlenemedi.",
+  };
 }
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const STAFF_EVENTS = new Set(["ticket_assigned", "ticket_reopened"]);
+async function getIdToken(forceRefresh) {
+  const user = window.__PARLA_FIREBASE?.auth?.currentUser;
+  if (!user) return null;
+  try {
+    return await user.getIdToken(!!forceRefresh);
+  } catch {
+    return null;
+  }
+}
 
-function inferAudience(eventType, to) {
-  const cfg = window.__PARLA_SITE_CONFIG || {};
-  const contact = String(cfg.CONTACT_EMAIL || "info@parlabilgiteknolojileri.net").toLowerCase();
-  const first = String(Array.isArray(to) ? to[0] : to || "").trim().toLowerCase();
-  if (first && first === contact) return "staff";
-  if (STAFF_EVENTS.has(eventType)) return "staff";
-  return "customer";
+/** Boş/yinelenen adresleri ve (varsa) işlemi yapan kişinin kendi adresini ayıklar. */
+function uniqueEmails(list, excludeEmail) {
+  const skip = String(excludeEmail || "").trim().toLowerCase();
+  const seen = new Set();
+  const out = [];
+  (list || []).forEach((item) => {
+    const email = String(item || "").trim().toLowerCase();
+    if (!email || email === skip || seen.has(email)) return;
+    seen.add(email);
+    out.push(email);
+  });
+  return out;
 }
 
 const ParlaEmailService = {
+  uniqueEmails,
+
   /**
    * @param {{ type: string, to: string|string[], ticketData?: object, extra?: object, requestId?: string }} params
+   * @returns {Promise<{success: boolean, message: string, code?: string, partial?: boolean, data?: object}>}
    */
   async send(params) {
     const url = getEmailApiUrl();
     if (!url) {
       console.warn("ParlaEmailService: EMAIL_API_URL tanımlı değil.");
-      return { success: false, message: "E-posta servisi yapılandırılmamış." };
+      return { success: false, code: "not_configured", message: "E-posta servisi yapılandırılmamış." };
+    }
+
+    let token = await getIdToken(false);
+    if (!token) {
+      return {
+        success: false,
+        code: "no_session",
+        message: "Oturum bulunamadı; e-posta gönderilemedi. Lütfen yeniden giriş yapın.",
+      };
     }
 
     const payload = {
@@ -68,19 +104,30 @@ const ParlaEmailService = {
       requestId: params.requestId || newRequestId(),
     };
 
-    let lastError = { success: false, message: "E-posta gönderilemedi." };
+    let lastError = { success: false, code: "unknown", message: "E-posta gönderilemedi." };
+    let refreshed = false;
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
         const res = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           body: JSON.stringify(payload),
         });
         const json = await parseResponse(res);
+
+        if (res.status === 401 && !refreshed) {
+          // Süresi dolmuş token olabilir: bir kez yenileyip tekrar dene.
+          refreshed = true;
+          token = (await getIdToken(true)) || token;
+          continue;
+        }
+
         if (json.success === false) {
           lastError = {
             success: false,
+            code: json.code || "",
+            partial: !!json.partial,
             message: json.message || "E-posta gönderilemedi.",
           };
           if (res.status >= 400 && res.status < 500 && res.status !== 429) {
@@ -97,6 +144,7 @@ const ParlaEmailService = {
         console.error("ParlaEmailService.send hatası:", err);
         lastError = {
           success: false,
+          code: "network",
           message: "E-posta gönderilirken bağlantı hatası oluştu.",
         };
       }
@@ -107,34 +155,51 @@ const ParlaEmailService = {
   },
 
   /**
-   * Ticket olayları için hazır bildirim şablonu
+   * Ticket olayları için bildirim. `to` tek adres ya da dizi olabilir; sunucu talep sahibi ve
+   * personel için ayrı (doğru bağlantılı) e-postalar üretir.
    */
   async notifyTicketEvent(eventType, to, ticket, extra) {
     extra = extra || {};
-    const number = ticket?.ticket_number || ticket?.id || "";
-    const title = ticket?.title || "";
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const recipients = uniqueEmails(Array.isArray(to) ? to : [to]);
+    if (!recipients.length) {
+      return { success: true, message: "Alıcı yok; e-posta gönderilmedi.", data: { skipped: true } };
+    }
 
     return this.send({
       type: eventType,
-      to,
+      to: recipients,
       ticketData: {
-        event: eventType,
-        audience: extra.audience || inferAudience(eventType, to),
         ticket_id: ticket?.id || ticket?.ticket_id || extra.ticket_id || "",
-        ticket_number: number,
-        title,
-        status: ticket?.status,
-        priority: ticket?.priority,
-        company_name: ticket?.company_name || extra.company_name || "",
-        user_name: ticket?.user_name || extra.user_name || "",
-        user_email: ticket?.user_email || extra.user_email || "",
-        portalUrl: extra.portalUrl || origin,
-        note: extra.note || "",
+        portalUrl: extra.portalUrl || (typeof window !== "undefined" ? window.location.origin : ""),
       },
+      extra: { note: extra.note || "" },
     });
+  },
+
+  /** GET /api/send-email — sunucu yapılandırması (RESEND_API_KEY var mı?). */
+  async health() {
+    try {
+      const res = await fetch(getEmailApiUrl(), { method: "GET" });
+      const json = await parseResponse(res);
+      if (json.success === false) return { reachable: false, configured: false, message: json.message };
+      return { reachable: true, configured: !!json.configured, from: json.from || "" };
+    } catch {
+      return { reachable: false, configured: false, message: "E-posta servisine ulaşılamadı." };
+    }
+  },
+
+  /** Resend alan adı doğrulama durumu (yalnızca admin rolleri). */
+  async diagnose() {
+    const res = await this.send({ type: "diagnostic", to: "diagnostic@invalid.local" });
+    return res;
+  },
+
+  /** Giriş yapan yöneticinin kendi adresine test e-postası gönderir. */
+  async sendTest() {
+    const me = window.__PARLA_FIREBASE?.auth?.currentUser?.email || "";
+    return this.send({ type: "test_email", to: me || "test@invalid.local" });
   },
 };
 
-export { ParlaEmailService };
+export { ParlaEmailService, uniqueEmails };
 export default ParlaEmailService;
