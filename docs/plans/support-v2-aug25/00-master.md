@@ -41,4 +41,7 @@
 - Yetki = RTDB rules + UI (Admin SDK yok).
 - Public Auth signup açık.
 - Auth silme Console.
-- Ticket maili GAS, Resend değil.
+- Ticket/davet maili artık Netlify Function + Resend; çağrılar Firebase ID token ister
+  (bkz. `docs/ticket-system-analysis.md`). Mail hataları Aktiviteler'de "E-posta Gönderilemedi" olarak izlenir.
+- Açık Auth kaydı: invite-only mimarisi istemci tarafı kullanıcı oluşturmaya dayandığı için kapatılamaz; RTDB kuralları
+  profili olmayan hesabı etkisiz bırakır.
