@@ -16,13 +16,14 @@ module.exports = (L) => `
       <tr><td>Firmadaki diğer kullanıcıların taleplerini görme</td><td>Hayır</td><td><strong>Evet</strong></td></tr>
       <tr><td>Talep açma, yanıtlama, dosya ekleme</td><td>Evet (kendi talepleri)</td><td>Evet (firmanın tüm talepleri)</td></tr>
       <tr><td>Kapanış onayı verme / yeniden açma</td><td>Evet (kendi talepleri)</td><td>Evet (firmanın tüm talepleri)</td></tr>
+      <tr><td>Kullanıcı hesaplarını portaldan yönetme (ekleme, rol/şifre/pasife alma)</td><td>Hayır</td><td>Hayır — Parla BT ekibi yapar</td></tr>
       <tr><td>Dahili (personel) notlarını görme</td><td>Hayır</td><td>Hayır</td></tr>
     </tbody>
   </table>
-  ${L.info("Firma yöneticisi rolünü Parla BT atar. Yeni bir yönetici belirlemek veya rolü değiştirmek için destek ekibimize e-posta gönderin.")}
+  ${L.info("Firma yöneticisi rolünü Parla BT atar; firma yöneticisi de başka bir kullanıcıyı portaldan ekleyemez veya rolünü değiştiremez. Yeni bir kullanıcı eklemek, yönetici belirlemek veya rolü değiştirmek için destek ekibimize e-posta gönderin.")}
 
   <h2>Profiliniz</h2>
-  <p>${L.menu("Profil")} sayfası hesap bilgilerinizi ve talep istatistiklerinizi gösterir. Bilgiler salt okunurdur; ad, telefon veya firma bilgilerinizde değişiklik gerekiyorsa Parla BT destek ekibine bildirin.</p>
+  <p>${L.menu("Profil")} sayfası hesap bilgilerinizi ve talep istatistiklerinizi gösterir. Bilgiler salt okunurdur; ad, telefon veya firma bilgilerinizde değişiklik gerekiyorsa Parla BT destek ekibine bildirin. Hesabınız Parla BT tarafından <strong>pasife alınırsa</strong> giriş yapamazsınız ve açık oturumunuz sonraki sayfada kapanır; talepleriniz silinmez.</p>
   ${L.fig("07-profil", { wide: true, url: "www.parlabilgiteknolojileri.net/support-v2/customer/profile.html", caption: "Profil sayfası.",
     legend: ["<strong>Profil Bilgileri</strong> — ad soyad, e-posta, telefon, rol, firma, müşteri kodu, son giriş ve hesap durumu.", "<strong>Talep İstatistikleri</strong> — toplam, aktif ve çözülen talep sayısı.", "<strong>Şifre Değiştir</strong> — menünün altından erişilir."] })}
 
@@ -36,7 +37,7 @@ module.exports = (L) => `
   <h2>Güvenli kullanım</h2>
   <div class="cards">
     <div class="card"><div class="ico" data-ico="key-round"></div><h4>Şifrenizi koruyun</h4><p>Şifrenizi kimseyle paylaşmayın, bir yere not etmeyin; başka sitelerde kullandığınız şifreleri kullanmayın.</p></div>
-    <div class="card blue"><div class="ico" data-ico="log-out"></div><h4>Oturumu kapatın</h4><p>Ortak veya paylaşılan bilgisayarlarda işiniz bitince mutlaka <em>Çıkış Yap</em>'a tıklayın.</p></div>
+    <div class="card blue"><div class="ico" data-ico="log-out"></div><h4>Oturumu kapatın</h4><p>Ortak veya paylaşılan bilgisayarlarda işiniz bitince mutlaka <em>Çıkış Yap</em>'a tıklayın. Portalda 30 gün işlem yapmazsanız oturum kendiliğinden kapanır.</p></div>
     <div class="card amber"><div class="ico" data-ico="paperclip"></div><h4>Hassas veri eklemeyin</h4><p>Mesaj ve ekran görüntülerinde şifre, TC kimlik numarası, maaş bilgisi gibi verileri gizleyin.</p></div>
   </div>
   ${L.warn("Parla BT çalışanları sizden hiçbir zaman şifrenizi istemez. Şifrenizi isteyen bir e-posta veya telefon aldıysanız yanıt vermeyin ve bize bildirin.")}

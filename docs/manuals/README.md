@@ -7,16 +7,41 @@ JetBrains Mono — Türkçe için `latin-ext` dahil), logo, kapak, bölüm açı
 ```
 docs/manuals/
 ├── build.cjs            derleyici  (node build.cjs <kılavuz-adı>)
-├── capture.cjs          ekran görüntüsü yardımcısı (isteğe bağlı)
+├── capture.cjs          ekran görüntüsü yardımcısı (tek sayfa, isteğe bağlı)
+├── capture-screens.cjs  gerçek arayüzden TÜM kılavuz görüntülerini üretir (user | admin | all)
+├── capture-specs.cjs    görüntü tanımları: oturum, sayfa, seçiciler, pinler (arayüz değişince burası güncellenir)
 ├── theme.css            tasarım sistemi (sayfa, kapak, açılış, içindekiler, tüm bileşenler)
 ├── assets/              logo-bt.png (başlık/kapak), logo-bt-tagline.png (sloganlı)
 ├── content/
+│   ├── _lib.cjs         ortak yardımcılar (fig/steps/faq/ST rozetleri; pinler screens/*.json'dan)
 │   ├── _sample/         tasarımı kanıtlayan örnek (index.html, meta.json, screens/)
-│   ├── user/            (siz ekleyeceksiniz)  index.html + meta.json + screens/
-│   └── admin/           (siz ekleyeceksiniz)
+│   ├── user/            Kullanıcı Kılavuzu: parts/*.cjs (bölümler) → make.cjs → index.html + meta.json + screens/
+│   └── admin/           Sistem Adminleri Kılavuzu: parts/*.cjs, _admin.cjs (rol rozetleri, yetki matrisi), make.cjs, style.css
 ├── out/                 üretilen PDF'ler (meta.json -> "output")
 └── .build/              ara HTML dosyaları (git'e girmez)
 ```
+
+## 0. Gerçek kılavuzları yenileme (Kullanıcı ve Sistem Adminleri)
+
+İki kılavuz da **uygulamanın gerçek arayüzünden** üretilir: sahte Firebase + gerçek RTDB kuralları (targaryen) + demo veri (`tests/e2e/harness.cjs`, `seed.cjs`).
+Arayüz metinleri, düğme adları veya sayfalar değişince şu sırayı izleyin (repo kökünden):
+
+```bash
+(cd tests/rules && npm install) ; (cd docs/manuals && npm install)       # bir kez
+node docs/manuals/capture-screens.cjs user|admin|all    # ekran görüntüleri + pin koordinatları (screens/*.png, *.json)
+node docs/manuals/content/<user|admin>/make.cjs         # parts/*.cjs -> content/<ad>/index.html
+node docs/manuals/build.cjs <user|admin>                # -> docs/manuals/out/<PDF>
+cp docs/manuals/out/*.pdf support-v2/docs/              # ELLE: derleyici yalnızca out/ yazar; portal support-v2/docs/ altındakini yayınlar
+```
+
+- **Metin** `content/<ad>/parts/*.cjs` içinde (HTML şablon dizeleri); görsel yerleşimi `L.fig(...)`/`L.side(...)` ile, pin sayısı ile açıklama (`legend`) sayısı **eşit** olmalıdır (`make.cjs` uyarır).
+- **Görüntü tanımı** `capture-specs.cjs` içinde: `shot({ name, as: <rol uid>, url, target/targets, pins })`. Seçici metinleri arayüzdeki başlıklarla eşleşmelidir
+  (örn. `sec("Atanmamış / Sahipsiz Talepler")`); arayüz sözcüğü değişirse seçici de değişmelidir. Hızlı yeniden çekim: `ONLY=a02-liste,a03 node docs/manuals/capture-screens.cjs admin` (ad öneklerine göre).
+- Roller (admin): `u_root` Süper Admin, `u_service` Destek Atayıcı, `u_pm` Proje Yöneticisi, `u_cons1/u_cons2` Danışman; müşteri: `u_cust`, `u_cadmin` (firma yöneticisi).
+  Sunucu işlevi (`/api/admin-users`) harness'te tanımlı değildir; davet/yetim hesap görüntüleri `capture-specs.cjs` içinde bu uç **taklit edilerek** çekilir.
+- **Terminoloji:** "Talep" (Ticket değil), "Kullanıcılar" (eski Muhataplar), "Muhatap" yalnızca müşteri firma kişisi, "Danışman" (Personel değil), "Yeniden Açıldı", "Durumu Kaydet".
+- Derleme sonrası kontrol: sayfa sayısı, Türkçe karakter denetimi (U+FFFD = 0) ve içindekiler doğrulaması çıktıda görünür; PDF'lerin `support-v2/docs/` altına kopyalandığını `node tests/e2e/guides.e2e.cjs` doğrular.
+- Giriş sayfasında yalnızca Kullanıcı Kılavuzu listelenir; Sistem Adminleri Kılavuzu personel menüsünde/üst çubukta durur (PDF URL ile erişilebilir olduğundan hassas içerik koymayın).
 
 ## 1. Derleme
 
@@ -29,7 +54,7 @@ node docs/manuals/build.cjs user      # content/user/ -> meta.json'daki "output"
 node docs/manuals/build.cjs user --html-only   # yalnızca .build/user.html (tarayıcıda göz atmak için)
 ```
 
-Playwright/Chromium bu ortamda `/opt/node-tools` ve `/opt/pw-browsers` altında hazırdır; derleyici bunları kendiliğinden
+Bulut/CI ortamlarında Playwright/Chromium genellikle hazır gelir (ör. `/opt/node-tools`, `/opt/pw-browsers`); derleyici bu konumları kendiliğinden
 bulur. Başka makinede: `PLAYWRIGHT_PATH=/yol/node_modules/playwright` ve/veya `CHROMIUM_PATH=/yol/chrome` ayarlayın
 (ya da `npm i playwright && npx playwright install chromium`). Sayfa kenar kutuları için Chromium 131+ gerekir
 (Chromium 141 / Playwright 1.56 ile denendi).
@@ -140,7 +165,7 @@ Adımlar bölünmez (`break-inside: avoid`); çok uzun adım için `<li class="l
 
 ### Ekran görüntüsü figürü
 ```html
-<figure class="shot" data-url="destek.parlabilgiteknolojileri.net/support-v2/login.html">
+<figure class="shot" data-url="www.parlabilgiteknolojileri.net/support-v2/login.html">
   <img src="screens/01-giris-sayfasi.png" alt="">
   <figcaption>Giriş sayfası.</figcaption>
 </figure>
@@ -211,7 +236,7 @@ Pin yüzdeleri **görsele** göre hesaplanır (tarayıcı şeridi ve altyazı ha
 <span class="badge pending_close">Kapanış Onayı Bekliyor</span>
 <span class="badge resolved">Çözüldü</span>
 <span class="badge closed">Kapandı</span>
-<span class="badge reopened">Tekrar Açıldı</span>
+<span class="badge reopened">Yeniden Açıldı</span>
 
 <span class="prio low">Düşük</span> <span class="prio medium">Orta</span>
 <span class="prio high">Yüksek</span> <span class="prio critical">Kritik</span>
@@ -260,7 +285,7 @@ başlık/hücre stilini paylaşan, şeritsiz sade bir tablodur; örnekte kullan�
 
 <table class="glossary">
   <thead><tr><th>Terim</th><th>Açıklama</th></tr></thead>
-  <tbody><tr><td>Talep (ticket)<small>isteğe bağlı alt not</small></td><td>Destek isteği.</td></tr></tbody>
+  <tbody><tr><td>Talep<small>isteğe bağlı alt not</small></td><td>Destek isteği.</td></tr></tbody>
 </table>
 ```
 

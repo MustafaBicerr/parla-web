@@ -1,131 +1,140 @@
-# Ticket Sistemi (Destek Portalı v2) — Analiz, Durum ve Yol Haritası
+# Talep Sistemi (Destek Portalı v2) — Mimari, Durum ve Bilinen Sınırlar
 
-Tarih: 2026-10-06 · Kapsam: `support-v2/`, `assets/js/support-v2/`, `netlify/`, `database.rules.json`
+Güncelleme: 2026-10-07 (denetim WP-02…WP-16 sonrası) · Kapsam: `support-v2/`, `assets/js/support-v2/`, `netlify/`, `database.rules.json`
+Bu belge **uygulanan sistemi** anlatır; denetim bulguları ve iş planı için `docs/ticket-sistemi-denetim-raporu.md`, yayın sırası için
+`docs/yayin-kontrol-listesi.md`, işletim için `docs/runbook.md`.
 
 ## 1. Mimari (kısa)
 
 | Katman | Teknoloji | Not |
 |---|---|---|
-| Arayüz | Statik HTML + ES modülleri (`support-v2/**`, `assets/js/support-v2/**`) | Framework yok, build yok |
-| Kimlik | Firebase Auth (e-posta/şifre) | Kullanıcı oluşturma istemci tarafında (ikincil app) |
-| Veri | Firebase Realtime Database, `v2/*` | Yetki = `database.rules.json` + arayüz (Admin SDK yok) |
-| E-posta | Tarayıcı → `POST /api/send-email` (Netlify Function) → Resend | Form mailleri ayrı: GAS (`yedek_kod.gs`) |
-| Auth e-postaları | Firebase Console SMTP (Resend) | Console işi, kodla yönetilmiyor |
+| Arayüz | Statik HTML + ES modülleri (`support-v2/**`, `assets/js/support-v2/**`) | Framework yok, build yok; yerel Font Awesome alt kümesi; dar ekranda tablolar kart olur |
+| Kimlik | Firebase Auth (e-posta/şifre) | Kullanıcı oluşturma **sunucu işleviyle** (`/api/admin-users`, Admin SDK/servis hesabı: davet + geri alma + onarım); servis hesabı yoksa uyarıyla istemci tarafı yedek akış |
+| Veri | Firebase Realtime Database, `v2/*` | Yetki = `database.rules.json` (kaynak `tests/rules/generate-rules.js`, elle düzenlenmez) + arayüz; sunucu işlevleri Admin SDK kullanır |
+| E-posta | Tarayıcı → `POST /api/send-email` (Netlify Function) → Resend | Alıcılar ve içerik **sunucuda** türetilir; hız sınırı + günlük kota; tarayıcı kuyruğu (geçici hatalar) |
+| Zamanlanmış işler | Netlify scheduled functions | `ticket-automation` (30 dk), `email-digest` (06:00 UTC), `backup-export` (02:30 UTC); servis hesabı yoksa kendiliğinden kapalı |
+| Auth e-postaları | Firebase Console SMTP (Resend) | Şifre sıfırlama (kullanıcının başlattığı); yönetici davet/bağlantı e-postaları Netlify işlevinden gider |
+| Site formları | Apps Script (`docs/gas/yedek_kod.gs`, gizli anahtarsız yedek) | Portal talep e-postaları GAS'tan **geçmez** |
+| Yedek | Netlify Blobs (14 gün) + GitHub Actions artifact (30 gün, isteğe bağlı şifreli) | Bkz. `docs/runbook.md` §4 |
 
 ## 2. Hazırlık durumu
 
 | Modül | Durum | Not |
 |---|---|---|
-| Giriş / roller / yönlendirme | Hazır | `company_admin` dahil 7 rol; zorunlu şifre değişimi (`must_change_password`) |
-| Talep açma (müşteri / yönetici) | Hazır | Numara: `TİP-MÜŞTERİ-MODÜL-YYAA-SIRA`; dosya eki (≤3 dosya, ≤2 MB) |
-| Atama (çoklu danışman, birincil) | Hazır | Danışman e-postası atamaya kaydedilir (`personel_email`) |
-| Mesajlaşma, efor kaydı, geçmiş | Hazır | **Dahili notlar ayrı düğümde** (`ticket_internal_notes`), müşteri veritabanı düzeyinde okuyamaz |
-| Durum akışı | Hazır | `açık → atandı → işlemde → müşteri bekleniyor → onay bekleniyor → çözüldü → kapandı` (+ `yeniden açıldı`); müşteri kapanış onayı ve 14 günlük yeniden açma |
-| SLA / hedef süreler | Hazır | Önceliğe göre ilk yanıt/çözüm hedefi; `müşteri bekleniyor`da süre durur; listede ve ayrıntıda rozet; panoda "SLA Aşımı" |
-| Uygulama içi bildirim | Hazır | Türetilmiş bildirim zili (veritabanına yazmaz); okundu bilgisi tarayıcıda |
-| E-posta bildirimleri | Hazır, dağıtım bekliyor | §3; hatalar görünür (toast + aktivite), geçici hatalarda tarayıcı kuyruğu + otomatik yeniden deneme |
-| Muhataplar (kullanıcı yönetimi) | Hazır | Davet, geçici şifre e-postası, rol/firma atama |
-| Firma içi görünürlük | Hazır | `company_admin` firmanın tüm taleplerini görür/yanıtlar |
-| Firma / sözleşme / proje / personel / raporlar | Hazır | Raporlar tüm talepleri istemciye çeker (ölçek notu §5) |
-| Güvenlik (RTDB kuralları) | Hazır, dağıtım bekliyor | §4; 49 kural testi |
+| Giriş / roller / yönlendirme | Hazır | 7 rol (`company_admin` dahil); zorunlu şifre değişimi (geçici şifreli hesaplar); boşta oturum zaman aşımı: personel 8 saat, müşteri 30 gün |
+| Talep açma (müşteri / yönetici) | Hazır | Numara `TİP-MÜŞTERİ-MODÜL-YYAA-SIRA` (değişmez); dosya eki (≤3 dosya, ≤2 MB); **talep tipi kilidi** (CUS → SUP/BUG, ARC → ARZ/BUG; kurallarda da); PRJ talebi proje ister (yönetici tarafı) |
+| Atama (çoklu danışman, birincil) | Hazır | Danışman e-postası/kimlik bağı atamaya kaydedilir; danışman **tüm talepleri okur, yalnızca atandığı talepte yazar** (kurallar `assigned_uids` ile zorlar) |
+| Mesajlaşma, efor kaydı, geçmiş | Hazır | **İç notlar ayrı düğümde** (`ticket_internal_notes`); efor 0,25–24 saat, en çok 30 gün geriye, girenin danışman kaydına |
+| Hazır yanıtlar | Hazır | `reply_templates`; değişkenler `{musteri_adi}`, `{talep_no}`, `{danisman}`; yazma yalnız süper admin/destek atayıcı |
+| Toplu işlemler | Hazır | Toplu atama / toplu durum (yalnız süper admin, destek atayıcı, proje yöneticisi); en çok 300 talep; durum için ≥10 karakter not; yalnız Çözüldü/Kapandı müşteriye e-posta |
+| Durum akışı | Hazır | İzinli geçiş matrisi (`ticket-utils.js` ve kurallar); koşullu yazma (bayat ekran yarım kayıt yapmaz); damgalar (`resolved_at/closed_at/reopened_at`) tek yerden |
+| Müşteri yanıtı | Hazır | Kapanış Onayı / Çözüldü iken müşteri yanıtı talebi **otomatik yeniden açar**; Müşteri Bekleniyor'da yanıt → İşlemde; kapalı talebe yazılamaz (14 gün içinde yeniden açılır) |
+| SLA | Hazır | **7/24 takvim saati**; Müşteri Bekleniyor ve Kapanış Onayı Bekliyor'da saat **gerçekten durur**; çözüm = kapanış onayına ilk geçiş; ihlal damgası kalıcı; yeniden açılışta yeni pencere; yalnız SUP/ARZ/BUG |
+| Otomasyon | Hazır (servis hesabı gerekir) | SLA %80 uyarısı ve aşımı; Müşteri Bekleniyor hatırlatmaları (3. ve 7. gün); Kapanış Onayı hatırlatması (3. gün) ve **10. gün otomatik kapanış**; 4 saat atanmamış eskalasyonu |
+| Silme | Hazır | Yumuşak silme (arşiv; süper admin + destek atayıcı geri yükler) ve yalnız süper adminin **kalıcı silmesi** (tüm bağlı düğümlerle, geri alınamaz) |
+| Uygulama içi bildirim | Hazır | Türetilmiş zil (veritabanına yazmaz); hedefli sorgular; görünür sekmede ≈5 dk yoklama; okundu bilgisi tarayıcıda |
+| E-posta bildirimleri | Hazır, dağıtım bekliyor | §4; hatalar görünür (uyarı + aktivite), geçici hatalarda tarayıcı kuyruğu |
+| Kullanıcılar | Hazır | Davet (şifre içermeyen bağlantı e-postası), **Yetim Hesabı Onar**, şifre belirleme bağlantısı, pasife alma (Auth hesabı da kapanır); yalnız süper admin/destek atayıcı (**firma yöneticisi kullanıcı yönetemez**); destek atayıcı süper admin/destek atayıcı rolü veremez |
+| Firma / sözleşme / proje / danışman | Hazır | Firma ad/kod değişince kopyalar yayılır; sözleşme etkin durumu tek hesaptan, firma "Sözleşmeli" rozeti ondan türer; **sözleşme bedeli yalnız süper admin/destek atayıcı** (`contract_values`); PRJ talepleri projeye bağlanır |
+| Modüller / Destek Türleri | Referans (salt-okunur) | Formlar, SLA ve numara sabit kod listesini (`ticket-utils.js`) kullanır; sayfalardaki değişiklikler formlara yansımaz |
+| Raporlar, aktiviteler, dışa aktarma | Hazır | CSV `;` ayraçlı, formül nötrlemeli; çözüm süresi pano ve raporlarda aynı tanım; aktivite `limitToLast(200)` + "Daha eski yükle" |
+| Güvenlik (RTDB kuralları) | Hazır, dağıtım bekliyor | §5 |
 | Şifre değiştirme / sıfırlama | Hazır | `change-password.html`, `auth-action.html` (şifre kuralı: ≥8, 1 büyük harf, 1 rakam) |
-| PDF kılavuzlar | Hazır | `support-v2/docs/` — giriş sayfasından ve menüden erişilir; kaynak: `docs/manuals/` |
+| PDF kılavuzlar | Hazır | `support-v2/docs/`; kullanıcı kılavuzu girişten ve menüden, **sistem adminleri kılavuzu yalnız personel menüsünden/üst çubuktan**; kaynak `docs/manuals/` |
 | Eski v1 portal | Kaldırıldı | `support/`, `assets/js/support/` silindi; `/support` → v2 girişine yönlenir |
 
-Genel değerlendirme: uçtan uca akış (aç → ata → yanıtla → çöz → müşteri onayı → kapat / yeniden aç) tamam. Üretime almadan önce
-yalnızca **altyapı adımları** kalır; sıra ve kontroller `docs/yayin-kontrol-listesi.md` içindedir.
+Genel değerlendirme: uçtan uca akış (aç → ata → yanıtla → çöz → müşteri onayı → kapat / yeniden aç) ve yönetim modülleri tamam. Üretime almadan önce
+**altyapı adımları** (veri taraması, kural dağıtımı, Console ayarları, servis hesabı) `docs/yayin-kontrol-listesi.md` sırasıyla yapılmalıdır.
 
-## 3. "Mailler neden gönderilmiyor?" — bulgular
+## 3. Terminoloji
 
-Kodda **kanıtlanan** nedenler (hepsi düzeltildi):
+| Terim | Anlamı |
+|---|---|
+| **Talep** | Portaldaki tek kayıt türü; müşteri ve yönetim tarafında aynı sözcük ("Ticket" kullanılmaz). Menü: *Talepler* (yönetim), *Taleplerim* (müşteri) |
+| **Muhatap** | Yalnızca **müşteri firmadaki kişi** (talep sahibi); personel için kullanılmaz |
+| **Kullanıcı** | Portalda hesabı olan herkes; yönetim menüsü *Kullanıcılar* (eski "Muhataplar") |
+| **Danışman** | Taleplere atanabilen personel kaydı (*Danışmanlar*; "Personel" değil); birincil danışman liste/iş yükü/zil için esastır |
+| Durum etiketleri | Açık · Atandı · İşlemde · Müşteri Bekleniyor · Kapanış Onayı Bekliyor · Çözüldü · Kapandı · **Yeniden Açıldı** (eski "Tekrar Açıldı") |
 
-1. **Hatalar sessizce yutuluyordu.** `ParlaEmailService.send` hata durumunda `{success:false}` döndürüyor,
-   çağıranlar sonucu hiç kontrol etmiyor (`.catch(() => {})`) ve "Yanıt gönderildi" diyordu. Yani
-   Resend/Netlify tarafında ne olursa olsun kimse fark etmiyordu. → Artık toast uyarısı +
-   Aktiviteler'de **"E-posta Gönderilemedi"** kaydı var.
-2. **Kullanıcı yönetimi sayfası hiç açılmıyordu.** `users.js`, repoda olmayan `access-control.js`,
-   `matchesSearch` ve `ParlaDb.emailHasConflictingRole`'a dayanıyordu (commit `dd1913a`); tarayıcıda modül 404.
-   Davet ve "giriş bilgilerini e-posta ile gönder" bu sayfadan tetiklendiği için **hiç gönderilemiyordu**.
-   Ayrıca oluşturma sonrası geçici şifre penceresi, liste yenilenirken siliniyordu.
-3. **Atama sonrası müşteri yanıtları kimseye bildirilmiyordu.** Müşteri sayfası personel listesini
-   yüklemediği için atanmış danışmanın adresi bulunamıyordu.
-4. **Yanlış alıcı / şablon:** admin güncellemesinde müşteriye "Size yeni bir talep atandı" (personel şablonu,
-   admin bağlantısı) gidiyordu; personele müşteri bağlantılı mail gidiyordu; atama + durum birlikte
-   değişince durum maili atlanıyordu; müşteri talep açınca kendisine onay maili gitmiyordu;
-   `waiting_customer` için hazır şablon (`send_to_customer`) kullanılmıyordu.
-5. **Uç nokta açıktı** (güvenlik): kimlik doğrulama yoktu, `Origin` başlığı yoksa herkes `info@` adresinden
-   keyfi içerikle (örn. sahte "giriş bilgileriniz" + `loginUrl`) mail gönderebilirdi.
+## 4. E-posta mimarisi ve doğrulama
 
-**Altyapıda doğrulanması gerekenler** (sandbox'tan canlı siteye erişim yok; kodla kanıtlanamaz):
+Tarihçe (denetim öncesi hatalar, **düzeltildi**): hatalar sessizce yutuluyordu; kullanıcı yönetimi sayfası eksik modül yüzünden açılmıyordu; atama sonrası müşteri yanıtları
+kimseye bildirilmiyordu; bazı olaylarda yanlış alıcı/şablon seçiliyordu. Bugünkü model:
+
+- Tarayıcı yalnızca olayı ve kayıt kimliğini (`message_id` / `history_id`) iletir; **alıcıları ve metni sunucu** veritabanından türetir, e-posta kök adresi sabittir (`SITE_URL`).
+- Her istek Firebase kimlik jetonu taşır; pasif hesap reddedilir; `Origin` denetlenir (tam eşleşme; `*.netlify.app` jokeri yok, `localhost` yalnızca üretim dışı).
+- Hız sınırı (kullanıcı/talep başına) ve **günlük kota** (yumuşak 80 / sert 95; Resend ücretsiz planı ≈100/gün, Auth + form e-postalarıyla ortak). Kota dolunca düşük öncelikli bildirimler günlük özete (06:00 UTC) düşer.
+- Geçici hatalarda tarayıcı kuyruğu: en çok 6 deneme veya 24 saat (5 dk, 30 dk, 2 sa, 6 sa, 12 sa aralıklar), aynı istek kimliğiyle mükerrer gitmez; süre dolarsa Aktiviteler'e `E-posta Gönderilemedi` yazılır. Kuyruk tarayıcıya bağlıdır; sunucu tarafı kalıcı kuyruk yoktur.
+- Parola e-postayla **gönderilmez**: yeni kullanıcıya şifre belirleme bağlantısı gider. Bildirim e-postalarında "bu adrese yanıt vermeyin, portaldan yazın" notu vardır.
+- Portal e-postaları Apps Script'ten geçmez; Apps Script yalnızca kurumsal site formlarını (iletişim/kariyer/fikir/sohbet) işler.
+
+**Altyapıda doğrulanması gerekenler** (kodla kanıtlanamaz):
 
 | # | Kontrol | Nasıl bakılır |
 |---|---|---|
-| A | Netlify function yayında mı, site Netlify'da mı? | `curl -s https://www.parlabilgiteknolojileri.net/api/send-email` → `{"configured":true,...}` bekleniyor. HTML/404 ise function yok (site Firebase Hosting'de olabilir: `firebase.json` hosting'de `/api/send-email` yönlendirmesi **yok**). |
+| A | Netlify function yayında mı, site Netlify'da mı? | `curl -s https://www.parlabilgiteknolojileri.net/api/send-email` → `{"configured":true,...}` bekleniyor. HTML/404 ise function yok. |
 | B | `RESEND_API_KEY` Netlify ortam değişkeni | Yukarıdaki yanıtta `configured:false` ise eksik. Değişkenden sonra **yeniden deploy** gerekir. |
-| C | Resend'de `parlabilgiteknolojileri.net` doğrulanmış mı (SPF/DKIM) | Dashboard → E-posta Servisi → "Durumu Kontrol Et" (tam yetkili anahtarla alan adı durumunu gösterir). |
-| D | Uçtan uca | Dashboard → "Test E-postası Gönder" (kendi adresinize). Spam klasörüne de bakın. |
-| E | Site hangi alan adında? | İzinli: `parlabilgiteknolojileri.net`, `www.`, `parla-bt-web.web.app`, `parla-bt-web.firebaseapp.com`, `*.netlify.app`. Başka alan adı (ör. `.com`) için Netlify'a `ALLOWED_ORIGINS=alanadi.com` ekleyin. |
-| F | Firebase Auth e-postaları (şifre sıfırlama / davet) | Console → Authentication → Templates → SMTP (`smtp.resend.com`, 587, kullanıcı `resend`) ve "Customize action URL" = `https://www.parlabilgiteknolojileri.net/support-v2/auth-action.html`. Aksi halde Firebase'in varsayılan göndericisi kullanılır ve spam'e düşer. |
+| C | Resend'de `parlabilgiteknolojileri.net` doğrulanmış mı (SPF/DKIM) | Genel Bakış → E-posta Servisi → "Durumu Kontrol Et" (tam yetkili anahtarla alan adı durumunu gösterir). |
+| D | Uçtan uca | "Test E-postası Gönder" (kendi adresinize). Spam klasörüne de bakın. |
+| E | Site hangi alan adında? | İzinli: `parlabilgiteknolojileri.net`, `www.`, `parla-bt-web.web.app`, `parla-bt-web.firebaseapp.com`. Başka alan adı veya deploy önizlemesi için Netlify'a `ALLOWED_ORIGINS=tam.host` ekleyin. |
+| F | Firebase Auth e-postaları (şifre sıfırlama) | Console → Authentication → Templates → SMTP (`smtp.resend.com`, 587, kullanıcı `resend`) ve "Customize action URL" = `https://www.parlabilgiteknolojileri.net/support-v2/auth-action.html`. Aksi halde Firebase'in varsayılan göndericisi kullanılır ve spam'e düşer. |
 
-Site Firebase Hosting'de, function Netlify'daysa: `assets/js/site-config.js` içinde
-`EMAIL_API_URL: "https://<netlify-site>.netlify.app/api/send-email"` yazın (CORS desteği eklendi).
+Site Firebase Hosting'de değil Netlify'dadır (`firebase.json` hosting bloğu kaldırıldı). Site başka bir yerde çalıştırılırsa `assets/js/site-config.js` içinde
+`EMAIL_API_URL` / `ADMIN_USERS_API_URL` Netlify adresine çevrilir (CORS desteklidir).
 
-## 4. Güvenlik bulguları (RTDB kuralları) — düzeltildi
+## 5. Güvenlik (RTDB kuralları)
 
-`tests/rules` (targaryen ile yerel simülasyon): **eski kurallarda 34 testin 20'si başarısız**, yenilerde 34/34 geçiyor.
+Eski sürümdeki kritik açıklar (kullanıcı profili üzerinden yetki yükseltme, başkasının talebini okuma/silme, herkese açık sözleşme/personel verisi, müşterinin kendi talebinin
+durumunu/önceliğini değiştirmesi) **yeni kurallarla kapatılmıştır**; kurallar canlıya dağıtılana kadar eski kurallar geçerlidir — bu yüzden kural dağıtımı yayın listesinin zorunlu adımıdır.
+Bugünkü kurallar özeti (ayrıntı: `tests/rules/generate-rules.js` başlık yorumu ve `tests/rules/README.md`):
 
-- **Kritik — yetki yükseltme:** `users/$uid` yazma kuralı kullanıcının kendi profilini serbestçe yazmasına izin
-  veriyordu; herhangi bir müşteri (ya da herkese açık Auth kaydıyla oluşturulmuş hesap) kendine `role: super_admin`
-  yazıp sistemi ele geçirebilirdi.
-- Başka bir kullanıcı `assigned_to_id` sorgusuyla tüm firmaların ticket'larını okuyabiliyordu.
-- Mesajlar/geçmiş herkes tarafından okunup (başka firmanınki dahil) **silinebiliyordu**; aktivite listesi toptan silinebiliyordu.
-- Sözleşme bedelleri, proje, personel iletişim bilgileri ve tüm firma listesi giriş yapmış herkese açıktı.
-- Müşteri kendi ticket'ının önceliğini/atamasını/durumunu (ör. `closed`) değiştirebiliyordu.
+- Pasif hesap hiçbir rolün yetkisini kullanamaz; **profili olmayan hesap talep/mesaj/ek yazamaz**. Kullanıcı kendi rolünü/aktifliğini/firmasını değiştiremez; süper admin ve destek atayıcı hesaplarını yalnız süper admin yönetir.
+- Tüm kritik düğümlerde `.validate`: izinli alan listesi, uzunluk/enum/ISO biçimi, kimlik bağlama (`user_id === auth.uid` vb.); mesajlar, geçmiş ve aktivite eklenir, değiştirilemez.
+- Danışman okumada geniş, **yazmada atamaya bağlı** (`assigned_uids`); müşteri yalnız kendi talebini (firma yöneticisi firmasınınkini) okur; iç notlar ve ekleri yalnız personele açıktır.
+- Müşteri: kapalı/silinmiş talebe yazamaz, kapanmış talebi `closed_at_ms + 14 gün` içinde yeniden açar, talep tipi firma türüne kilitlidir, pasif firma yeni talep açamaz.
+- Silme: yumuşak silme (`is_deleted`) destek atayıcı ve süper admin; kalıcı silme (cascade) yalnız süper admin. Sözleşme bedeli `contract_values` düğümünde yalnız süper admin/destek atayıcıya açıktır.
+- `notifications`, `system_state`, `ops` istemciye kapalıdır; yalnız sunucu (Admin SDK) kullanır.
+- Yetki matrisi (rol × işlem) otomatik test edilir (`tests/rules/matrix.test.js`).
 
-Not: "invite-only" mimarisi kullanıcıları istemci tarafında oluşturduğu için Firebase'de e-posta kaydı kapatılamıyor
-(kapatılırsa davet de çalışmaz). Yeni kurallar profili olmayan hesabı etkisiz bırakır; kalıcı çözüm kullanıcı oluşturmayı
-sunucuya (Cloud Function / Admin SDK) taşımaktır.
+Not: Firebase'de genel e-posta kaydı kapatılamaz; ancak kullanıcılar artık sunucu işleviyle (davet) oluşturulur ve profilsiz hesap kural düzeyinde etkisizdir. Ek önlemler Console ayarlarıdır
+(e-posta numaralandırma koruması, App Check, API anahtarı kısıtı — `docs/yayin-kontrol-listesi.md` §8).
 
-## 5. Bilinen sınırlar ve sonraki adımlar (bilinçli olarak kapsam dışı)
+## 6. Bilinen sınırlar ve sonraki adımlar (bilinçli olarak kapsam dışı)
 
-1. **Sunucu tarafı e-posta kuyruğu yok.** Yeniden deneme tarayıcıda (localStorage) yapılır; kullanıcı sekmeyi kapatırsa bekleyen e-posta bir sonraki
-   girişte gönderilir, 24 saat sonra düşer ve Aktiviteler'e `email_failed` yazılır. Kalıcı çözüm: Cloud Function / zamanlanmış Netlify function.
-2. **Kullanıcı oluşturma istemci tarafında** (ikincil Firebase app). Firebase'de genel e-posta kaydı kapatılamaz; kurallar profili olmayan hesabı etkisiz bırakır.
-   Kalıcı çözüm: Admin SDK ile sunucu tarafı kullanıcı oluşturma.
-3. **Dosya ekleri RTDB'de base64** (Firebase Storage kullanılmıyor): küçük dosyalar için uygundur (≤2 MB, ≤3 dosya, görseller istemcide sıkıştırılır).
-   Hacim büyürse Storage'a taşıyın.
-4. **Ölçek:** yönetici sayfaları ve raporlar `getAllTickets()` ile koleksiyonu çeker; sayfalama istemci tarafında. Binlerce talepten sonra sunucu tarafı sorgu/sayfalama gerekir.
-5. **SLA hedefleri sabit** (`ticket-utils.js` → `SLA_TARGETS_HOURS`); sözleşmeye özel hedef ve eskalasyon e-postası yok.
-6. Mevcut ("must_change_password" bayrağı olmayan) kullanıcılar zorunlu şifre değişimine tabi değildir; isterseniz Console'dan bayrağı ekleyin.
-7. Eski dahili notlar (kural değişikliğinden önce `ticket_messages` içine yazılmış olanlar) için süper admin → Genel Bakış → **Veri Bakımı** → "İç Notları Taşı".
+1. **Sunucu tarafı kalıcı e-posta kuyruğu yok.** Yeniden deneme tarayıcıda yapılır (en çok 6 deneme / 24 saat); sekme kapanırsa bekleyen e-posta bir sonraki girişte gönderilir. Otomasyon e-postaları sunucudan gider ve kota dolunca özete düşer.
+2. **Dosya ekleri RTDB'de base64** (Firebase Storage kullanılmıyor): ≤3 dosya, ≤2 MB, görseller istemcide sıkıştırılır. Ek hacmi ≈500 MB'ı geçerse Storage'a taşıyın (talep başına ek kotası kuralı hazır ama kapalıdır).
+3. **Ölçek:** yönetici liste/raporları tüm talepleri istemciye çeker (aktivite günlüğü ve müşteri listeleri sayfalı/hedefli); binlerce talepten sonra sunucu tarafı özet düğümleri/sayfalama gerekir (Spark kota eşikleri: `docs/runbook.md` §7).
+4. **SLA hedefleri sabit** (`ticket-utils.js` → `SLA_TARGETS_HOURS`); sözleşmeye özel hedef ve mesai takvimi yok (7/24).
+5. **Modül ve destek türü listeleri sabit** kod listesidir; sayfaları referanstır.
+6. Bildirim tercihleri (kullanıcı bazlı e-posta kapatma) yok; e-postadan talebe yanıt (e-posta→talep) yok.
+7. Mevcut ("must_change_password" bayrağı olmayan) kullanıcılar zorunlu şifre değişimine tabi değildir; isterseniz Console'dan bayrağı ekleyin.
+8. Eski dahili notlar (kural değişikliğinden önce `ticket_messages` içine yazılmış olanlar) için süper admin → Genel Bakış → **Veri Bakımı** → "İç Notları Taşı".
+9. KVKK metinleri taslak durumundadır (`docs/kvkk.md`); izleme (Sentry/uptime) hesapları kurulmamıştır (`docs/monitoring.md`).
 
-## 6. Dağıtım sırası
+## 7. Dağıtım sırası
 
-Ayrıntılı, işaretlenebilir liste: **`docs/yayin-kontrol-listesi.md`**. Özet:
+Ayrıntılı, işaretlenebilir liste: **`docs/yayin-kontrol-listesi.md`**; işletim: **`docs/runbook.md`**. Özet:
 
-1. `main` güncel → Netlify'dan yayınlayın (site + `/api/send-email` function).
-2. **Hemen ardından** RTDB kurallarını dağıtın: `firebase deploy --only database` (iç notlar, ekler, kapanış/yeniden açma ve `company_admin` kuralları yeni kurallara bağlıdır;
-   kurallar dağıtılmadan yeni özellikler `PERMISSION_DENIED` verir).
-3. Süper admin → Genel Bakış → **E-posta Servisi**: "Durumu Kontrol Et" + "Test E-postası Gönder".
-4. Firebase Console: SMTP + action URL (§3-F).
-5. Duman testi (müşteri + danışman), ardından Veri Bakımı (isteğe bağlı).
+1. Güvenlik temizliği (sızan anahtarı döndürme, depoyu özel yapma), yerel testler.
+2. **Canlı veriyi tarayıp göç edin** (`tests/rules/scan-existing-data.cjs`; ENGEL varsa kuralları dağıtmayın).
+3. `main` onayla, tek toplu push → Netlify yayını (site + `/api/send-email` + `/api/admin-users` işlevleri).
+4. **Hemen ardından** RTDB kurallarını dağıtın: `firebase deploy --only database --project parla-bt-web` (kurallar istemciye bağlıdır; sırayı bozmayın).
+5. Firebase Console ayarları (SMTP + action URL, e-posta numaralandırma koruması, App Check, API anahtarı kısıtı, şifre politikası) ve E-posta Servisi sınaması.
+6. Duman testi (müşteri + danışman + yönetici), ardından — kapanış onayında 10 günden uzun bekleyen talepleri gözden geçirdikten sonra — servis hesabını ekleyerek otomasyonu/yedeği/kullanıcı yönetimi işlevini etkinleştirin.
 
-Geri alma: `git show 1d537a6:database.rules.json > database.rules.json && firebase deploy --only database` (eski, **güvensiz** kurallar — yalnızca acil durumda).
+Geri alma: Netlify → önceki dağıtım (site); kurallar için Console → Rules → Geçmiş ya da `git show <önceki-iyi-commit>:database.rules.json > database.rules.json && firebase deploy --only database`
+ve ardından `git checkout -- database.rules.json` (eski kurallar güvensiz olabilir; ayrıntı `docs/runbook.md` §3).
 
-## 7. Testler
+## 8. Testler
 
 ```
-node --test netlify/tests/send-email.test.js netlify/tests/client-email-service.test.mjs \
-            netlify/tests/client-firebase.test.mjs netlify/tests/client-notifications.test.mjs \
-            netlify/tests/client-utils.test.mjs        # sunucu + istemci birim testleri (53)
-cd tests/rules && npm install && npm test              # RTDB kuralları (targaryen, 49) + üretecin database.rules.json ile eşitliği
-node tests/e2e/lifecycle.e2e.cjs                       # tarayıcı: talep yaşam döngüsü (34)
-node tests/e2e/bell-sla.e2e.cjs                        # bildirim zili, SLA, e-posta kuyruğu (22)
-node tests/e2e/attachments.e2e.cjs                     # dosya ekleri (22)
-node tests/e2e/guides.e2e.cjs                          # PDF kılavuz bağlantıları ve dosyalar (18)
-node tests/e2e/permissions-ui.e2e.cjs                  # rol bazlı yazma düğmeleri (52)
-node tests/e2e/smoke-all.e2e.cjs                       # tüm roller × tüm sayfalar (75)
+node --test netlify/tests/*.test.* tests/unit/*.test.mjs   # sunucu + istemci birim testleri (e-posta, otomasyon, kullanıcı yönetimi, güvenli çizim, ...)
+(cd tests/rules && npm install && npm test)                # RTDB kuralları: yetki matrisi (rol × işlem) + üretecin database.rules.json ile eşitliği
+(cd tests/e2e && npm install)                              # bir kez (Playwright + axe-core)
+node tests/e2e/run-all.cjs --skip xss,button-crawler       # tarayıcı: yaşam döngüsü, zil/SLA, ekler, kılavuzlar, rol bazlı düğmeler, toplu işlem, hazır yanıtlar,
+                                                           # kullanıcı yönetimi, yönetim modülleri, erişilebilirlik, yerleşim, performans bütçesi, tüm roller × tüm sayfalar
+node tests/e2e/xss.e2e.cjs                                 # XSS (yavaş, ≈10 dk)
 ```
 
-E2E testleri Playwright + Chromium ister (`PLAYWRIGHT_PATH` ile yol verilebilir). Tarayıcıda gerçek RTDB kuralları (targaryen) ve gerçek
-`send-email` fonksiyonu çalışır; yalnızca Google sertifikaları, RTDB REST ve Resend taklit edilir. Kılavuzları yeniden üretmek için `docs/manuals/README.md`.
+E2E dosyalarının tam listesi ve notlar `CLAUDE.md` içindedir. Tarayıcıda gerçek RTDB kuralları (targaryen) ve gerçek `send-email` fonksiyonu çalışır; yalnızca Google sertifikaları, RTDB REST ve Resend taklit edilir.
+Kılavuzları yeniden üretmek için `docs/manuals/README.md`.

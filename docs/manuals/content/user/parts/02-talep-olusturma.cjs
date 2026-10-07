@@ -20,10 +20,10 @@ module.exports = (L) => `
   <table class="fields">
     <thead><tr><th>Alan</th><th>Ne yazmalı / seçmeli?</th><th>Zorunlu mu?</th></tr></thead>
     <tbody>
-      <tr><td>Talep Tipi</td><td>Çoğu durumda <strong>Destek Anlaşmalı Talep</strong>. Aşağıdaki tabloya bakın.</td><td>${L.req}</td></tr>
+      <tr><td>Talep Tipi</td><td>Listede yalnızca firmanızın açabileceği tipler görünür (destek anlaşmalı firmalarda <strong>Destek Anlaşmalı Talep</strong> veya <strong>Hata / Problem Kaydı</strong>; arızi müşterilerde <strong>Arızi Talep</strong> veya <strong>Hata / Problem Kaydı</strong>). Aşağıdaki tabloya bakın.</td><td>${L.req}</td></tr>
       <tr><td>Öncelik</td><td>Sorunun işinize etkisine göre Düşük, Orta, Yüksek veya Kritik.</td><td>${L.req}</td></tr>
       <tr><td>SAP Modülü</td><td>Sorunun ilişkili olduğu modül (FI, MM, SD ...). Emin değilseniz <em>Diğer</em>.</td><td>${L.req}</td></tr>
-      <tr><td>Konu</td><td>5–100 karakter. Sorunu bir cümleyle özetleyin: <em>“Fatura kesiminde vergi kodu hatası”</em>.</td><td>${L.req}</td></tr>
+      <tr><td>Konu</td><td>En az 5 karakter. Sorunu bir cümleyle özetleyin: <em>“Fatura kesiminde vergi kodu hatası”</em>.</td><td>${L.req}</td></tr>
       <tr><td>Açıklama</td><td>En az 20 karakter. Ne yapmaya çalışıyordunuz, hangi hata mesajını gördünüz, ne bekliyordunuz?</td><td>${L.req}</td></tr>
       <tr><td>Ekran Görüntüsü / Dosya</td><td>En fazla 3 dosya; her biri en çok 2 MB.</td><td>${L.opt}</td></tr>
       <tr><td>Ek Bağlantı</td><td>Büyük dosyalar için paylaşım bağlantısı (https:// ile başlamalı).</td><td>${L.opt}</td></tr>
@@ -34,12 +34,13 @@ module.exports = (L) => `
   <p>İki seçim, talebin ne kadar hızlı ve kimin tarafından ele alınacağını belirler. Doğru seçim sizin de lehinizedir.</p>
 
   <h3>Talep tipleri</h3>
+  <p>Talep tipi <strong>firmanıza göre kilitlidir</strong>: destek anlaşmalı (CUS) firmalar yalnızca SUP ve BUG, arızi (ARC) firmalar yalnızca ARZ ve BUG açabilir. Diğer tipler (PRJ, INT, DEV) Parla BT ekibinin iç kullanımı içindir. Doğru tipi bulamıyorsanız hesap yöneticinize yazın; sözleşme durumunuz değiştiğinde seçenekler kendiliğinden değişir.</p>
   <table class="fields">
     <thead><tr><th>Tip</th><th>Ne zaman seçilir?</th><th>Örnek</th></tr></thead>
     <tbody>
-      <tr><td><strong>SUP</strong> — Destek Anlaşmalı Talep</td><td>Destek sözleşmeniz kapsamındaki günlük sorular, hatalar ve küçük değişiklikler.</td><td>“XK01 ile satıcı açamıyorum.”</td></tr>
-      <tr><td><strong>ARZ</strong> — Arızi Talep</td><td>Destek sözleşmesi kapsamında olmayan, tek seferlik hizmet gereken durumlar (Arızi müşteri hesaplarında varsayılan).</td><td>“Eski modülde tek seferlik rapor düzeltmesi.”</td></tr>
-      <tr><td><strong>BUG</strong> — Hata / Problem Kaydı</td><td>Daha önce çalışan bir özelliğin beklenmedik şekilde bozulması.</td><td>“Dünkü transport sonrası fatura belgesi oluşmuyor.”</td></tr>
+      <tr><td><strong>SUP</strong> — Destek Anlaşmalı Talep</td><td>Destek sözleşmeniz kapsamındaki günlük sorular, hatalar ve küçük değişiklikler (yalnızca destek anlaşmalı firmalarda; varsayılan seçenektir).</td><td>“XK01 ile satıcı açamıyorum.”</td></tr>
+      <tr><td><strong>ARZ</strong> — Arızi Talep</td><td>Destek sözleşmesi kapsamında olmayan, tek seferlik hizmet gereken durumlar (yalnızca arızi müşteri firmalarında; varsayılan seçenektir).</td><td>“Eski modülde tek seferlik rapor düzeltmesi.”</td></tr>
+      <tr><td><strong>BUG</strong> — Hata / Problem Kaydı</td><td>Daha önce çalışan bir özelliğin beklenmedik şekilde bozulması (her iki firma türü de açabilir).</td><td>“Dünkü transport sonrası fatura belgesi oluşmuyor.”</td></tr>
     </tbody>
   </table>
 
@@ -111,8 +112,8 @@ module.exports = (L) => `
   <h2>Gönderdikten sonra ne olur?</h2>
   ${L.steps([
     ["Talep numaranız oluşur", `<p>Talebiniz <code>SUP-ORN-FI-2610-0042</code> gibi benzersiz bir numara alır. Numarayı yazışmalarda ve telefonda referans olarak kullanabilirsiniz.</p>`],
-    ["Onay e-postası gelir", `<p>E-posta adresinize “<strong>Talebiniz alındı</strong>” başlıklı bir onay gönderilir. Aynı anda Parla BT destek ekibine de bildirim gider.</p>`],
-    ["Danışman atanır", `<p>Talep ilgili danışmana atanır; durum ${L.ST.assigned} olur ve danışmanın adı talepte görünür. Atama sırasında size ayrıca e-posta gönderilmez; durumu portalda veya bildirim zilinde izleyebilirsiniz.</p>`],
+    ["Onay e-postası gelir", `<p>E-posta adresinize “<strong>Talebiniz alındı</strong>” başlıklı bir onay gönderilir. Aynı anda Parla BT destek ekibine de bildirim gider. Bu e-postaları <strong>yanıtlamayın</strong>; yazışmayı portaldan, talebin içinden yapın.</p>`],
+    ["Danışman atanır", `<p>Talep ilgili danışmana atanır; durum ${L.ST.assigned} olur ve danışmanın adı talepte görünür. Sorumlu danışman belirlendiğinde (ya da değiştiğinde) size “<strong>Talebinize danışman atandı</strong>” başlıklı tek bir e-posta gönderilir; durumu portalda veya bildirim zilinde de izleyebilirsiniz.</p>`],
     ["İlk yanıt ve çözüm", `<p>Danışmanınız talebi ${L.ST.in_progress} durumuna alır ve size talep içinden yazar. Yanıt geldiğinde e-posta ve bildirim alırsınız.</p>`],
   ])}
 </section>`;

@@ -18,35 +18,40 @@ module.exports = (L) => `
   </div>
 
   <h3>Kimler kullanabilir?</h3>
-  <p>Hesaplar Parla BT tarafından oluşturulur; kendi başınıza kayıt olamazsınız. Hesabınızın <strong>rolü</strong>, neleri görebileceğinizi belirler:</p>
+  <p>Hesaplar Parla BT tarafından oluşturulur; kendi başınıza kayıt olamazsınız. Hesabınızın <strong>rolü</strong>, neleri görebileceğinizi belirler. Firmanızın destek sözleşmesi olup olmamasına göre açabileceğiniz <strong>talep tipi</strong> de belirlidir (bkz. “Talep tipi ve öncelik”).</p>
   <table class="fields">
     <thead><tr><th>Rol</th><th>Ne yapabilir?</th><th>Hangi talepleri görür?</th></tr></thead>
     <tbody>
       <tr><td>Müşteri Kullanıcısı</td><td>Talep açar, yanıtlar, kapanışı onaylar veya yeniden açar.</td><td>Yalnızca <strong>kendi</strong> açtığı talepler.</td></tr>
-      <tr><td>Firma Yöneticisi</td><td>Müşteri kullanıcısının tüm yetkileri; ayrıca firmanın diğer taleplerini izler ve yanıtlar.</td><td>Firmanın <strong>tüm</strong> talepleri.</td></tr>
-      <tr><td>Arızi Müşteri</td><td>Destek sözleşmesi olmayan firmalar için, talep tipi varsayılan olarak “Arızi Talep” gelir.</td><td>Yalnızca kendi talepleri.</td></tr>
+      <tr><td>Firma Yöneticisi</td><td>Müşteri kullanıcısının tüm yetkileri; ayrıca firmanın diğer taleplerini izler ve yanıtlar. Kullanıcı hesaplarını portaldan yönetemez; hesap işlemleri için Parla BT ekibine başvurulur.</td><td>Firmanın <strong>tüm</strong> talepleri.</td></tr>
+      <tr><td>Arızi Müşteri</td><td>Destek sözleşmesi olmayan firmalar için; açabileceği talep tipleri “Arızi Talep” ve “Hata / Problem Kaydı”dır.</td><td>Yalnızca kendi talepleri.</td></tr>
     </tbody>
   </table>
 
-  ${L.info("Tarayıcı olarak Chrome, Edge, Firefox veya Safari'nin güncel sürümlerini kullanın. Bilgisayar, tablet ve telefonda çalışır; ekran görüntüleri bu kılavuzda bilgisayar görünümüyle verilmiştir.", "Gereksinimler")}
+  ${L.info("Tarayıcı olarak Chrome, Edge, Firefox veya Safari'nin güncel sürümlerini kullanın. Bilgisayar, tablet ve telefonda çalışır: dar ekranlarda listelerdeki tablolar kendiliğinden <strong>kart görünümüne</strong> geçer. Ekran görüntüleri bu kılavuzda bilgisayar görünümüyle verilmiştir.", "Gereksinimler")}
 
   <h2>Portala giriş</h2>
-  <p>Hesabınız oluşturulduğunda Parla BT ekibi <strong>giriş bilgilerinizi</strong> (e-posta adresiniz ve geçici şifreniz) size iletir; genellikle e-posta ile. Portal adresi: <strong>www.parlabilgiteknolojileri.net/support</strong></p>
+  <p>Hesabınız oluşturulduğunda adresinize “<strong>Parla BT Destek — hesabınız oluşturuldu</strong>” başlıklı bir davet e-postası gelir. E-postada <strong>şifre yer almaz</strong>: şifrenizi, e-postadaki düğmeyle açılan sayfada <strong>kendiniz belirlersiniz</strong> (bkz. “İlk girişte şifrenizi belirleyin”). Portal adresi: <strong>www.parlabilgiteknolojileri.net/support</strong></p>
 
   ${L.steps([
     ["Giriş sayfasını açın", `<p>Tarayıcınıza portal adresini yazın veya giriş bilgilerinizin geldiği e-postadaki <span class="ui-btn primary">Portala giriş yap</span> bağlantısına tıklayın.</p>`],
-    ["Bilgilerinizi girin", `<p>${L.field("E-posta")} alanına hesabınıza bağlı adresi, ${L.field("Şifre")} alanına geçici şifrenizi yazın. Şifreyi görmek için alanın sağındaki göz simgesine tıklayabilirsiniz.</p>`],
+    ["Bilgilerinizi girin", `<p>${L.field("E-posta")} alanına hesabınıza bağlı adresi, ${L.field("Şifre")} alanına belirlediğiniz şifreyi yazın. Şifreyi görmek için alanın sağındaki göz simgesine tıklayabilirsiniz.</p>`],
     ["Giriş yapın", `<p>${L.btn("Giriş Yap")} düğmesine tıklayın veya <kbd>Enter</kbd> tuşuna basın. Birkaç saniye içinde ${L.menu("Genel Bakış")} sayfası açılır.</p>`],
   ])}
 
   ${L.fig("01-giris", { half: true, bare: true, caption: "Giriş kartı: oturum açmak için gereken her şey burada.",
-    legend: ["<strong>E-posta</strong> — hesabınıza bağlı kurumsal adres.", "<strong>Şifre</strong> — göz simgesi şifreyi gösterir/gizler.", "<strong>Giriş Yap</strong> — oturumu başlatır.", "<strong>Şifremi Unuttum</strong> — sıfırlama e-postası gönderir.", "<strong>Kılavuzlar</strong> — bu kılavuzu PDF olarak açın (<em>Aç</em>) veya bilgisayarınıza kaydedin (<em>İndir</em>)."], cols2: true })}
+    legend: ["<strong>E-posta</strong> — hesabınıza bağlı kurumsal adres.", "<strong>Şifre</strong> — göz simgesi şifreyi gösterir/gizler.", "<strong>Giriş Yap</strong> — oturumu başlatır.", "<strong>Şifremi Unuttum</strong> — sıfırlama e-postası gönderir.", "<strong>Kılavuz</strong> — bu kılavuzu PDF olarak açın (<em>Aç</em>) veya bilgisayarınıza kaydedin (<em>İndir</em>)."], cols2: true })}
 
-  ${L.tip("Giriş yapamıyorsanız önce <kbd>Caps Lock</kbd> tuşunun kapalı olduğundan emin olun; şifre büyük/küçük harfe duyarlıdır. Birkaç başarısız denemeden sonra hesap kısa süre kilitlenebilir — beklemeniz yeterlidir.")}
+  ${L.tip("Giriş yapamıyorsanız önce <kbd>Caps Lock</kbd> tuşunun kapalı olduğundan emin olun; şifre büyük/küçük harfe duyarlıdır. Birkaç başarısız denemeden sonra giriş kısa süre kilitlenebilir — beklemeniz yeterlidir. Portalda <strong>30 gün</strong> hiç işlem yapmazsanız oturumunuz güvenlik için kapanır; yeniden giriş yapmanız yeterlidir.")}
   ${L.warn("Şifrenizi kimseyle paylaşmayın. Parla BT çalışanları sizden şifrenizi hiçbir zaman istemez.")}
 
   <h3>İlk girişte şifrenizi belirleyin</h3>
-  <p>Hesabınız geçici bir şifreyle açıldığı için ilk girişinizde portal sizi otomatik olarak <strong>Şifrenizi belirleyin</strong> sayfasına yönlendirir. Yeni şifrenizi belirlemeden portalın diğer bölümlerini kullanamazsınız.</p>
+  ${L.steps([
+    ["Davet e-postasını açın", `<p>“Hesabınız oluşturuldu” e-postasındaki <span class="ui-btn primary">Şifremi belirle</span> düğmesine tıklayın. Bağlantı <strong>kısa süre geçerlidir ve yalnızca bir kez</strong> kullanılabilir.</p>`],
+    ["Şifrenizi iki kez yazın", `<p>Açılan <strong>Yeni Şifre Belirle</strong> sayfasında (bu sayfanın görünümü aşağıdaki “Şifrenizi unuttuysanız” bölümündedir) kurallara uygun şifrenizi yazıp ${L.btn("Şifreyi Kaydet")} düğmesine tıklayın.</p>`],
+    ["Giriş yapın", `<p>Yeni şifrenizle portala giriş yapın. Hiçbir e-postada şifreniz yazılı gelmez ve Parla BT çalışanları sizden şifre istemez.</p>`],
+  ])}
+  ${L.info("Bağlantının süresi dolduysa giriş sayfasında e-posta adresinizi yazıp <strong>Şifremi Unuttum</strong>'a tıklayarak yeni bir bağlantı isteyebilirsiniz. Nadiren, hesabınız geçici bir şifreyle açılmış olabilir (Parla BT ekibi size ayrıca iletir); bu durumda ilk girişinizde portal sizi aşağıdaki <strong>Şifrenizi belirleyin</strong> sayfasına yönlendirir ve yeni şifrenizi belirlemeden portalın diğer bölümlerini kullanamazsınız.", "Geçici şifreyle açılan hesaplar")}
 
   ${L.fig("01-sifre-degistir", { half: true, bare: true, caption: "İlk girişte açılan şifre belirleme kartı.",
     legend: ["<strong>Geçici şifre</strong> — size e-postayla gönderilen şifre.", "<strong>Yeni şifre</strong> — kendi belirlediğiniz şifre.", "<strong>Yeni şifre (tekrar)</strong> — aynısını bir kez daha yazın.", "<strong>Şifreyi Güncelle</strong> — kaydeder ve sizi portala alır."], cols2: true })}

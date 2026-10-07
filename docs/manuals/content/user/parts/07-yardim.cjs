@@ -5,14 +5,16 @@ module.exports = (L) => `
 
   <h2>Sık sorulan sorular</h2>
   ${L.faq([
-    ["Hesabım yok, kendim kayıt olabilir miyim?", `<p>Hayır. Hesaplar Parla BT tarafından oluşturulur. Hesap talebi için hesap yöneticinize veya <strong>info@parlabilgiteknolojileri.net</strong> adresine yazın.</p>`],
+    ["Hesabım yok, kendim kayıt olabilir miyim?", `<p>Hayır. Hesaplar Parla BT tarafından oluşturulur; hesap açıldığında size şifre içermeyen bir davet e-postası gelir ve şifrenizi bağlantıdan kendiniz belirlersiniz. Hesap talebi için hesap yöneticinize veya <strong>info@parlabilgiteknolojileri.net</strong> adresine yazın.</p>`],
     ["Şifremi unuttum, ne yapmalıyım?", `<p>Giriş sayfasında e-posta adresinizi yazıp <strong>Şifremi Unuttum</strong>'a tıklayın; sıfırlama bağlantısı e-postanıza gelir. Gelmezse spam klasörünü kontrol edin.</p>`],
     ["Yanlışlıkla iki kez talep açtım.", `<p>Mükerrer talebin numarasını bize e-postayla veya diğer talebe yazarak bildirin; danışmanımız birini kapatır. Siz talebi kendiniz silemezsiniz.</p>`],
     ["Talebimi açtıktan sonra düzenleyebilir miyim?", `<p>Konu ve açıklama değiştirilemez; eklemek istediğiniz her şeyi talebe <strong>yanıt</strong> olarak yazın, gerekirse dosya ekleyin. Böylece geçmiş bozulmaz.</p>`],
+    ["Neden bana yalnızca iki talep tipi gösteriliyor?", `<p>Talep tipi firmanızın sözleşme durumuna göre kilitlidir: destek anlaşmalı firmalar SUP ve BUG, arızi müşteriler ARZ ve BUG açabilir. Farklı bir tip gerekiyorsa hesap yöneticinize yazın.</p>`],
+    ["E-postadaki bildirimi yanıtlasam talebe eklenir mi?", `<p>Hayır. Bildirim e-postaları yanıtlanmak için gönderilmez; yanıtınız talebe eklenmez. Yazışmayı portaldan, talebin içinden yapın.</p>`],
     ["Önceliği yanlış seçtim.", `<p>Talebe yazarak durumu belirtin; danışmanımız önceliği güncelleyebilir. Kritik bir durumsa ayrıca telefonla arayın.</p>`],
     ["Danışmanım kim, ona nasıl ulaşırım?", `<p>Atanan danışman talep ayrıntısında <strong>Danışman</strong> alanında görünür. Danışmanla yazışma talebin içinden yapılır; acil durumlarda <strong>+90 530 226 77 98</strong> numarasından ulaşabilirsiniz.</p>`],
     ["Talebim neden hâlâ “Açık” durumda?", `<p>Talep henüz bir danışmana atanmamıştır. Atama genellikle kısa sürede yapılır; yüksek öncelikli taleplerde destek ekibi hemen devreye girer. Bir süre geçtiyse talebe kısa bir not yazabilirsiniz.</p>`],
-    ["Kapanış onayını vermezsem ne olur?", `<p>Talep “Kapanış Onayı Bekliyor” durumunda kalır; yazışmaya devam edebilirsiniz. Çözümü kontrol edip onayladığınızda veya yeniden açtığınızda süreç ilerler.</p>`],
+    ["Kapanış onayını vermezsem ne olur?", `<p>Talep “Kapanış Onayı Bekliyor” durumunda kalır; 3. günde hatırlatma e-postası alırsınız. <strong>10 gün</strong> içinde onaylamaz, yeniden açmaz ve yanıt da yazmazsanız talep otomatik kapatılır. Bu süre içinde yanıt yazarsanız talep yeniden açılır.</p>`],
     ["Kapanmış talebi yeniden açamıyorum.", `<p>Yeniden açma süresi kapanıştan sonra 14 gündür. Süre dolduysa yeni bir talep açın ve açıklamada eski talep numarasını belirtin.</p>`],
     ["Dosyam yüklenmiyor.", `<p>Dosyanın 2 MB'tan küçük olduğundan ve desteklenen bir türde olduğundan emin olun (görsel, PDF, Office, TXT/CSV/LOG, ZIP). Büyük dosyalar için paylaşım bağlantısını <strong>Ek Bağlantı</strong> alanına yazın.</p>`],
     ["E-posta bildirimleri gelmiyor.", `<p>Spam klasörünüzü kontrol edin ve info@parlabilgiteknolojileri.net adresini güvenli göndericilere ekleyin. Sorun sürerse BT biriminize başvurun; portalı kullanmaya devam edebilirsiniz, bildirimler zilde de görünür.</p>`],
@@ -26,6 +28,7 @@ module.exports = (L) => `
       <tr><td>“E-posta veya şifre hatalı”</td><td>Yanlış şifre veya e-posta; Caps Lock açık.</td><td>Bilgileri kontrol edin; gerekirse <strong>Şifremi Unuttum</strong>.</td></tr>
       <tr><td>“Çok fazla başarısız deneme”</td><td>Güvenlik amaçlı geçici kilit.</td><td>Birkaç dakika bekleyip tekrar deneyin.</td></tr>
       <tr><td>“Hesabınız aktif değil”</td><td>Hesap devre dışı bırakılmış.</td><td>Parla BT destek ekibine yazın.</td></tr>
+      <tr><td>“Oturumunuz uzun süre boşta kaldığı için sona erdi”</td><td>Portalda 30 gün işlem yapılmadı; güvenlik zaman aşımı.</td><td>Yeniden giriş yapın.</td></tr>
       <tr><td>Sayfa boş veya yarım yükleniyor</td><td>Eski tarayıcı önbelleği veya bağlantı sorunu.</td><td>Sayfayı yenileyin (<kbd>Ctrl</kbd> + <kbd>F5</kbd>); güncel bir tarayıcı kullanın.</td></tr>
       <tr><td>“Bu talebe erişim yetkiniz yok”</td><td>Başka kullanıcının talebi.</td><td>Talebi açan kişiyle veya firma yöneticinizle görüşün.</td></tr>
       <tr><td>Talep gönderilemiyor</td><td>Zorunlu alan eksik veya metin kısa.</td><td>Kırmızı uyarılara bakın: konu en az 5, açıklama en az 20 karakter.</td></tr>
@@ -37,14 +40,15 @@ module.exports = (L) => `
   <table class="glossary">
     <thead><tr><th>Terim</th><th>Açıklama</th></tr></thead>
     <tbody>
-      <tr><td>Talep<small>ticket</small></td><td>Portal üzerinden açtığınız her destek, arıza veya hata kaydı.</td></tr>
+      <tr><td>Talep</td><td>Portal üzerinden açtığınız her destek, arıza veya hata kaydı.</td></tr>
       <tr><td>Danışman</td><td>Talebiniz için atanan Parla BT uzmanı.</td></tr>
       <tr><td>Talep numarası</td><td>Talebin benzersiz kimliği (TİP-MÜŞTERİ-MODÜL-YYAA-SIRA).</td></tr>
       <tr><td>SAP modülü<small>FI, MM, SD ...</small></td><td>Sorunun ilişkili olduğu SAP uygulama alanı.</td></tr>
       <tr><td>Öncelik</td><td>Talebin işinize etkisini belirten Düşük / Orta / Yüksek / Kritik seviyesi.</td></tr>
-      <tr><td>Hedef süre</td><td>İlk yanıt ve çözüm için önceliğe göre belirlenen hedef.</td></tr>
+      <tr><td>Hedef süre</td><td>İlk yanıt ve çözüm için önceliğe göre belirlenen hedef; 7/24 takvim saati olarak işler, yanıt/onay beklenirken durur.</td></tr>
       <tr><td>Kapanış onayı</td><td>Çözümün sizin tarafınızdan doğrulanması ve talebin kapatılması adımı.</td></tr>
-      <tr><td>Yeniden açma</td><td>Kapanmış/çözülmüş talebi, gerekçenizle tekrar aktif hale getirmek.</td></tr>
+      <tr><td>Yeniden açma</td><td>Kapanmış/çözülmüş talebi, gerekçenizle tekrar aktif hale getirmek. Çözüldü veya Kapanış Onayı durumundayken yanıt yazmak da talebi otomatik yeniden açar.</td></tr>
+      <tr><td>Otomatik kapanış</td><td>Kapanış onayı 10 gün verilmeyen talebin sistem tarafından kapatılması.</td></tr>
       <tr><td>Dahili not</td><td>Yalnızca Parla BT personelinin gördüğü iç not; müşteriye gösterilmez.</td></tr>
       <tr><td>Arızi talep</td><td>Destek sözleşmesi kapsamı dışındaki, tek seferlik hizmet talebi.</td></tr>
     </tbody>

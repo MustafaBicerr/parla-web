@@ -14,7 +14,7 @@ module.exports = (L) => `
   ])}
 
   <h2>Kapanış onayı</h2>
-  <p>Çözüm sizin tarafınızdan doğrulandığında danışman talebi <strong>${L.ST.pending_close}</strong> durumuna alır. Bu aşamada talebin üstünde mor bir onay bandı belirir ve e-posta ile bildirim gelir.</p>
+  <p>Çözüm sizin tarafınızdan doğrulandığında danışman talebi <strong>${L.ST.pending_close}</strong> durumuna alır. Bu aşamada talebin üstünde mor bir onay bandı belirir ve e-posta ile bildirim gelir. Hedef süre sayacı durur; <strong>3. günde</strong> bir hatırlatma e-postası alırsınız.</p>
 
   ${L.fig("05-banner-onay", { wide: true, bare: true, caption: "Kapanış onayı bandı: iki seçeneğiniz var.",
     legend: ["<strong>Onayla ve Kapat</strong> — çözümden memnunsanız talebi kapatır.", "<strong>Yeniden Aç</strong> — sorun sürüyorsa talebi gerekçenizle yeniden açar."], cols2: true })}
@@ -26,6 +26,7 @@ module.exports = (L) => `
   ])}
   ${L.row(L.fig("05-eposta-kapanis-onayi", { half: true, bare: true, caption: "“Kapanış onayı” e-postası.", alt: "Kapanış onayı e-postası" }), L.fig("05-onay-penceresi", { half: true, bare: true, caption: "Talebi Kapat penceresi.",
     legend: ["<strong>Not</strong> — isteğe bağlı mesajınız.", "<strong>Onayla ve Kapat</strong> — kapanışı tamamlar."] }))}
+  ${L.warn("Kapanış onayını <strong>10 gün</strong> boyunca vermez ve yanıt yazmazsanız talep <strong>otomatik olarak kapatılır</strong> ve size bilgi e-postası gider. Bu durumda da kapanıştan sonra 14 gün içinde talebi yeniden açabilirsiniz.", "Otomatik kapanış")}
   ${L.warn("Kapanış onayı verdiğinizde talep kapanır ve yeni yanıt yazamazsınız. Sorun tekrar ederse kapanıştan sonra <strong>14 gün</strong> içinde talebi yeniden açabilirsiniz.")}
 
   <h2>Talebi yeniden açma</h2>
@@ -40,7 +41,7 @@ module.exports = (L) => `
   ${L.fig("05-banner-yeniden-acildi", { wide: true, bare: true, nonum: true, caption: "Talep yeniden açıldıktan sonra görünen bilgi bandı." })}
 
   <h2>Çözüldü ve Kapandı durumları</h2>
-  <p>Danışmanınız bazı talepleri doğrudan <strong>${L.ST.resolved}</strong> olarak işaretleyebilir. Bu durumda da talebi kapatabilir veya yeniden açabilirsiniz. Kapanmış talepler için yeniden açma süresi <strong>kapanıştan sonra 14 gündür</strong>.</p>
+  <p>Danışmanınız bazı talepleri doğrudan <strong>${L.ST.resolved}</strong> olarak işaretleyebilir. Bu durumda da talebi kapatabilir veya yeniden açabilirsiniz; yanıt yazarsanız talep otomatik olarak yeniden açılır. Kapanmış talepler için yeniden açma süresi <strong>kapanıştan sonra 14 gündür</strong>.</p>
   <div class="shot-row">
     ${L.fig("05-banner-cozuldu", { bare: true, nonum: true, caption: "Çözüldü bandı: kapatın veya yeniden açın." })}
     ${L.fig("05-banner-kapandi", { bare: true, nonum: true, caption: "Kapandı bandı: 14 gün içinde yeniden açabilirsiniz." })}
@@ -48,8 +49,8 @@ module.exports = (L) => `
   <table class="fields">
     <thead><tr><th>Durum</th><th>Yanıt yazabilir miyim?</th><th>Yapabileceğiniz</th></tr></thead>
     <tbody>
-      <tr><td>${L.ST.pending_close}</td><td>Evet</td><td>Onayla ve Kapat · Yeniden Aç</td></tr>
-      <tr><td>${L.ST.resolved}</td><td>Hayır</td><td>Onayla ve Kapat · Yeniden Aç</td></tr>
+      <tr><td>${L.ST.pending_close}</td><td>Evet — yanıtınız talebi otomatik yeniden açar</td><td>Onayla ve Kapat · Yeniden Aç</td></tr>
+      <tr><td>${L.ST.resolved}</td><td>Evet — yanıtınız talebi otomatik yeniden açar</td><td>Onayla ve Kapat · Yeniden Aç</td></tr>
       <tr><td>${L.ST.closed}</td><td>Hayır</td><td>Yeniden Aç (14 gün içinde)</td></tr>
       <tr><td>${L.ST.reopened}</td><td>Evet</td><td>Yazışmaya devam edin</td></tr>
     </tbody>

@@ -4,7 +4,7 @@ module.exports = (L) => `
   <h1>Taleplerinizi Takip Etme</h1>
 
   <h2>Genel Bakış ve Taleplerim</h2>
-  <p>${L.menu("Genel Bakış")} sayfası güne başlarken ilk bakacağınız yerdir. Dört özet kartı, o anki durumunuzu tek bakışta verir; altındaki tablo son 10 talebinizi listeler.</p>
+  <p>${L.menu("Genel Bakış")} sayfası güne başlarken ilk bakacağınız yerdir. Dört özet kartı, o anki durumunuzu tek bakışta verir; altındaki tablo son 10 talebinizi listeler. Dar ekranlarda (telefon) tablolar satır yerine <strong>kartlar</strong> olarak görünür.</p>
 
   <table class="fields">
     <thead><tr><th>Kart</th><th>Neyi sayar?</th><th>Ne yapmalı?</th></tr></thead>
@@ -16,7 +16,7 @@ module.exports = (L) => `
     </tbody>
   </table>
 
-  <p>${L.menu("Taleplerim")} sayfası tüm taleplerinizi listeler. Üstteki arama kutusu <strong>talep numarası, konu veya modüle</strong> göre arar; durum çipleri listeyi tek tıkla daraltır; sağdaki açılır liste sıralamayı değiştirir. Bir talebin satırına (numarası dışında herhangi bir yerine) tıklayarak ayrıntı sayfasını açarsınız.</p>
+  <p>${L.menu("Taleplerim")} sayfası tüm taleplerinizi listeler. Üstteki arama kutusu <strong>talep numarası, konu veya modüle</strong> göre arar; durum çipleri listeyi tek tıkla daraltır; sağdaki açılır liste sıralamayı değiştirir. Liste ilk 25 talebi gösterir; devamı için tablonun altındaki <strong>Daha fazla göster</strong> düğmesini kullanın. Bir talebin satırına (numarası dışında herhangi bir yerine) tıklayarak ayrıntı sayfasını açarsınız. Süreler ve sayılar Türkçe biçimde, ondalık ayracı virgülle yazılır (ör. 3,5 saat).</p>
 
   ${L.fig("03-taleplerim", { wide: true, url: "www.parlabilgiteknolojileri.net/support-v2/customer/tickets.html", caption: "Taleplerim sayfası.",
     legend: ["<strong>Yeni Talep</strong> — talep formunu açar.", "<strong>Arama</strong> — numara, konu veya modül.", "<strong>Durum çipleri</strong> — Tümü ve sekiz durum.", "<strong>Sıralama</strong> — En yeni, En eski veya Öncelik.", "<strong>Durum rozeti</strong> — talebin güncel aşaması."], cols2: true })}
@@ -24,6 +24,8 @@ module.exports = (L) => `
   ${L.fig("03-filtre", { wide: true, bare: true, caption: "Örnek: “Kapanış Onayı Bekliyor” çipi seçilince yalnızca onayınızı bekleyen talepler görünür.",
     legend: ["<strong>Seçili çip</strong> mavi görünür; “Tümü” ile filtreyi kaldırırsınız.", "<strong>Liste</strong> yalnızca seçilen duruma uyan talepleri gösterir."] })}
   ${L.tip("Günün başında “Müşteri Bekleniyor” ve “Kapanış Onayı Bekliyor” çiplerine bakın: bunlar sizden bir işlem bekleyen taleplerdir. Çözümü sizin onayınız bekliyorsa süreç ilerleyemez.")}
+
+  ${L.fig("03-mobil-kartlar", { half: true, bare: true, caption: "Telefon görünümü: tablolar satır yerine kartlar olarak listelenir; her kart bir talebin tüm alanlarını alt alta gösterir." })}
 
   <h3>Talep numarasını okuma</h3>
   <p>Her talep numarası, talebin kimliğini özetleyen beş parçadan oluşur:</p>
@@ -53,17 +55,17 @@ module.exports = (L) => `
       <tr><td>${L.ST.open}</td><td>Talebiniz alındı, henüz danışman atanmadı.</td><td><span class="opt">Yok</span></td></tr>
       <tr><td>${L.ST.assigned}</td><td>Bir danışman talebin sorumluluğunu aldı.</td><td><span class="opt">Yok</span></td></tr>
       <tr><td>${L.ST.in_progress}</td><td>Danışman talep üzerinde çalışıyor.</td><td><span class="opt">Yok</span></td></tr>
-      <tr><td>${L.ST.waiting_customer}</td><td>Çözümü denemeniz veya ek bilgi vermeniz gerekiyor.</td><td><span class="req">Yanıt verin</span></td></tr>
-      <tr><td>${L.ST.pending_close}</td><td>Çözüm tamamlandı; kapatılması için onayınız bekleniyor.</td><td><span class="req">Onaylayın veya yeniden açın</span></td></tr>
-      <tr><td>${L.ST.resolved}</td><td>Talep çözüldü olarak işaretlendi.</td><td><span class="opt">Kapatın / gerekirse yeniden açın</span></td></tr>
+      <tr><td>${L.ST.waiting_customer}</td><td>Çözümü denemeniz veya ek bilgi vermeniz gerekiyor. Bu sırada hedef süre sayacı durur; yanıt vermezseniz <strong>3. ve 7. günde</strong> hatırlatma e-postası alırsınız.</td><td><span class="req">Yanıt verin</span></td></tr>
+      <tr><td>${L.ST.pending_close}</td><td>Çözüm tamamlandı; kapatılması için onayınız bekleniyor. Hedef süre sayacı bu sırada da durur. <strong>3. günde</strong> hatırlatma gelir; <strong>10 gün</strong> içinde onay veya yanıt gelmezse talep otomatik kapatılır.</td><td><span class="req">Onaylayın veya yeniden açın</span></td></tr>
+      <tr><td>${L.ST.resolved}</td><td>Talep çözüldü olarak işaretlendi. Bu aşamada yazdığınız her yanıt talebi otomatik olarak yeniden açar.</td><td><span class="opt">Kapatın / gerekirse yeniden açın</span></td></tr>
       <tr><td>${L.ST.closed}</td><td>Talep tamamlandı ve kapatıldı.</td><td><span class="opt">Sorun tekrar ederse yeniden açın (14 gün)</span></td></tr>
-      <tr><td>${L.ST.reopened}</td><td>Talep yeniden açıldı; danışman yeniden inceliyor.</td><td><span class="opt">Yok</span></td></tr>
+      <tr><td>${L.ST.reopened}</td><td>Talep yeniden açıldı (sizin tarafınızdan ya da yanıtınız üzerine); danışman yeniden inceliyor ve hedef süreler yeniden başlar.</td><td><span class="opt">Yok</span></td></tr>
     </tbody>
   </table>
 
   <h2>Bildirimler</h2>
   <h3>Bildirim zili</h3>
-  <p>Sayfanın sağ üstündeki <strong>zil</strong> simgesi, dikkatinizi gerektiren gelişmeleri toplar. Üzerindeki kırmızı rakam, okunmamış bildirim sayısıdır. Zile tıklayınca açılan panelde bildirimler yeniden eskiye sıralanır; bir bildirime tıklayınca ilgili talebe gidersiniz ve bildirim okundu sayılır.</p>
+  <p>Sayfanın sağ üstündeki <strong>zil</strong> simgesi, dikkatinizi gerektiren gelişmeleri toplar. Üzerindeki kırmızı rakam, okunmamış bildirim sayısıdır. Zile tıklayınca açılan panelde bildirimler yeniden eskiye sıralanır; zil görünür sekmede yaklaşık 5 dakikada bir, sekme gizliyken hiç yenilenmez; bir bildirime tıklayınca ilgili talebe gidersiniz ve bildirim okundu sayılır.</p>
   ${L.fig("03-bildirimler", { half: true, bare: true, caption: "Bildirim paneli.",
     legend: ["<strong>Danışman güncellemesi</strong> — yeni yanıt veya durum değişikliği.", "<strong>Eylem bildirimi</strong> — sizden işlem bekleyen talep (turuncu simge).", "<strong>Tümünü okundu say</strong> — güncelleme bildirimlerini temizler."] })}
   <table class="fields">
@@ -78,7 +80,7 @@ module.exports = (L) => `
   ${L.info("Bildirim zili ilk kullanımda son 48 saati gösterir; “okundu” bilgisi tarayıcınızda saklanır. Farklı bir bilgisayardan girerseniz bildirimleri yeniden görebilirsiniz.")}
 
   <h3>E-posta bildirimleri</h3>
-  <p>Önemli gelişmeler e-posta adresinize de gönderilir; böylece portalı açmasanız bile haberdar olursunuz. E-postalar <strong>Parla BT Destek &lt;info@parlabilgiteknolojileri.net&gt;</strong> adresinden gelir ve doğrudan yanıtlayabilirsiniz.</p>
+  <p>Önemli gelişmeler e-posta adresinize de gönderilir; böylece portalı açmasanız bile haberdar olursunuz. E-postalar <strong>Parla BT Destek &lt;info@parlabilgiteknolojileri.net&gt;</strong> adresinden gelir. Bu e-postaları <strong>yanıtlamayın</strong>: yanıtlar talebe eklenmez. Yazışmayı her zaman portaldan, talebin içinden yapın (e-postadaki düğmeler sizi doğrudan talebe götürür).</p>
   <table class="fields">
     <thead><tr><th>E-posta başlığı</th><th>Ne zaman gelir?</th></tr></thead>
     <tbody>
@@ -88,16 +90,24 @@ module.exports = (L) => `
       <tr><td>İncelemeniz bekleniyor · <em>numara</em></td><td>Danışman çözümü test etmenizi istediğinde.</td></tr>
       <tr><td>Kapanış onayı · <em>numara</em></td><td>Çözüm tamamlandığında ve onayınız gerektiğinde.</td></tr>
       <tr><td>Talep çözüldü / Talep kapatıldı · <em>numara</em></td><td>Talep sonuçlandığında.</td></tr>
+      <tr><td>Talebinize danışman atandı · <em>numara</em></td><td>Sorumlu danışman belirlendiğinde veya değiştiğinde.</td></tr>
+      <tr><td>Yanıtınızı bekliyoruz · <em>numara</em></td><td>Talep “Müşteri Bekleniyor”da 3 ve 7 gün kaldığında (hatırlatma).</td></tr>
+      <tr><td>Kapanış onayınızı bekliyoruz · <em>numara</em></td><td>Talep “Kapanış Onayı Bekliyor”da 3 gün kaldığında (hatırlatma).</td></tr>
+      <tr><td>Talebiniz otomatik kapatıldı · <em>numara</em></td><td>Kapanış onayı 10 gün boyunca verilmediğinde.</td></tr>
     </tbody>
   </table>
   ${L.row(
     L.fig("04-eposta-talep-alindi", { half: true, bare: true, caption: "Talep oluşturulunca gelen “Talebiniz alındı” e-postası.", alt: "Talebiniz alındı e-postası" }),
     L.fig("04-eposta-yanit", { half: true, bare: true, caption: "Danışman yanıt yazınca gelen e-posta; “Yanıtı oku” sizi doğrudan talebe götürür.", alt: "Yeni yanıt e-postası" })
   )}
+  ${L.row(
+    L.fig("04-eposta-danisman-atandi", { half: true, bare: true, caption: "Sorumlu danışman belirlenince gelen e-posta.", alt: "Talebinize danışman atandı e-postası" }),
+    L.fig("05-eposta-hatirlatma", { half: true, bare: true, caption: "Kapanış onayı 3 gündür bekliyorsa gelen hatırlatma.", alt: "Kapanış onayı hatırlatma e-postası" })
+  )}
   ${L.tip("E-postalar gelmiyorsa önce gereksiz (spam) klasörünü kontrol edin ve info@parlabilgiteknolojileri.net adresini güvenli göndericiler listenize ekleyin. Kurumsal e-posta sisteminiz harici mesajları engelliyorsa BT biriminize başvurun.")}
 
   <h2>Hedef süreler</h2>
-  <p>Her talebin ayrıntı sayfasında, önceliğe göre belirlenen <strong>Hedef Süreler</strong> görünür: danışmanın talebe <em>ilk yanıt</em> vermesi ve talebi <em>çözmesi</em> için hedeflenen süreler. Süreler talebin açıldığı andan itibaren (takvim saati olarak) sayılır; danışman sizden yanıt beklerken (${L.ST.waiting_customer}) süre duraklatılır.</p>
+  <p>Her talebin ayrıntı sayfasında, önceliğe göre belirlenen <strong>Hedef Süreler</strong> görünür: danışmanın talebe <em>ilk yanıt</em> vermesi ve talebi <em>çözmesi</em> için hedeflenen süreler. Süreler talebin açıldığı andan itibaren <strong>7 gün 24 saat, takvim saati</strong> olarak sayılır (mesai saati, hafta sonu ve resmi tatil ayrımı yoktur). Danışman sizden yanıt veya onay beklerken (${L.ST.waiting_customer} ve ${L.ST.pending_close}) süre <strong>gerçekten durur</strong>; yanıt verdiğinizde kaldığı yerden sürer. Talep yeniden açılırsa çözüm hedefi için yeni bir süre başlar. Çözüm hedefi, danışman talebi kapanış onayına aldığında karşılanmış sayılır.</p>
   <table class="fields">
     <thead><tr><th>Öncelik</th><th>Hedef ilk yanıt</th><th>Hedef çözüm</th></tr></thead>
     <tbody>

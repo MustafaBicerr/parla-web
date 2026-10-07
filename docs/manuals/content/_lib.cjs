@@ -43,7 +43,7 @@ exports.makeLib = (guideDir) => {
   const ST = {
     open: badge("open", "Açık"), assigned: badge("assigned", "Atandı"), in_progress: badge("in_progress", "İşlemde"),
     waiting_customer: badge("waiting_customer", "Müşteri Bekleniyor"), pending_close: badge("pending_close", "Kapanış Onayı Bekliyor"),
-    resolved: badge("resolved", "Çözüldü"), closed: badge("closed", "Kapandı"), reopened: badge("reopened", "Tekrar Açıldı"),
+    resolved: badge("resolved", "Çözüldü"), closed: badge("closed", "Kapandı"), reopened: badge("reopened", "Yeniden Açıldı"),
   };
   const PR = { low: prio("low", "Düşük"), medium: prio("medium", "Orta"), high: prio("high", "Yüksek"), critical: prio("critical", "Kritik") };
   return { fig, row, tip, warn, info, danger, steps, faq, inThis, req, opt, btn, field, menu, badge, prio, ST, PR, warnings };

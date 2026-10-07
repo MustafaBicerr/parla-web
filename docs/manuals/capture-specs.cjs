@@ -120,6 +120,12 @@ exports.user = async ({ shot, emailShot, world, sleep }) => {
   // ---------- 7. Hesap
   await shot({ guide: "user", name: "07-profil", as: "u_cust", url: "/support-v2/customer/profile.html", wait: ".sv2-meta-grid", vp: [1100, 700], scale: 1.6,
     pins: { 1: [".sv2-meta-grid", "tl"], 2: [".sv2-stats-grid", "tl"], 3: ["#sv2-change-password-link", "r"] } });
+
+  // ---------- Telefon görünümü (tablolar kart olur) ve yeni e-posta örnekleri
+  await shot({ guide: "user", name: "03-mobil-kartlar", as: "u_cust", url: "/support-v2/customer/tickets.html", wait: "#sv2-tickets-table", vp: [390, 860], scale: 2, settle: 700,
+    clip: { x: 0, y: 0, width: 390, height: 860 } });
+  await emailShot("user", "04-eposta-danisman-atandi", "consultant_assigned", { event: "consultant_assigned", audience: "customer", ticket_id: "t6", ticket_number: "SUP-ORN-FI-2610-0006", title: "Ödeme programı (F110) bankaya dosya üretmiyor", status: "assigned", priority: "high", company_name: "Örnek Holding A.Ş.", user_name: "Ayşe Demir", assignee_name: "Zeynep Arslan", portalUrl: "https://www.parlabilgiteknolojileri.net" }, 700);
+  await emailShot("user", "05-eposta-hatirlatma", "reminder_pending_close", { event: "reminder_pending_close", audience: "customer", ticket_id: "t4", ticket_number: "SUP-ORN-MM-2610-0004", title: "Stok devir hızı raporunda hatalı değerler", status: "pending_close", priority: "medium", company_name: "Örnek Holding A.Ş.", user_name: "Ayşe Demir", days: 3, days_left: 7, portalUrl: "https://www.parlabilgiteknolojileri.net" }, 700);
 };
 
 
@@ -154,7 +160,7 @@ exports.admin = async ({ shot, emailShot, world, sleep }) => {
 
   // ---------- Ek örnek veri
   const act = (id, o) => world.seed(`v2/activities/${id}`, { activity_id: id, user_uid: o.uid, user_name: o.name, action: o.action, entity_type: o.type, entity_id: o.eid || "", entity_label: o.label || "", details: o.details || "", created_at: iso(o.age) });
-  act("a4", { uid: "u_service", name: "Mehmet Kaya", action: "ticket_updated", type: "ticket", eid: "t1", label: "SUP-ORN-SD-2610-0001", details: "Ticket güncellendi", age: 50 * 60000 });
+  act("a4", { uid: "u_service", name: "Mehmet Kaya", action: "ticket_updated", type: "ticket", eid: "t1", label: "SUP-ORN-SD-2610-0001", details: "Talep güncellendi", age: 50 * 60000 });
   act("a5", { uid: "u_cons1", name: "Zeynep Arslan", action: "email_failed", type: "ticket", eid: "t6", label: "SUP-ORN-FI-2610-0006", details: "ticket_message — [rate_limited] E-posta servisi yoğun, lütfen tekrar deneyin.", age: 70 * 60000 });
   act("a6", { uid: "u_root", name: "Murat Aydın", action: "user_created", type: "user", eid: "u_new", label: "Ahmet Güler", details: "ahmet.guler@ornekholding.com — Müşteri Kullanıcısı", age: 20 * H });
   act("a7", { uid: "u_root", name: "Murat Aydın", action: "company_created", type: "company", eid: "cB", label: "Demir Çelik San. A.Ş.", details: "DMR0001", age: 26 * H });
@@ -163,6 +169,12 @@ exports.admin = async ({ shot, emailShot, world, sleep }) => {
   act("a10", { uid: "u_pm", name: "Burak Şahin", action: "updated", type: "project", eid: "pr1", label: "PRJ-ORN-01", details: "Proje güncellendi: S/4HANA Geçiş Projesi", age: 3 * D });
   act("a11", { uid: "u_cons2", name: "Can Öztürk", action: "ticket_updated", type: "ticket", eid: "t4", label: "SUP-ORN-MM-2610-0004", details: "Kapanış Onayı Bekliyor", age: 5 * H });
   act("a12", { uid: "u_root", name: "Murat Aydın", action: "updated", type: "department", eid: "d2", label: "SAP Geliştirme", details: "Departman güncellendi: SAP Geliştirme", age: 4 * D });
+  // Hazır yanıt şablonları
+  const tpl = (id, o) => world.seed(`v2/reply_templates/${id}`, { template_id: id, title: o.title, category: o.cat, body: o.body, sort_order: o.order, is_active: o.active !== false, created_at: iso(20 * D), updated_at: iso(20 * D) });
+  tpl("rt1", { title: "Talep alındı — karşılama", cat: "Karşılama", order: 1, body: "Merhaba {musteri_adi},\n{talep_no} numaralı talebiniz alındı. Danışmanınız {danisman} en kısa sürede sizinle iletişime geçecek." });
+  tpl("rt2", { title: "Ek bilgi talebi", cat: "Bilgi talebi", order: 2, body: "Merhaba {musteri_adi},\n{talep_no} numaralı talebiniz için aşağıdaki bilgilere ihtiyacımız var:\n- Hata mesajının ekran görüntüsü\n- İşlemin yapıldığı şirket kodu ve tarih\nBilgileri paylaştığınızda incelemeye devam edeceğim. — {danisman}" });
+  tpl("rt3", { title: "Test için müşteriye dönüş", cat: "Çözüm", order: 3, body: "Merhaba {musteri_adi},\n{talep_no} numaralı talebinizdeki düzenlemeyi tamamladım. Lütfen kendi ortamınızda deneyip sonucu bu talebe yazar mısınız? — {danisman}" });
+  tpl("rt4", { title: "Eski karşılama metni", cat: "Karşılama", order: 9, active: false, body: "{talep_no} alındı." });
   // t1: iki ek dosya (veri ayrı düğümde, mesajda yalnızca başvuru)
   const attData = Buffer.from("demo").toString("base64");
   world.seed("v2/ticket_attachments/t1/att1", { att_id: "att1", name: "vf01-hata-ekrani.png", type: "image/png", size: 184320, data: attData, uploader_uid: "u_cust", uploader_name: "Ayşe Demir", created_at: iso(6 * H) });
@@ -189,22 +201,22 @@ exports.admin = async ({ shot, emailShot, world, sleep }) => {
   // ================================================================ 1. Başlangıç
   await shot({ guide: "admin", name: "a01-giris", as: null, url: "/support-v2/login.html", wait: "#sv2-login-form", vp: [1100, 700], scale: 2.4, target: ".sv2-auth-panel .sv2-card", pad: 14,
     before: async (page) => { await page.fill("#sv2-email", "mehmet.kaya@parla-demo.com"); await page.fill("#sv2-password", "Gecici-Sifre1"); },
-    pins: { 1: ["#sv2-email", "l"], 2: ["#sv2-password", "l"], 3: ["#sv2-login-submit", "l"], 4: ["#sv2-forgot-password", "r"], 5: ["#sv2-guide-admin-open", "l"] } });
+    pins: { 1: ["#sv2-email", "l"], 2: ["#sv2-password", "l"], 3: ["#sv2-login-submit", "l"], 4: ["#sv2-forgot-password", "r"] } });
 
   await shot({ guide: "admin", name: "a01-genel-bakis", as: "u_root", url: "/support-v2/admin/dashboard.html", wait: ".sv2-stats-grid", vp: [1366, 1800], scale: 1.5, settle: 900,
     clip: { x: 0, y: 0, width: 1366, height: 700 },
-    pins: { 1: [nav("dashboard"), "r"], 2: ["#sv2-topbar-guide", "l"], 3: ["#sv2-notif-btn", "l"], 4: [".sv2-stats-grid", "tl", 0, 6, 6], 5: [statCard("SLA Aşımı"), "tr", 0, -14, 14], 6: [sec("Ticket Tipi Dağılımı"), "tl", 0, 14, 14], 7: [sec("Son Aktiviteler"), "tl", 0, 14, 14], 8: [".sv2-topbar-user", "l"] } });
+    pins: { 1: [nav("dashboard"), "r"], 2: ["#sv2-topbar-guide", "l"], 3: ["#sv2-notif-btn", "l"], 4: [".sv2-stats-grid", "tl", 0, 6, 6], 5: [statCard("SLA Aşımı"), "tr", 0, -14, 14], 6: [sec("Talep Tipi Dağılımı"), "tl", 0, 14, 14], 7: [sec("Son Aktiviteler"), "tl", 0, 14, 14], 8: [".sv2-topbar-user", "l"] } });
 
   await shot({ guide: "admin", name: "a01-is-yuku", as: "u_root", url: "/support-v2/admin/dashboard.html", wait: ".sv2-stats-grid", vp: [1366, 1800], scale: 1.5, settle: 900,
     before: async (page) => { await page.addStyleTag({ content: "#sv2-email-health,#sv2-maintenance{display:none !important}" }); await sleep(150); },
-    targets: [sec("Danışman İş Yükü"), sec("Atanmamış Ticketlar")], pad: 8,
-    pins: { 1: [sec("Danışman İş Yükü"), "tl", 0, 16, 16], 2: [".sv2-quick-assign", "tl", 0, -6, -6], 3: [sec("Atanmamış Ticketlar") + " a.sv2-btn", "tl", 0, -6, -6] } });
+    targets: [sec("Danışman İş Yükü"), sec("Atanmamış / Sahipsiz Talepler")], pad: 8,
+    pins: { 1: [sec("Danışman İş Yükü"), "tl", 0, 16, 16], 2: [".sv2-quick-assign", "tl", 0, -6, -6], 3: [sec("Atanmamış / Sahipsiz Talepler") + " a.sv2-btn", "tl", 0, -6, -6] } });
 
   // ================================================================ 2. Talep yönetimi
   await shot({ guide: "admin", name: "a02-liste", as: "u_service", url: "/support-v2/admin/tickets.html", wait: "#sv2-tickets-table .sv2-table", vp: [1500, 1300], scale: 1.4, settle: 700,
     before: async (page) => { await noSidebar(page); await firstRows(page, 5); await sleep(150); },
     targets: [".sv2-content > :first-child", ".sv2-content > .sv2-section"], pad: 0,
-    pins: { 1: B("#sv2-new-ticket"), 2: B("#sv2-export-csv"), 3: ["#sv2-filter-chips .sv2-chip", "tl", 0, -10, -8], 4: ["#sv2-ticket-search", "tr", 0, -10, 8], 5: ["#sv2-sort-select", "tl", 0, 0, -4], 6: B("#sv2-advanced-toggle"), 7: ["#sv2-type-chips .sv2-chip", "tl", 0, -10, -8], 8: [".sv2-table thead th >> nth=9", "tl", 0, -14, -6], 9: [".sv2-approval-cb", "tl", 1, 8, -8], 10: [".sv2-delete-ticket", "r", 0, 12, 0] } });
+    pins: { 1: B("#sv2-new-ticket"), 2: B("#sv2-toggle-deleted"), 3: B("#sv2-export-csv"), 4: ["#sv2-filter-chips .sv2-chip", "tl", 0, -10, -8], 5: ["#sv2-ticket-search", "tr", 0, -10, 8], 6: ["#sv2-sort-select", "tl", 0, 0, -4], 7: B("#sv2-advanced-toggle"), 8: ["#sv2-type-chips .sv2-chip", "tl", 0, -10, -8], 9: [".sv2-bulk-cb", "tl", 0, -6, -6], 10: [".sv2-table thead th >> nth=10", "tl", 0, -14, -6], 11: [".sv2-approval-cb", "tl", 1, 8, -8], 12: [".sv2-delete-ticket", "r", 0, 12, 0] } });
 
   await shot({ guide: "admin", name: "a02-filtre", as: "u_service", url: "/support-v2/admin/tickets.html", wait: "#sv2-tickets-table .sv2-table", vp: [1500, 1300], scale: 1.6, settle: 600,
     before: async (page) => {
@@ -216,6 +228,30 @@ exports.admin = async ({ shot, emailShot, world, sleep }) => {
     targets: [".sv2-content > .sv2-mb-1 >> nth=0", ".sv2-filter-bar", "#sv2-advanced-panel", ".sv2-content > .sv2-mb-1 >> nth=1"], pad: 22,
     hide: ["#sv2-new-ticket", "#sv2-export-csv", "#sv2-export-excel"],
     pins: { 1: ["#sv2-filter-chips .is-active", "tl", 0, -10, -8], 2: ["#sv2-ticket-search", "tr", 0, -10, 8], 3: F("#sv2-filter-sap"), 4: F("#sv2-filter-consultant"), 5: F("#sv2-filter-company"), 6: ["#sv2-filter-unassigned", "c", 0, -22, 0], 7: B("#sv2-apply-advanced"), 8: ["#sv2-type-chips .sv2-chip", "tl", 0, -10, -8] } });
+
+  // --- Toplu işlemler (yalnız Süper Admin / Destek Atayıcı / Proje Yöneticisi) ve arşiv
+  await shot({ guide: "admin", name: "a02-toplu", as: "u_service", url: "/support-v2/admin/tickets.html", wait: "#sv2-tickets-table .sv2-table", vp: [1500, 1300], scale: 1.5, settle: 600,
+    before: async (page) => { await noSidebar(page); await firstRows(page, 4); await page.click(".sv2-bulk-cb >> nth=0"); await page.click(".sv2-bulk-cb >> nth=1"); await sleep(250); },
+    targets: ["#sv2-bulk-bar", ".sv2-table thead", ".sv2-table tbody tr:nth-child(3)"], pad: 10,
+    pins: { 1: ["#sv2-bulk-count", "tl", 0, -6, -10], 2: B("#sv2-bulk-assign"), 3: B("#sv2-bulk-status"), 4: ["#sv2-bulk-all", "tl", 0, -6, -6], 5: [".sv2-bulk-cb", "tl", 0, -6, -6] } });
+
+  await shot({ guide: "admin", name: "a02-toplu-durum", as: "u_service", url: "/support-v2/admin/tickets.html", wait: "#sv2-tickets-table .sv2-table", vp: [1100, 1100], scale: 1.8, settle: 600,
+    before: async (page) => {
+      await page.click(".sv2-bulk-cb >> nth=0"); await page.click(".sv2-bulk-cb >> nth=1"); await page.click("#sv2-bulk-status");
+      await page.waitForSelector("#sv2-bulk-status-modal.is-open .sv2-modal"); await page.selectOption("#bulk-status-target", "in_progress");
+      await page.fill("#bulk-status-note", "Ay sonu yoğunluğu nedeniyle iki talep birlikte işleme alındı."); await sleep(400);
+    },
+    target: modal("sv2-bulk-status-modal"), pad: 6,
+    pins: { 1: F("#bulk-status-target"), 2: F("#bulk-status-note"), 3: ["#bulk-status-preview", "tl", 0, 0, -4], 4: B("#bulk-status-confirm") } });
+
+  await shot({ guide: "admin", name: "a02-arsiv", as: "u_root", url: "/support-v2/admin/tickets.html", wait: "#sv2-tickets-table .sv2-table", vp: [1500, 1100], scale: 1.5, settle: 600,
+    before: async (page) => {
+      const t = JSON.parse(JSON.stringify(world.valueAt("v2/tickets/t12")));
+      world.seed("v2/tickets/t13", { ...t, ticket_id: "t13", ticket_number: "SUP-ORN-CO-2610-0013", title: "Mükerrer açılan talep (aynı konu)", status: "closed", is_deleted: true, deleted_at: iso(2 * H), deleted_by: "u_service" });
+      await noSidebar(page); await page.click("#sv2-toggle-deleted"); await page.waitForSelector(".sv2-restore-ticket"); await sleep(300);
+    },
+    targets: [".sv2-content > :first-child", ".sv2-content > .sv2-section"], pad: 8,
+    pins: { 1: B("#sv2-toggle-deleted"), 2: [".sv2-restore-ticket", "tl", 0, -6, -8], 3: [".sv2-permanent-delete", "tl", 0, -6, -8] } });
 
   const openNew = async (page) => { await page.click("#sv2-new-ticket"); await page.waitForSelector("#sv2-create-ticket-modal.is-open .sv2-modal"); await sleep(250); };
   await shot({ guide: "admin", name: "a02-yeni-ticket", as: "u_service", url: "/support-v2/admin/tickets.html", wait: "#sv2-tickets-table .sv2-table", vp: [1100, 1250], scale: 1.6,
@@ -237,10 +273,10 @@ exports.admin = async ({ shot, emailShot, world, sleep }) => {
 
   await shot({ guide: "admin", name: "a02-admin-paneli", as: "u_service", url: T1, wait: ".sv2-meta-grid", vp: [1366, 3300], scale: 1.6,
     target: ".sv2-content > .sv2-form-row > .sv2-section", pad: 4,
-    pins: { 1: ["#sv2-quick-actions .sv2-btn", "tl", 0, 2, -2], 2: F("#sv2-admin-status"), 3: F("#sv2-admin-priority"), 4: [".sv2-assign-check", "tl", 0, -8, -4], 5: [".sv2-assign-primary:checked", "tl", 0, -20, -8], 6: F("#sv2-admin-status-note"), 7: B("#sv2-admin-update") } });
+    pins: { 1: ["#sv2-quick-actions .sv2-btn", "tl", 0, 2, -2], 2: F("#sv2-admin-status"), 3: F("#sv2-admin-priority"), 4: F("#sv2-admin-type"), 5: [".sv2-assign-check", "tl", 0, -8, -4], 6: [".sv2-assign-primary:checked", "tl", 0, -20, -8], 7: F("#sv2-admin-status-note"), 8: B("#sv2-admin-update") } });
 
   const quick = async (name, as, tid) => shot({ guide: "admin", name, as, url: `/support-v2/admin/ticket-detail.html?id=${tid}`, wait: "#sv2-quick-actions", vp: [1366, 3300], scale: 2, target: "#sv2-quick-actions", pad: 10 });
-  await quick("a02-hizli-acik", "u_service", "t2");
+  await quick("a02-hizli-acik", "u_service", "t6");
   await quick("a02-hizli-islemde", "u_service", "t1");
   await quick("a02-hizli-musteri", "u_service", "t3");
   await quick("a02-hizli-onay", "u_service", "t4");
@@ -263,7 +299,7 @@ exports.admin = async ({ shot, emailShot, world, sleep }) => {
   await shot({ guide: "admin", name: "a02-yanit", as: "u_service", url: T1, wait: ".sv2-meta-grid", vp: [1366, 3300], scale: 1.5,
     before: async (page) => { await page.addStyleTag({ content: ".sv2-timeline > li:nth-child(1){display:none !important}" }); await sleep(150); },
     target: sec("Mesajlar & Geçmiş"), pad: 6,
-    pins: { 1: [tab("messages"), "tr", 0, 8, -2], 2: [tab("history"), "tr", 0, 8, -2], 3: [".sv2-timeline-item.customer .sv2-timeline-author", "tl", 0, -4, -4], 4: [".sv2-attachment", "tl", 0, -6, -6], 5: F("#sv2-reply-message"), 6: B("#sv2-reply-picker .sv2-file-btn"), 7: ["#sv2-reply-internal", "tl", 0, -8, -6], 8: ["#sv2-reply-hours", "tr", 0, 10, -10], 9: B("#sv2-reply-send") } });
+    pins: { 1: [tab("messages"), "tr", 0, 8, -2], 2: [tab("history"), "tr", 0, 8, -2], 3: [".sv2-timeline-item.customer .sv2-timeline-author", "tl", 0, -4, -4], 4: [".sv2-attachment", "tl", 0, -6, -6], 5: F("#sv2-reply-template"), 6: F("#sv2-reply-message"), 7: B("#sv2-reply-picker .sv2-file-btn"), 8: ["#sv2-reply-internal", "tl", 0, -8, -6], 9: ["#sv2-reply-hours", "tr", 0, 10, -10], 10: B("#sv2-reply-send") } });
 
   await shot({ guide: "admin", name: "a02-gecmis", as: "u_service", url: T1, wait: ".sv2-meta-grid", vp: [1366, 3300], scale: 1.8,
     before: async (page) => { await page.click(tab("history")); await sleep(250); },
@@ -307,21 +343,46 @@ exports.admin = async ({ shot, emailShot, world, sleep }) => {
     targets: [".sv2-content > .sv2-section >> nth=0", ".sv2-stats-grid", "#company-tabs"], pad: 18,
     pins: { 1: ["#btn-edit-company", "tl", 0, 4, 4], 2: ["#btn-toggle-company", "tl", 0, 4, 4], 3: [".sv2-stats-grid", "tl", 0, 4, 4], 4: ["#company-tabs .sv2-tab", "tl", 0, 4, -2], 5: ["#company-tabs .sv2-tab", "tl", 3, 6, -4] } });
 
-  await shot({ guide: "admin", name: "a03-muhataplar", as: "u_service", url: "/support-v2/admin/users.html", wait: ".sv2-table", vp: [1500, 1300], scale: 1.4,
+  await shot({ guide: "admin", name: "a03-kullanicilar", as: "u_service", url: "/support-v2/admin/users.html", wait: ".sv2-table", vp: [1500, 1300], scale: 1.4,
     before: async (page) => { await noSidebar(page); await firstRows(page, 3); await sleep(150); },
     targets: [".sv2-content > :first-child", ".sv2-content > .sv2-section"], pad: 8,
-    pins: { 1: B("#btn-new-user"), 2: F("#users-search"), 3: ["#sv2-filter-chips .sv2-chip", "tr", 6, 18, -10], 4: [".sv2-role-badge", "tr", 0, -4, -4], 5: [".sv2-table tbody .sv2-btn", "tl", 0, -4, -8] } });
+    pins: { 1: B("#btn-repair-user"), 2: B("#btn-new-user"), 3: F("#users-search"), 4: ["#sv2-filter-chips .sv2-chip", "tr", 6, 18, -10], 5: [".sv2-role-badge", "tr", 0, -4, -4], 6: [".sv2-table tbody .sv2-btn", "tl", 0, -4, -8] } });
 
+  // Sunucu tarafı kullanıcı yönetimi (servis hesabı tanımlıyken): /api/admin-users taklidi → "davet" kipi
+  const mockAdminApi = async (page, extra) => {
+    await page.route("**/api/admin-users", (route) => {
+      const b = JSON.parse(route.request().postData() || "{}");
+      const ok = (data, warnings) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ success: true, data, warnings: warnings || [] }) });
+      if (b.action === "create") return ok({ uid: "u_new_demo", email: b.email, mode: "invite", invite: { status: "sent" } });
+      if (b.action === "orphans") return ok({ orphans: [{ email: "fatma.sen@demircelik.com" }] });
+      return ok({});
+    });
+    // Sunucu işlevi durumu sayfa açılırken sorgulanır: taklit kayıtlıyken sayfayı yeniden yükle.
+    await page.reload();
+    await page.waitForSelector(".sv2-table", { timeout: 10000 });
+    await sleep(600);
+  };
   const openUser = async (page) => { await page.click("#btn-new-user"); await page.waitForSelector("#modal-new-user.is-open .sv2-modal"); await sleep(250); };
   await shot({ guide: "admin", name: "a03-yeni-kullanici", as: "u_service", url: "/support-v2/admin/users.html", wait: ".sv2-table", vp: [1100, 1300], scale: 1.6,
     before: async (page) => {
-      await openUser(page);
+      await mockAdminApi(page);
+      await openUser(page); await sleep(300);
       await page.fill("#nu-first-name", "Elif"); await page.fill("#nu-last-name", "Karaca"); await page.fill("#nu-email", "elif.karaca@demircelik.com"); await page.fill("#nu-phone", "+90 533 111 22 77");
       await page.fill("#nu-company", "Demir"); await page.waitForSelector(".sv2-ac-item"); await page.click(".sv2-ac-item >> nth=0");
       await sleep(250);
     },
     target: modal("modal-new-user"), pad: 6,
-    pins: { 1: F("#nu-first-name"), 2: F("#nu-email"), 3: F("#nu-phone"), 4: F("#nu-company"), 5: F("#nu-role"), 6: ["#nu-temp-password", "tr", 0, -52, 16], 7: B("#nu-gen-password"), 8: B("#nu-submit") } });
+    pins: { 1: F("#nu-first-name"), 2: F("#nu-email"), 3: F("#nu-phone"), 4: F("#nu-company"), 5: F("#nu-role"), 6: ["#nu-invite", "tl", 0, -8, -4], 7: B("#nu-submit") } });
+
+  await shot({ guide: "admin", name: "a03-yetim-hesap", as: "u_service", url: "/support-v2/admin/users.html", wait: ".sv2-table", vp: [1100, 1100], scale: 1.8,
+    before: async (page) => {
+      await mockAdminApi(page);
+      await page.click("#btn-repair-user"); await page.waitForSelector("#modal-repair-user.is-open .sv2-modal"); await sleep(400);
+      await page.fill("#rp-email", "fatma.sen@demircelik.com"); await page.fill("#rp-first", "Fatma"); await page.fill("#rp-last", "Şen"); await page.fill("#rp-phone", "+90 532 444 55 66");
+      await page.selectOption("#rp-company", { label: "Demir Çelik San. A.Ş. (DMR)" }); await sleep(250);
+    },
+    target: modal("modal-repair-user"), pad: 6,
+    pins: { 1: F("#rp-email"), 2: ["#rp-hint", "tl", 0, 0, -2], 3: F("#rp-role"), 4: B("#rp-submit") } });
 
   await shot({ guide: "admin", name: "a03-kullanici-detay", as: "u_service", url: "/support-v2/admin/user-detail.html?uid=u_cadmin", wait: ".sv2-stats-grid", vp: [1366, 1500], scale: 1.5,
     targets: [".sv2-content > .sv2-section >> nth=0", ".sv2-stats-grid"], pad: 18,
@@ -335,25 +396,25 @@ exports.admin = async ({ shot, emailShot, world, sleep }) => {
   await shot({ guide: "admin", name: "a03-personel", as: "u_service", url: "/support-v2/admin/personnel.html", wait: ".sv2-table", vp: [1500, 1200], scale: 1.4,
     before: async (page) => { await noSidebar(page); },
     targets: [".sv2-content > :first-child", ".sv2-content > .sv2-section"], pad: 16,
-    pins: { 1: B("#btn-new-personnel"), 2: F("#personnel-search"), 3: F("#dept-filter"), 4: ["#status-chips .sv2-chip", "tl", 0, 0, -6], 5: [".sv2-table thead th >> nth=5", "tl", 0, -14, -6], 6: [".sv2-table tbody .sv2-btn", "tl", 0, -4, -8] } });
+    pins: { 1: B("#btn-link-personnel"), 2: B("#btn-new-personnel"), 3: F("#personnel-search"), 4: F("#dept-filter"), 5: ["#status-chips .sv2-chip", "tl", 0, 0, -6], 6: [".sv2-table thead th >> nth=5", "tl", 0, -14, -6], 7: [".sv2-table tbody .sv2-btn", "tl", 0, -4, -8] } });
 
   await shot({ guide: "admin", name: "a03-yeni-personel", as: "u_service", url: "/support-v2/admin/personnel.html", wait: ".sv2-table", vp: [1100, 1000], scale: 1.8,
     before: async (page) => { await page.click("#btn-new-personnel"); await page.waitForSelector("#modal-new-personnel.is-open .sv2-modal"); await page.fill("#np-first", "Elif"); await page.fill("#np-last", "Karaca"); await page.fill("#np-email", "elif.karaca@parla-demo.com"); await page.selectOption("#np-dept", "d1"); await page.fill("#np-role", "SAP MM Danışmanı"); await sleep(250); },
     target: modal("modal-new-personnel"), pad: 6,
     pins: { 1: F("#np-email"), 2: F("#np-dept"), 3: F("#np-role"), 4: B("#np-submit") } });
 
-  // Yeni kullanıcı oluşturma akışı (listeler çekildikten sonra veriyi değiştirir)
+  // Yeni kullanıcı oluşturma akışı (davet kipi; listeler çekildikten sonra veriyi değiştirir)
   await shot({ guide: "admin", name: "a03-kimlik-bilgileri", as: "u_service", url: "/support-v2/admin/users.html", wait: ".sv2-table", vp: [1100, 1300], scale: 2,
     before: async (page) => {
-      await openUser(page);
+      await mockAdminApi(page);
+      await openUser(page); await sleep(300);
       await page.fill("#nu-first-name", "Elif"); await page.fill("#nu-last-name", "Karaca"); await page.fill("#nu-email", "elif.karaca@demircelik.com"); await page.fill("#nu-phone", "+90 533 111 22 77");
       await page.fill("#nu-company", "Demir"); await page.waitForSelector(".sv2-ac-item"); await page.click(".sv2-ac-item >> nth=0");
-      await page.fill("#nu-temp-password", "Kx7mPq2Wn9Ta");
       await page.click("#nu-submit"); await page.waitForSelector("#modal-user-success.is-open .sv2-modal", { timeout: 8000 }); await sleep(300);
     },
     target: modal("modal-user-success"), pad: 8,
-    pins: { 1: ["#cred-email", "r", 0, 30, 0], 2: ["#cred-password", "r", 0, 30, 0], 3: B("#cred-copy"), 4: B("#cred-email-btn"), 5: B("[data-close=modal-user-success].sv2-btn-primary") } });
-  await emailShot("admin", "a03-eposta-kimlik", "user_credentials", { email: "elif.karaca@demircelik.com", password: "Kx7mPq2Wn9Ta", name: "Elif Karaca", portalUrl: "https://www.parlabilgiteknolojileri.net", loginUrl: "https://www.parlabilgiteknolojileri.net/support-v2/login.html" });
+    pins: { 1: ["#cred-email", "r", 0, 30, 0], 2: ["#cred-invite", "r", 0, 30, 0], 3: B("[data-close=modal-user-success].sv2-btn-primary") } });
+  await emailShot("admin", "a03-eposta-kimlik", "user_credentials", { email: "elif.karaca@demircelik.com", name: "Elif Karaca", setPasswordUrl: "https://www.parlabilgiteknolojileri.net/support-v2/auth-action.html?mode=resetPassword&oobCode=ORNEK", portalUrl: "https://www.parlabilgiteknolojileri.net", loginUrl: "https://www.parlabilgiteknolojileri.net/support-v2/login.html" }, 760);
 
   // ================================================================ 4. Tanımlar
   await shot({ guide: "admin", name: "a04-sozlesmeler", as: "u_service", url: "/support-v2/admin/contracts.html", wait: ".sv2-table", vp: [1500, 1200], scale: 1.4,
@@ -373,17 +434,26 @@ exports.admin = async ({ shot, emailShot, world, sleep }) => {
 
   await shot({ guide: "admin", name: "a04-departmanlar", as: "u_root", url: "/support-v2/admin/departments.html", wait: ".sv2-table", vp: [1366, 800], scale: 1.4,
     targets: [".sv2-content > .sv2-section"], pad: 6,
-    pins: { 1: B("#btn-new-dept"), 2: [".dept-toggle", "tl", 0, -6, -2], 3: [".btn-edit", "tl", 0, -6, -4], 4: [".btn-delete", "tl", 0, -6, -4] } });
+    pins: { 1: B("#btn-new-dept"), 2: [".dept-toggle", "tl", 0, -6, -2], 3: [".btn-edit", "tl", 0, -6, -4] } });
 
   await shot({ guide: "admin", name: "a04-moduller", as: "u_root", url: "/support-v2/admin/modules.html", wait: ".sv2-table", vp: [1366, 1300], scale: 1.4,
     before: async (page) => { await firstRows(page, 4); await sleep(150); },
     targets: [".sv2-content > .sv2-section"], pad: 6,
-    pins: { 1: B("#btn-new-module"), 2: [".sv2-table thead th >> nth=2", "tl", 0, -14, -6], 3: [".mod-toggle", "tl", 0, -6, -2], 4: [".btn-edit", "tl", 0, -6, -4] } });
+    pins: { 1: [".sv2-section-header h3 .sv2-badge", "r", 0, 16, 0], 2: B("#btn-new-module"), 3: [".sv2-table thead th >> nth=2", "tl", 0, -14, -6], 4: [".mod-toggle", "tl", 0, -6, -2], 5: [".btn-edit", "tl", 0, -6, -4] } });
 
   await shot({ guide: "admin", name: "a04-destek-turleri", as: "u_root", url: "/support-v2/admin/support-types.html", wait: ".sv2-table", vp: [1366, 1300], scale: 1.4,
     before: async (page) => { await firstRows(page, 4); await sleep(150); },
     targets: [".sv2-content > .sv2-section"], pad: 6,
-    pins: { 1: B("#btn-new-type"), 2: [".sv2-color-swatch", "tl", 0, -8, -8], 3: [".type-toggle", "tl", 0, -6, -2], 4: [".btn-edit", "tl", 0, -6, -4] } });
+    pins: { 1: [".sv2-section-header h3 .sv2-badge", "r", 0, 16, 0], 2: B("#btn-new-type"), 3: [".sv2-color-swatch", "tl", 0, -8, -8], 4: [".type-toggle", "tl", 0, -6, -2], 5: [".btn-edit", "tl", 0, -6, -4] } });
+
+  await shot({ guide: "admin", name: "a04-hazir-yanitlar", as: "u_service", url: "/support-v2/admin/reply-templates.html", wait: ".sv2-table", vp: [1366, 1100], scale: 1.4,
+    targets: [".sv2-content > .sv2-section"], pad: 6,
+    pins: { 1: B("#btn-new-template"), 2: ["#template-help", "tl", 0, 8, 8], 3: [".tpl-toggle", "tl", 0, -6, -2], 4: [".btn-edit", "tl", 0, -6, -4] } });
+
+  await shot({ guide: "admin", name: "a04-hazir-yanit-formu", as: "u_service", url: "/support-v2/admin/reply-templates.html", wait: ".sv2-table", vp: [1100, 1200], scale: 1.6,
+    before: async (page) => { await page.click(".btn-edit >> nth=1"); await page.waitForSelector("#template-modal.is-open .sv2-modal"); await sleep(350); },
+    target: modal("template-modal"), pad: 6,
+    pins: { 1: F("#tf-title"), 2: F("#tf-category"), 3: F("#tf-body"), 4: ["#tf-vars .tf-var", "tl", 0, -4, -4], 5: ["#tf-preview", "tl", 0, 8, 8], 6: B("#template-save") } });
 
   // ================================================================ 5. Raporlar, aktivite günlüğü
   await shot({ guide: "admin", name: "a05-raporlar", as: "u_service", url: "/support-v2/admin/reports.html", wait: ".sv2-report-card", vp: [1366, 2400], scale: 1.4, settle: 800,
@@ -406,7 +476,7 @@ exports.admin = async ({ shot, emailShot, world, sleep }) => {
   world.seed("v2/ticket_messages/t2/legacy1", { message_id: "legacy1", user_id: "u_cons1", author_name: "Zeynep Arslan", author_email: "zeynep.arslan@parla-demo.com", author_role: "consultant", message: "Dahili: müşteri kodu kontrol edilecek.", is_internal: true, work_hours: 0, created_at: iso(30 * D) });
   world.seed("v2/ticket_messages/t2/legacy2", { message_id: "legacy2", user_id: "u_cons1", author_name: "Zeynep Arslan", author_email: "zeynep.arslan@parla-demo.com", author_role: "consultant", message: "Dahili: mutabakat hesabı için FI ekibine soruldu.", is_internal: true, work_hours: 0, created_at: iso(29 * D) });
   await shot({ guide: "admin", name: "a06-veri-bakimi", as: "u_root", url: "/support-v2/admin/dashboard.html", wait: "#sv2-maintenance", vp: [1366, 1800], scale: 1.6, settle: 700,
-    before: async (page) => { page.once("dialog", (d) => d.accept()); await page.click("#sv2-migrate-notes"); await page.waitForFunction(() => /taşındı/.test(document.getElementById("sv2-maintenance-status").textContent)); await sleep(300); },
+    before: async (page) => { await page.click("#sv2-migrate-notes"); await page.click("#sv2-confirm-ok"); await page.waitForFunction(() => /taşındı/.test(document.getElementById("sv2-maintenance-status").textContent)); await sleep(300); },
     target: "#sv2-maintenance", pad: 14,
     pins: { 1: ["#sv2-migrate-notes", "tl", 0, 0, 0] } });
 };
