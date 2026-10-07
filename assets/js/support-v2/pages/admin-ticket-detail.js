@@ -134,7 +134,7 @@ function statusOptions(selected) {
     role: session?.role,
     hasAssignee: !!ticket?.assigned_to_id || assignments.length > 0,
   });
-  const opt = (s, suffix) => `<option value="${s}"${s === current ? " selected" : ""}>${escapeHtml(STATUS_LABELS[s])}${suffix || ""}</option>`;
+  const opt = (s, suffix) => `<option value="${escapeHtml(s)}"${s === current ? " selected" : ""}>${escapeHtml(STATUS_LABELS[s] || s)}${suffix || ""}</option>`;
   let html = opt(current, " (mevcut)");
   html += allowed.map((s) => opt(s)).join("");
   if (override.length) {
@@ -357,7 +357,7 @@ function renderQuickActions() {
   const actions = quickActionList();
   const hint =
     String(ticket.status || "").toLowerCase() === STATUSES.PENDING_CLOSE
-      ? `<p class="sv2-text-muted" style="font-size:0.8125rem;margin:0.5rem 0 0"><i class="fas fa-hourglass-half"></i> Müşterinin kapanış onayı bekleniyor; onaylarsa talep otomatik kapanır, reddederse "Tekrar Açıldı" durumuna geçer.</p>`
+      ? `<p class="sv2-text-muted" style="font-size:0.8125rem;margin:0.5rem 0 0"><i class="fas fa-hourglass-half"></i> Müşterinin kapanış onayı bekleniyor; onaylarsa talep otomatik kapanır, reddederse "Yeniden Açıldı" durumuna geçer.</p>`
       : "";
   if (!actions.length && !hint) return "";
   const buttons = actions

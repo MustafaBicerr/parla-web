@@ -113,7 +113,7 @@ test("kapalı liste bekçisi: git'te izlenen her kök girdi yayın listesinde ya
     t.skip("git yok");
     return;
   }
-  const published = new Set(["index.html", "404.html", "components", "pages", "assets", "support-v2", "robots.txt", "sitemap.xml", "LICENSE"]);
+  const published = new Set(["index.html", "404.html", "components", "pages", "assets", "support-v2", "robots.txt", "sitemap.xml", "LICENSE", "favicon.ico"]);
   const roots = [...new Set(files.map((f) => f.split("/")[0]))];
   const exposed = roots.filter((r) => {
     if (published.has(r)) return false;
@@ -155,6 +155,27 @@ test("güvenlik başlıkları: tüm site + CSP Report-Only yalnızca portal HTML
 test("mevcut önbellek başlıkları korunur", () => {
   ["/assets/js/support-v2/pages/login.js", "/assets/css/support-v2.css", "/assets/js/firebase-init.js", "/assets/js/site-config.js", "/support-v2/docs/Kullanici-Kilavuzu.pdf"].forEach((p) => {
     assert.ok(headerValue(p, "Cache-Control").includes("no-cache, must-revalidate"), p);
+  });
+});
+
+test("uzun önbellek (WP-15): vendor ve görseller modest max-age; özet adı yokken immutable yok; no-cache yollarıyla çakışmaz", () => {
+  const long = [
+    ["/assets/vendor/fontawesome/fa-subset.css", /max-age=86400/],
+    ["/assets/vendor/fontawesome/fa-solid-subset.woff2", /max-age=86400/],
+    ["/assets/img/parla-logo/parla-logo-320.png", /max-age=604800/],
+    ["/assets/img/favicon/favicon.svg", /max-age=604800/],
+    ["/favicon.ico", /max-age=604800/],
+  ];
+  long.forEach(([p, re]) => {
+    const vals = headerValue(p, "Cache-Control");
+    assert.equal(vals.length, 1, `${p}: tek Cache-Control kuralı olmalı (çakışma yok): ${JSON.stringify(vals)}`);
+    assert.match(vals[0], re, p);
+    assert.doesNotMatch(vals[0], /immutable/, `${p}: özetsiz dosya adında immutable kullanılmaz`);
+    assert.match(vals[0], /^public/, p);
+  });
+  // Uygulama kodu ve PDF'ler hâlâ no-cache (çakışma yok)
+  ["/assets/js/support-v2/pages/login.js", "/assets/css/support-v2.css", "/support-v2/docs/Kullanici-Kilavuzu.pdf"].forEach((p) => {
+    assert.deepEqual(headerValue(p, "Cache-Control"), ["no-cache, must-revalidate"], p);
   });
 });
 

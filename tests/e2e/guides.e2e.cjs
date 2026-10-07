@@ -39,7 +39,8 @@ function check(name, ok, detail) {
     const attr = (sel, a) => anon.page.getAttribute(sel, a);
     check("giriş: kullanıcı kılavuzu 'Aç' bağlantısı", (await attr("#sv2-guide-user-open", "href")) === USER_PDF && (await attr("#sv2-guide-user-open", "target")) === "_blank");
     check("giriş: kullanıcı kılavuzu 'İndir' bağlantısı", (await attr("#sv2-guide-user-dl", "href")) === USER_PDF && !!(await attr("#sv2-guide-user-dl", "download")));
-    check("giriş: sistem adminleri kılavuzu bağlantıları", (await attr("#sv2-guide-admin-open", "href")) === ADMIN_PDF && (await attr("#sv2-guide-admin-dl", "href")) === ADMIN_PDF);
+    // Karar 30: sistem adminleri kılavuzu giriş sayfasında listelenmez (personel menüden/üst çubuktan erişir).
+    check("giriş: sistem adminleri kılavuzu kartı YOK", (await anon.page.locator("#sv2-guide-admin-open, #sv2-guide-admin-dl").count()) === 0 && !(await anon.page.locator("#sv2-auth-guides").innerText()).includes("Sistem Adminleri"));
     const res = await anon.page.request.get(srv.base + USER_PDF);
     check("giriş: PDF HTTP 200 + application/pdf", res.status() === 200 && /pdf/.test(res.headers()["content-type"] || ""), res.status() + " " + res.headers()["content-type"]);
     check("giriş: sayfa hatası yok", anon.errors.length === 0, anon.errors.join(" | "));

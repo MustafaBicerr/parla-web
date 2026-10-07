@@ -4,6 +4,13 @@
 const itiInstances = new WeakMap();
 let loadPromise = null;
 
+// Alt kaynak bütünlüğü (SRI, ALT-03/SEC): sürüm sabit (23.0.4); özetler npm kayıt defterindeki paketten (npm pack) hesaplandı
+// ve jsDelivr kopyasıyla birebir eşleştiği doğrulandı. Sürüm değişirse özetleri yenileyin: docs/runbook.md §"SRI özetlerini yenileme".
+// utils.js (utilsScript) kütüphane tarafından yüklenir; SRI eklenemez (yalnızca telefon doğrulama yardımcısıdır).
+const ITI_BASE = "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/";
+const ITI_CSS_SRI = "sha384-WF0RAt8MGisWNsxq/lbm1i7nz61PKrW8z1neNPIJLbwqtsftpz3/xHsl/of5T8RR";
+const ITI_JS_SRI = "sha384-OEti0Km7w2zVOhl3/8EikwWvAzlM4eJLA+qLHDv8tQUqHeAnZ2FqhfVfX/9RbELY";
+
 function loadIntlTelInput() {
   if (loadPromise) return loadPromise;
   loadPromise = new Promise((resolve, reject) => {
@@ -14,14 +21,16 @@ function loadIntlTelInput() {
     if (!document.querySelector('link[data-iti-css]')) {
       const link = document.createElement("link");
       link.rel = "stylesheet";
-      link.href =
-        "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/css/intlTelInput.css";
+      link.href = ITI_BASE + "css/intlTelInput.css";
+      link.integrity = ITI_CSS_SRI;
+      link.crossOrigin = "anonymous";
       link.dataset.itiCss = "1";
       document.head.appendChild(link);
     }
     const script = document.createElement("script");
-    script.src =
-      "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/intlTelInput.min.js";
+    script.src = ITI_BASE + "js/intlTelInput.min.js";
+    script.integrity = ITI_JS_SRI;
+    script.crossOrigin = "anonymous";
     const timer = setTimeout(() => reject(new Error("Telefon bileşeni zamanında yüklenemedi.")), 15000);
     script.onload = () => {
       clearTimeout(timer);
@@ -52,8 +61,7 @@ export async function initPhoneInput(inputEl, options = {}) {
     preferredCountries: ["tr", "de", "gb", "us", "nl", "fr"],
     separateDialCode: true,
     nationalMode: true,
-    utilsScript:
-      "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/utils.js",
+    utilsScript: ITI_BASE + "js/utils.js",
   });
   itiInstances.set(inputEl, iti);
   return iti;

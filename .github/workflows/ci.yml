@@ -1,27 +1,170 @@
 name: CI
 
+# Test kapısı (WP-15 / D-04, K-ALT-4): `main` dalı korumasız olduğundan tek güvenlik ağı budur. Netlify yalnızca bu iş akışı
+# yeşil olduğunda main'e yeni bir şey itilmesini bekleyen kişiye (repo sahibine) güvence verir; zorunlu kılmak için GitHub
+# → Settings → Branches → "Require status checks" (unit, rules, e2e, e2e-xss, e2e-crawler) etkinleştirin (docs/runbook.md §2).
+#
+# Eylem sürümleri tam commit SHA'sına sabitlenmiştir (tedarik zinciri). Güncelleme: `git ls-remote --tags <repo> 'refs/tags/vN*'`
+# ile yeni etiketin SHA'sını bulup yorumdaki sürümle birlikte değiştirin.
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: "22"
+  # a11y e2e: axe-core bulunamazsa test ATLANMAZ, başarısız olur.
+  A11Y_REQUIRE: "1"
 
 jobs:
-  unit-and-rules:
+  unit:
+    name: unit (netlify + istemci + tests/unit)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 22
-      - name: Birim testleri (e-posta fonksiyonu + istemci)
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Birim testleri
+        run: node --test netlify/tests/*.test.* tests/unit/*.test.mjs
+      - name: intl-tel-input SRI özetleri paket kaydıyla eşleşiyor mu?
+        run: node tests/verify-sri.cjs
+
+  rules:
+    name: rules (RTDB kuralları)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: tests/rules/package-lock.json
+      - name: Kural kaynağı ile database.rules.json birebir aynı mı?
         run: |
-          node --test netlify/tests/send-email.test.js \
-                      netlify/tests/client-email-service.test.mjs \
-                      netlify/tests/client-firebase.test.mjs \
-                      netlify/tests/client-notifications.test.mjs \
-                      netlify/tests/client-utils.test.mjs
-      - name: RTDB kural testleri (database.rules.json üretecle eşit mi?)
+          node tests/rules/generate-rules.js "$RUNNER_TEMP/generated.rules.json"
+          if ! diff -u database.rules.json "$RUNNER_TEMP/generated.rules.json"; then
+            echo "::error file=database.rules.json::database.rules.json elle düzenlenmiş ya da güncel değil. 'node tests/rules/generate-rules.js' çalıştırıp çıktıyı commit edin."
+            exit 1
+          fi
+      - name: Bağımlılıklar (kilit dosyasından)
         working-directory: tests/rules
+        run: npm ci --no-fund
+      - name: Kural testleri (işlevsel + yetki matrisi + veri tarayıcı)
+        working-directory: tests/rules
+        run: npm test
+      - name: npm audit (kritik bulgu olmamalı; yalnız test bağımlılığı)
+        working-directory: tests/rules
+        # Kalan "high" bulgu: targaryen -> lodash.set (yama yok; yalnız test sürecinde, güvenilir girdiyle). Bkz. docs/runbook.md.
+        run: npm audit --audit-level=critical
+
+  e2e:
+    name: e2e (Playwright; xss ve düğme tarayıcısı hariç)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Bağımlılıklar (kural testi harness'ı + Playwright + axe-core)
         run: |
-          npm install --no-audit --no-fund
-          npm test
+          (cd tests/rules && npm ci --no-fund)
+          (cd tests/e2e && npm ci --no-fund)
+      - name: Playwright sürümünü oku
+        id: pw
+        run: echo "version=$(node -p "require('./tests/e2e/node_modules/playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Tarayıcı önbelleği
+        id: pwcache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - name: Chromium kur (önbellek yoksa)
+        if: steps.pwcache.outputs.cache-hit != 'true'
+        working-directory: tests/e2e
+        run: npx playwright install --with-deps chromium
+      - name: Chromium sistem bağımlılıkları (önbellek varsa)
+        if: steps.pwcache.outputs.cache-hit == 'true'
+        working-directory: tests/e2e
+        run: npx playwright install-deps chromium
+      - name: Tüm e2e testleri (xss hariç)
+        run: node tests/e2e/run-all.cjs --skip xss,button-crawler
+
+  # XSS e2e yavaştır (tüm sayfalar × zehirli veri); ayrı iş olarak paralel koşar.
+  e2e-xss:
+    name: e2e-xss (yavaş)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Bağımlılıklar
+        run: |
+          (cd tests/rules && npm ci --no-fund)
+          (cd tests/e2e && npm ci --no-fund)
+      - name: Playwright sürümünü oku
+        id: pw
+        run: echo "version=$(node -p "require('./tests/e2e/node_modules/playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Tarayıcı önbelleği
+        id: pwcache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - name: Chromium kur (önbellek yoksa)
+        if: steps.pwcache.outputs.cache-hit != 'true'
+        working-directory: tests/e2e
+        run: npx playwright install --with-deps chromium
+      - name: Chromium sistem bağımlılıkları (önbellek varsa)
+        if: steps.pwcache.outputs.cache-hit == 'true'
+        working-directory: tests/e2e
+        run: npx playwright install-deps chromium
+      - name: XSS e2e
+        run: node tests/e2e/xss.e2e.cjs
+
+  # Düğme tarayıcısı (her rol × her sayfa × her düğme) uzun sürer; ayrı iş olarak paralel koşar.
+  e2e-crawler:
+    name: e2e-crawler (düğme tarayıcısı)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Bağımlılıklar
+        run: |
+          (cd tests/rules && npm ci --no-fund)
+          (cd tests/e2e && npm ci --no-fund)
+      - name: Playwright sürümünü oku
+        id: pw
+        run: echo "version=$(node -p "require('./tests/e2e/node_modules/playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Tarayıcı önbelleği
+        id: pwcache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+      - name: Chromium kur (önbellek yoksa)
+        if: steps.pwcache.outputs.cache-hit != 'true'
+        working-directory: tests/e2e
+        run: npx playwright install --with-deps chromium
+      - name: Chromium sistem bağımlılıkları (önbellek varsa)
+        if: steps.pwcache.outputs.cache-hit == 'true'
+        working-directory: tests/e2e
+        run: npx playwright install-deps chromium
+      - name: Düğme tarayıcısı e2e
+        run: node tests/e2e/button-crawler.e2e.cjs

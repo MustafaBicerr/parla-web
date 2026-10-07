@@ -4,7 +4,7 @@
 
 ```
 node tests/rules/generate-rules.js      # database.rules.json'u yeniden üretir
-cd tests/rules && npm install && npm test
+cd tests/rules && npm ci && npm test      # kilit dosyası var (package-lock.json); bağımlılığı değiştirirseniz `npm install` ile kilidi yenileyip commit edin
 ```
 
 | Dosya | Görev |

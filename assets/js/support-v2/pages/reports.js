@@ -509,7 +509,7 @@ async function exportReport(id, format, data) {
       file: `danisman-performans-${ts}`,
     },
     companies: {
-      headers: ["Firma", "Ticket"],
+      headers: ["Firma", "Talep"],
       rows: data.companyData,
       name: "Firmalar",
       file: `aktif-firmalar-${ts}`,
@@ -541,7 +541,7 @@ async function exportReport(id, format, data) {
       file: `arizi-istatistik-${ts}`,
     },
     trend: {
-      headers: ["Ay", "Ticket"],
+      headers: ["Ay", "Talep"],
       rows: data.trendData,
       name: "Trend",
       file: `aylik-trend-${ts}`,

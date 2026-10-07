@@ -194,7 +194,7 @@ function buildContent() {
   );
 
   const tabs = [
-    { id: "tickets", label: "Ticketlar" },
+    { id: "tickets", label: "Talepler" },
     { id: "effort", label: "Efor" },
   ];
   if (seeAdmin) tabs.push({ id: "users", label: "Kullanıcılar" });
@@ -239,7 +239,7 @@ function buildContent() {
     ${renderStatsGrid(stats)}
 
     <div class="sv2-section">
-      <div class="sv2-section-header"><h3 id="tab-title">Ticketlar</h3></div>
+      <div class="sv2-section-header"><h3 id="tab-title">Talepler</h3></div>
       <div class="sv2-section-body">
         <div id="company-tabs">${renderTabs(tabs, activeTab, (tab) => {
           activeTab = tab;
@@ -486,14 +486,14 @@ function bindEvents() {
   });
 
   const titles = {
-    tickets: "Ticketlar",
+    tickets: "Talepler",
     effort: "Efor",
     users: "Kullanıcılar",
     contracts: "Sözleşmeler",
     projects: "Projeler",
   };
   const tabTitle = document.getElementById("tab-title");
-  if (tabTitle) tabTitle.textContent = titles[activeTab] || "Ticketlar";
+  if (tabTitle) tabTitle.textContent = titles[activeTab] || "Talepler";
 
   document.getElementById("effort-month")?.addEventListener("change", (e) => {
     effortMonth = e.target.value;

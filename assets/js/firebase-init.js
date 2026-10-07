@@ -3,7 +3,6 @@
  * site-config.js'den sonra, diğer uygulama scriptlerinden önce yüklenmeli.
  */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
 import {
   getAuth,
   signInWithEmailAndPassword,
@@ -55,7 +54,6 @@ const firebaseApi = {
   app,
   auth,
   database,
-  analytics: null,
   db: {
     ref,
     set,
@@ -89,8 +87,4 @@ const firebaseApi = {
 
 window.__PARLA_FIREBASE = firebaseApi;
 
-isSupported().then(function (supported) {
-  if (supported) {
-    firebaseApi.analytics = getAnalytics(app);
-  }
-});
+// Firebase Analytics bilinçli olarak yüklenmez (KVKK, karar D-13 A: açık rıza olmadan çerez/izleme yok).

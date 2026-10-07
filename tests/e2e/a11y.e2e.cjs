@@ -80,7 +80,7 @@ const MODALS = [
 async function openPage(s, url) {
   s.errors.length = 0;
   await s.goto(url);
-  await s.page.waitForSelector(".sv2-content, .sv2-auth-wrap", { timeout: 8000 }).catch(() => {});
+  await s.page.waitForSelector(".sv2-content, .sv2-auth-wrap, .sv2-legal-wrap", { timeout: 8000 }).catch(() => {});
   await s.page.waitForTimeout(600);
 }
 
@@ -122,7 +122,7 @@ const fmt = (vs) => vs.map((v) => `${v.id}(${v.impact}×${v.count}) ${v.nodes[0]
       }
       // oturumsuz: giriş sayfası + e-posta işlem sayfası
       const anon = await srv.session(null);
-      for (const p of ["/support-v2/login.html", "/support-v2/auth-action.html?mode=resetPassword&oobCode=x"]) {
+      for (const p of ["/support-v2/login.html", "/support-v2/auth-action.html?mode=resetPassword&oobCode=x", "/support-v2/privacy.html"]) {
         await openPage(anon, p);
         const hard = (await runAxe(anon.page)).filter(blocking);
         check(`axe [anonim] ${p}`, hard.length === 0, fmt(hard));

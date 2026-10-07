@@ -1652,7 +1652,7 @@ async function loadData() {
 
     renderPage();
   } catch (err) {
-    handleLoadError(err, "Talepler yüklenemedi", { retry: loadData, activePage: "tickets", pageTitle: "Ticketlar", isAdmin: true });
+    handleLoadError(err, "Talepler yüklenemedi", { retry: loadData, activePage: "tickets", pageTitle: "Talepler", isAdmin: true });
   } finally {
     showLoading(false);
   }

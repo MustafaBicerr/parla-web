@@ -8,7 +8,16 @@
  *  - /api/send-email isteği gerçek netlify/functions/send-email.js koduna yönlenir; Google sertifikaları,
  *    RTDB REST ve Resend çağrıları world içinde taklit edilir (gönderilen e-postalar world.emails'e düşer).
  *
- * Gereksinimler: Playwright + Chromium (PLAYWRIGHT_PATH ile ayarlanabilir), `cd tests/rules && npm install`, openssl.
+ * Gereksinimler: Playwright + Chromium (`cd tests/e2e && npm ci`; ya da PLAYWRIGHT_PATH), `cd tests/rules && npm ci`, openssl.
+ *
+ * Bilinen sınırlar (WP-15, SEN-27/ALT-27 düzeltmeleri sonrası):
+ *  - Anonim (oturumsuz) işlemler artık GERÇEKTEN auth=null ile değerlendirilir (targaryen `as(null)` önceki yazanın yetkisini
+ *    korurdu; `viewAs()` bunu aşar). Her yazım sonrası depo yetkisiz duruma döner.
+ *  - `runTransaction` Node tarafında atomik "karşılaştır-ve-yaz" (cas) ile çalışır; çakışmada gerçek Firebase gibi yeniden dener.
+ *  - `signOut` oturumu gerçekten kapatır (sonraki sayfa yüklemeleri ve veritabanı işlemleri oturumsuz olur).
+ *  - Same-origin 4xx/5xx yanıtları (404 veren CSS/görsel/PDF dahil; `/api/*` hariç) `errors` listesine düşer.
+ *  - Gerçek `assets/js/firebase-init.js` testte ÇALIŞMAZ (taklit edilir); API yüzeyi uyumu `tests/unit/firebase-init-contract.test.mjs` ile korunur.
+ *  - Sunucu tarafı sorgu türleri: yalnızca orderByChild+equalTo ve limitToLast desteklenir (limitToFirst/startAt/endAt yok).
  */
 const http = require("node:http");
 const fs = require("node:fs");
@@ -28,7 +37,17 @@ function loadPlaywright() {
   }
   throw new Error("Playwright bulunamadı (PLAYWRIGHT_PATH ayarlayın).");
 }
+const { isDeepStrictEqual } = require("node:util");
 const targaryen = require(path.join(ROOT, "tests", "rules", "node_modules", "targaryen"));
+
+/**
+ * Veritabanının verilen yetkiyle görünümü. targaryen `db.as(null)` yetkiyi SIFIRLAMAZ (`with()` null auth'u yok sayıp son yazanın
+ * yetkisini korur); bu yüzden auth=null için yeni bir Database örneği kurulur.
+ */
+function viewAs(db, auth) {
+  const Database = db.constructor;
+  return new Database({ rules: db.rules, data: db.root, auth: auth || null, debug: db.debug });
+}
 
 const MIME = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".pdf": "application/pdf", ".json": "application/json", ".woff2": "font/woff2" };
 
@@ -52,6 +71,8 @@ function createWorld(seedData, options) {
     emails: [],
     denied: [],
     resendFailure: null,
+    /** `signInWithEmailAndPassword` taklidinin kabul ettiği parola. */
+    password: "Parla-e2e-1",
     enforceRules: options.enforceRules !== false,
     keys,
     mintToken(uid) {
@@ -69,12 +90,12 @@ function createWorld(seedData, options) {
     /** Kural kontrolü olmadan veri yazar (test hazırlığı). */
     seed(p, value) {
       const res = this.db.with({ rules: { rules: { ".read": true, ".write": true } } }).write(p, value);
-      this.db = res.newDatabase.with({ rules: { rules: this.rules.rules } });
+      this.db = viewAs(res.newDatabase.with({ rules: { rules: this.rules.rules } }), null);
     },
     dbOp(op) {
       const auth = op.uid ? { uid: op.uid, token: { email: String((this.valueAt(`v2/users/${op.uid}`) || {}).email || "").toLowerCase() } } : null;
       const db = this.enforceRules ? this.db : this.db.with({ rules: { rules: { ".read": true, ".write": true } } });
-      const as = db.as(auth);
+      const as = viewAs(db, auth);
       const path_ = "/" + String(op.path || "").replace(/^\/+/, "");
       const deny = (res) => {
         const info = String(res.info || "").split("\n").slice(0, 3).join(" ");
@@ -82,7 +103,8 @@ function createWorld(seedData, options) {
         return { error: "PERMISSION_DENIED", info };
       };
       const commit = (res) => {
-        this.db = res.newDatabase.with({ rules: { rules: this.rules.rules } });
+        // Depo her zaman "yetkisiz" duruma döner: sonraki işlem kendi auth'unu açıkça belirtir.
+        this.db = viewAs(res.newDatabase.with({ rules: { rules: this.rules.rules } }), null);
         return { ok: true };
       };
       if (op.op === "get") {
@@ -112,6 +134,14 @@ function createWorld(seedData, options) {
       }
       if (op.op === "remove") {
         const res = as.write(path_, null);
+        return res.allowed ? commit(res) : deny(res);
+      }
+      if (op.op === "cas") {
+        // Atomik karşılaştır-ve-yaz (runTransaction): bu işlev eşzamanlı olduğundan iki işlem araya giremez.
+        const cur = this.valueAt(path_);
+        const curVal = cur === undefined ? null : cur;
+        if (!isDeepStrictEqual(curVal, op.expected === undefined ? null : op.expected)) return { conflict: true, val: curVal };
+        const res = as.write(path_, op.value === undefined ? null : op.value);
         return res.allowed ? commit(res) : deny(res);
       }
       return { error: "BAD_OP" };
@@ -156,9 +186,10 @@ async function callEmailFunction(world, req) {
   }
 }
 
-const BROWSER_STUB = (uid) => `
-const uid = ${JSON.stringify(uid)};
-const call = (op) => window.__dbOp(Object.assign({ uid }, op));
+const BROWSER_STUB = (uid, email) => `
+let curUid = ${JSON.stringify(uid)};
+const email = ${JSON.stringify(email || "")};
+const call = (op) => window.__dbOp(Object.assign({ uid: curUid }, op));
 const unwrap = async (p) => {
   const r = await p;
   if (r && r.error) { const e = new Error(r.error + ": " + (r.info || "")); e.code = r.error; throw e; }
@@ -166,13 +197,27 @@ const unwrap = async (p) => {
 };
 let seq = 0;
 const snap = (v) => ({ exists: () => v != null, val: () => v });
-const authUser = uid ? { uid, email: "", getIdToken: async () => window.__mintToken(uid) } : null;
+const makeUser = (u) => (u ? { uid: u, email, getIdToken: async () => window.__mintToken(u) } : null);
+let authUser = makeUser(curUid);
+const listeners = new Set();
+const authError = (code) => { const e = new Error(code); e.code = code; return e; };
 window.__PARLA_FIREBASE = {
   database: {}, app: { options: {} }, analytics: null,
-  auth: { currentUser: authUser },
+  auth: { get currentUser() { return authUser; } },
   authFn: {
-    onAuthStateChanged: (a, cb) => { setTimeout(() => cb(authUser), 0); return () => {}; },
-    signOut: async () => {},
+    onAuthStateChanged: (a, cb) => { listeners.add(cb); setTimeout(() => { if (listeners.has(cb)) cb(authUser); }, 0); return () => listeners.delete(cb); },
+    signOut: async () => {
+      await window.__signOut();
+      curUid = null; authUser = null;
+      listeners.forEach((cb) => cb(null));
+    },
+    signInWithEmailAndPassword: async (a, mail, pass) => {
+      const r = await window.__signIn(String(mail || ""), String(pass || ""));
+      if (r.error) throw authError(r.error);
+      curUid = r.uid; authUser = { uid: r.uid, email: r.email, getIdToken: async () => window.__mintToken(r.uid) };
+      listeners.forEach((cb) => cb(authUser));
+      return { user: authUser };
+    },
     sendPasswordResetEmail: async () => {},
     verifyPasswordResetCode: async () => "ayse.demir@ornekholding.com",
     confirmPasswordReset: async () => {},
@@ -192,11 +237,18 @@ window.__PARLA_FIREBASE = {
     equalTo: (v) => ({ equalTo: v }),
     limitToLast: (n) => ({ limitToLast: n }),
     onValue: () => () => {}, off: () => {},
+    // Gerçek Firebase gibi iyimser çalışır; oku, işlevi uygula, koşullu yaz (Node tarafında atomik karşılaştır-ve-yaz), çakışmada yeniden dene.
     runTransaction: async (r, fn) => {
-      const cur = await unwrap(call({ op: "get", path: r.path }));
-      const next = fn(cur.val === undefined ? null : cur.val);
-      await unwrap(call({ op: "set", path: r.path, value: next }));
-      return { committed: true, snapshot: snap(next) };
+      for (let attempt = 0; attempt < 25; attempt++) {
+        const cur = await unwrap(call({ op: "get", path: r.path }));
+        const curVal = cur.val === undefined ? null : cur.val;
+        const next = fn(curVal);
+        if (next === undefined) return { committed: false, snapshot: snap(curVal) };
+        const res = await unwrap(call({ op: "cas", path: r.path, expected: curVal, value: next }));
+        if (res && res.conflict) continue;
+        return { committed: true, snapshot: snap(next) };
+      }
+      const e = new Error("maxretry"); e.code = "maxretry"; throw e;
     },
   },
 };`;
@@ -219,13 +271,51 @@ async function startServer(world, options) {
   /** uid olarak oturum açmış (ya da anonim) yeni bir tarayıcı bağlamı + sayfa. */
   async function session(uid, ctxOptions) {
     const context = await browser.newContext(Object.assign({ viewport: { width: 1440, height: 900 }, locale: "tr-TR", timezoneId: "Europe/Istanbul" }, ctxOptions || {}));
+    // Oturum durumu bağlam düzeyindedir: signOut/signIn sonrası yeni sayfa yüklemeleri de aynı kimlikle açılır.
+    const state = { uid: uid || null };
     await context.exposeFunction("__dbOp", (op) => world.dbOp(op));
     await context.exposeFunction("__mintToken", (u) => world.mintToken(u));
+    await context.exposeFunction("__signOut", () => { state.uid = null; });
+    await context.exposeFunction("__signIn", (mail, pass) => {
+      const users = world.valueAt("v2/users") || {};
+      const found = Object.entries(users).find(([, p]) => p && String(p.email || "").toLowerCase() === String(mail).trim().toLowerCase());
+      if (!found || pass !== world.password) return { error: "auth/invalid-credential" };
+      if (found[1].is_active === false) return { error: "auth/user-disabled" };
+      state.uid = found[0];
+      return { uid: found[0], email: String(found[1].email || "").toLowerCase() };
+    });
+    // SRI: sahte CDN betikleri gerçek özetle eşleşmez; `integrity` ayarlanması KAYDEDİLİR (data-sri-requested) ama uygulanmaz.
+    await context.addInitScript(() => {
+      for (const C of [HTMLScriptElement, HTMLLinkElement]) {
+        Object.defineProperty(C.prototype, "integrity", {
+          configurable: true,
+          get() { return this.getAttribute("data-sri-requested") || ""; },
+          set(v) { this.setAttribute("data-sri-requested", String(v)); },
+        });
+      }
+    });
     const page = await context.newPage();
     const errors = [];
     page.on("pageerror", (e) => errors.push("pageerror: " + String(e).slice(0, 300)));
     page.on("console", (m) => { if (m.type() === "error" && !/Failed to load resource|ERR_TUNNEL|net::ERR/.test(m.text())) errors.push("console: " + m.text().slice(0, 300)); });
-    await page.route("**/firebase-init.js", (r) => r.fulfill({ contentType: "text/javascript", body: BROWSER_STUB(uid) }));
+    // Same-origin 4xx/5xx (404 veren CSS/görsel/PDF dahil) sayfa hatası sayılır (ALT-27).
+    page.on("response", (r) => {
+      try {
+        const u = new URL(r.url());
+        // /api/* yanıtları (ör. bilerek tetiklenen 429/502) uygulama düzeyi sonuçtur ve testlerce açıkça denetlenir; yalnız statik kaynaklar sayılır.
+        if (u.origin === base && r.status() >= 400 && !u.pathname.startsWith("/api/") && !(options.allowStatus || []).includes(u.pathname)) errors.push(`http ${r.status()}: ${u.pathname}`);
+      } catch { /* geçersiz URL */ }
+    });
+    page.on("requestfailed", (r) => {
+      try {
+        const u = new URL(r.url());
+        if (u.origin === base && !/ERR_ABORTED/.test(String(r.failure() && r.failure().errorText))) errors.push(`istek başarısız: ${u.pathname}`);
+      } catch { /* geçersiz URL */ }
+    });
+    await page.route("**/firebase-init.js", (r) => {
+      const mail = state.uid ? String((world.valueAt(`v2/users/${state.uid}`) || {}).email || "").toLowerCase() : "";
+      return r.fulfill({ contentType: "text/javascript", body: BROWSER_STUB(state.uid, mail) });
+    });
     await page.route(/gstatic\.com\/firebasejs\/.*\/firebase-app\.js/, (r) => r.fulfill({ contentType: "text/javascript", body: "export const initializeApp=(o,n)=>({n});export const deleteApp=async()=>{};" }));
     await page.route(/gstatic\.com\/firebasejs\/.*\/firebase-auth\.js/, (r) => r.fulfill({ contentType: "text/javascript", body: "export const getAuth=()=>({});export const createUserWithEmailAndPassword=async(a,e)=>({user:{uid:'new-'+Date.now(),email:e}});" }));
     if (options.fontAwesomeDir) {
@@ -239,7 +329,9 @@ async function startServer(world, options) {
     }
     await page.route(/fonts\.(googleapis|gstatic)\.com|cdn\.jsdelivr\.net.*\.css|cdnjs\.cloudflare\.com(?!\/ajax\/libs\/font-awesome)/, (r) => r.fulfill({ contentType: "text/css", body: "" }));
     if (!options.fontAwesomeDir) await page.route(/cdnjs\.cloudflare\.com\/ajax\/libs\/font-awesome/, (r) => r.fulfill({ contentType: "text/css", body: "" }));
+    // CDN betikleri: genel → intl-tel-input taklidi; xlsx → küçük XLSX taklidi (Playwright'ta SON kayıtlı rota önce eşleşir, bu yüzden xlsx sonda).
     await page.route(/cdn\.jsdelivr\.net.*\.js/, (r) => r.fulfill({ contentType: "text/javascript", body: "window.intlTelInput=(e)=>({isValidNumber:()=>true,getNumber:()=>'+905301112233',getSelectedCountryData:()=>({dialCode:'90'}),setNumber:()=>{}});" }));
+    await page.route(/cdn\.jsdelivr\.net.*xlsx.*\.js/, (r) => r.fulfill({ contentType: "text/javascript", body: "window.XLSX={utils:{book_new:()=>({sheets:[]}),aoa_to_sheet:(d)=>({d}),json_to_sheet:(d)=>({d}),book_append_sheet:(wb,ws,n)=>wb.sheets.push([n,ws])},writeFile:(wb,name)=>{(window.__xlsxWrites=window.__xlsxWrites||[]).push(name)}};" }));
     await page.route("**/api/send-email", async (route) => {
       const req = route.request();
       const result = await callEmailFunction(world, {
@@ -249,7 +341,7 @@ async function startServer(world, options) {
       });
       await route.fulfill({ status: result.statusCode, headers: result.headers, body: result.body });
     });
-    return { context, page, errors, goto: (p) => page.goto(base + p), base };
+    return { context, page, errors, state, goto: (p) => page.goto(base + p), base };
   }
 
   return { base, browser, session, close: async () => { await browser.close(); server.close(); } };

@@ -288,6 +288,13 @@
     Reporting-Endpoints = 'csp="/api/csp-report"'
     Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://apis.google.com; style-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src-attr 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob: https://cdn.jsdelivr.net https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://cdn.jsdelivr.net; frame-src https://parla-bt-web.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; report-uri /api/csp-report; report-to csp"
 
+# Gizlilik/KVKK sayfası (statik, betik yok): dar CSP (Report-Only, diğer portal sayfalarıyla aynı geçiş planı).
+[[headers]]
+  for = "/support-v2/privacy.html"
+  [headers.values]
+    Reporting-Endpoints = 'csp="/api/csp-report"'
+    Content-Security-Policy-Report-Only = "default-src 'none'; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; report-uri /api/csp-report; report-to csp"
+
 [[headers]]
   for = "/support-v2/auth-action.html"
   [headers.values]
@@ -338,3 +345,23 @@
   [headers.values]
     Cache-Control = "no-cache, must-revalidate"
     X-Content-Type-Options = "nosniff"
+
+# --- Uzun önbellek (WP-13/15: logo/yazı tipi/FA alt kümesi tekrar tekrar indirilmesin) ---------------------------
+# Dosya adlarında içerik özeti (hash) YOK; bu yüzden "immutable" kullanılmaz: dosya yerinde değişirse (ör. logo ya da
+# fa-subset.css yeniden üretilirse) kullanıcılar en geç aşağıdaki süre sonunda yenisini alır. Dosya adına özet eklenirse
+# (ör. logo.3fa9c1.png) o desen için `public, max-age=31536000, immutable` kuralı ayrıca eklenebilir.
+# Bu desenler yukarıdaki "no-cache" yollarıyla ÇAKIŞMAZ (aynı başlığı iki kural birden ayarlamasın).
+[[headers]]
+  for = "/assets/vendor/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, stale-while-revalidate=604800"
+
+[[headers]]
+  for = "/assets/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/favicon.ico"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
