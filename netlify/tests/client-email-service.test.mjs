@@ -55,7 +55,25 @@ test("token Authorization başlığında gider", async () => {
   const body = JSON.parse(calls[0].init.body);
   assert.deepEqual(body.to, ["a@b.com"]);
   assert.equal(body.ticketData.ticket_id, "T1234567");
-  assert.equal(body.extra.note, "n");
+  assert.deepEqual(Object.keys(body.ticketData), ["ticket_id"], "portalUrl gönderilmez (sunucu SITE_URL kullanır)");
+  assert.equal(body.extra, null, "note istemciden gönderilmez (sunucu DB'den okur)");
+});
+
+test("notifyTicketEvent: message_id/history_id iletilir; site-config destek adresi '@support' olur", async () => {
+  setup();
+  window.__PARLA_SITE_CONFIG.CONTACT_EMAIL = "Info@Parla.com";
+  responder = () => res(200, { success: true, message: "ok" });
+  await Email.notifyTicketEvent("ticket_message", ["info@parla.com", "x@y.com", "gecersiz"], { id: "T1234567" }, { note: "yok sayılır", message_id: "m1", history_id: "h1" });
+  const body = JSON.parse(calls[0].init.body);
+  assert.deepEqual(body.to, ["@support", "x@y.com"], "geçersiz adres süzülür");
+  assert.deepEqual(body.extra, { message_id: "m1", history_id: "h1" });
+});
+
+test("user_credentials: parola sunucuya gönderilmez", async () => {
+  setup();
+  responder = () => res(200, { success: true, message: "ok" });
+  await Email.send({ type: "user_credentials", to: "a@b.com", ticketData: { password: "GIZLI-PAROLA", email: "a@b.com" } });
+  assert.doesNotMatch(calls[0].init.body, /GIZLI-PAROLA/);
 });
 
 test("oturum yoksa istek atılmaz ve anlaşılır hata döner", async () => {
@@ -82,7 +100,8 @@ test("404 HTML yanıtı: fonksiyon yayında değil teşhisi", async () => {
   const r = await Email.send({ type: "ticket_message", to: "a@b.com" });
   assert.equal(r.success, false);
   assert.equal(r.code, "endpoint_missing");
-  assert.match(r.message, /bulunamadı/);
+  assert.match(r.message, /ulaşılamadı/);
+  assert.doesNotMatch(r.message, /Netlify|function|404/i, "teknik ayrıntı kullanıcıya gösterilmez");
   assert.equal(calls.length, 1, "4xx tekrar denenmez");
 });
 
@@ -159,9 +178,11 @@ test("flush: kalıcı hata kuyruktan düşer, geçici hata kalır, kuyruk kullan
   responder = () => res(503, { success: false, message: "geçici" });
   await Email.send({ type: "ticket_message", to: "a@b.com", requestId: "r1" });
   responder = () => res(503, { success: false, message: "hâlâ kapalı" });
+  const t0 = Date.now();
   assert.deepEqual(await Email.flushOutbox(), { sent: 0, dropped: 0, pending: 1 });
+  assert.deepEqual(await Email.flushOutbox(), { sent: 0, dropped: 0, pending: 1 }, "geri çekilme: zamanı gelmeyen öğe denenmez");
   responder = () => res(403, { success: false, message: "yetki", code: "role_denied" });
-  const dropped = await Email.flushOutbox();
+  const dropped = await Email.flushOutbox({ now: t0 + 8 * 60 * 1000 });
   assert.equal(dropped.dropped, 1);
   assert.equal(Email.outboxSize(), 0);
 

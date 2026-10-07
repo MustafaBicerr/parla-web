@@ -1,20 +1,254 @@
+# ============================================================================
+# Parla BT — netlify.toml
+#
+# publish = "." olduğundan depo kökündeki git'te izlenen HER dosya sitede görünür olurdu. Aşağıdaki
+# "force = true" 404 yönlendirmeleri yayın dışı yolları 404.html ile kapatır (denetim ALT-02 EK-1; emülasyonda
+# 27/27 yayın dışı yol 404, site/portal yolları açık). Bu KAPALI bir listedir: kök dizine yeni dosya/klasör
+# eklenince buraya da eklenmeli (örn. yeni bir .gs/.json dosyası). Kalıcı çözüm: siteyi public/ altına taşıyıp
+# publish = "public" yapmak (planlı iş; ayrıca firebase.json hosting bloğu kaldırılacak).
+# NOT: Netlify "splat" (*) yalnızca yolun sonunda kullanılabilir; bu yüzden /*.gs gibi desenler yerine tek tek yazılmıştır.
+# ============================================================================
+
 [build]
   publish = "."
   functions = "netlify/functions"
+  # Kredi tasarrufu (isteğe bağlı, açmak için başındaki # kaldırın): yalnızca belge/test/CI değişince derleme yapma.
+  # ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)docs' ':(exclude)tests' ':(exclude).github' ':(exclude)*.md'"
+
+[build.environment]
+  # Node 20 bakım sonuna girdi (ALT-21). CI de Node 22 kullanır.
+  NODE_VERSION = "22"
+
+# Branch deploy / deploy preview build kredisi harcar (CLAUDE.md). Kapatmak için:
+# [context.branch-deploy]
+#   ignore = "exit 0"
+# [context.deploy-preview]
+#   ignore = "exit 0"
+# Önizleme adresinden e-posta fonksiyonunu denemek için o host'u ALLOWED_ORIGINS'e ekleyin (*.netlify.app joker YOKTUR).
 
 [functions]
   node_bundler = "esbuild"
+  # Netlify Blobs (@netlify/blobs) netlify/functions/package.json üzerinden kurulur.
 
-[build.environment]
-  NODE_VERSION = "20"
+# send-email fonksiyonu (ALT-21): dış çağrılara kod içinde zaman aşımı konur (Resend 5 sn, RTDB/sertifika 3 sn,
+# toplam bütçe ≈8,5 sn → Netlify varsayılan 10 sn içinde kalır). Planınız izin veriyorsa fonksiyon zaman aşımı
+# artırılabilir (Site configuration → Functions; netlify.toml'da zaman aşımı anahtarı garanti değildir).
+# Bölge: RTDB europe-west1 (Belçika) olduğundan fonksiyon bölgesini Avrupa'ya (ör. eu-central-1) alın:
+# Netlify UI → Site configuration → Functions → Region (planınız destekliyorsa). Kod/toml ile ayarlanamaz.
+# E-posta ortam değişkenleri: bkz. .env.example (RESEND_API_KEY, SITE_URL, CONTACT_EMAIL, ALLOWED_ORIGINS, ...).
+# Günlük özet: netlify/functions/email-digest.mjs zamanlanmış işlev (06:00 UTC); yalnızca yayındaki (production) dağıtımda çalışır.
+# Sunucu tarafı kullanıcı yönetimi: netlify/functions/admin-users.js (/api/admin-users; FIREBASE_SERVICE_ACCOUNT gerekir, yoksa 503 not_configured).
+# Zamanlanmış otomasyon: ticket-automation.mjs (her 30 dk: SLA uyarısı, hatırlatmalar, otomatik kapanış, eskalasyon) ve
+# backup-export.mjs (günlük RTDB yedeği → Netlify Blobs). İkisi de FIREBASE_SERVICE_ACCOUNT yoksa kendiliğinden atlanır.
 
-# RESEND_API_KEY Netlify UI → Site settings → Environment variables
-# FROM: Parla BT Destek <info@parlabilgiteknolojileri.net>
+# --- Yönlendirmeler (ilk eşleşen kazanır; yayın dışı yollar en üstte) -----------------------------------------
 
+[[redirects]]
+  from = "/docs"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/docs/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/tests"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/tests/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/netlify"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/netlify/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.github/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.git"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.git/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.cursor/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.claude/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/temp.json"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/yedek_kod.gs"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/project-hierarchy.txt"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/database.rules.json"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/firebase.json"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.firebaserc"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.env"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.env.example"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/netlify.toml"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/CLAUDE.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/README.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/README"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/package.json"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/package-lock.json"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.gitignore"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.DS_Store"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/assets/.DS_Store"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/assets/img/.DS_Store"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/pages/.DS_Store"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/support-v2/.DS_Store"
+  to = "/404.html"
+  status = 404
+  force = true
+
+# --- Uygulama yönlendirmeleri ---
 [[redirects]]
   from = "/api/send-email"
   to = "/.netlify/functions/send-email"
   status = 200
+
+[[redirects]]
+  from = "/api/admin-users"
+  to = "/.netlify/functions/admin-users"
+  status = 200
+
+[[redirects]]
+  from = "/api/csp-report"
+  to = "/.netlify/functions/csp-report"
+  status = 200
+
+[[redirects]]
+  from = "/support-v2"
+  to = "/support-v2/login.html"
+  status = 302
 
 [[redirects]]
   from = "/support"
@@ -26,6 +260,59 @@
   to = "/support-v2/login.html"
   status = 301
 
+# --- Güvenlik başlıkları (ALT-07) -----------------------------------------------------------------------------
+# Tüm site. (HSTS Netlify tarafından otomatik eklenir.)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+    X-Frame-Options = "SAMEORIGIN"
+
+# Portal: arama motorları indekslemesin (PDF kılavuzlar dahil — /support-v2/docs/* altında).
+[[headers]]
+  for = "/support-v2/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# CSP: ÖNCE Report-Only (1-2 hafta; ihlaller /api/csp-report ile function günlüğüne düşer). Temiz görününce başlık adı
+# "Content-Security-Policy" yapılır. Ana site (GTM satır içi script, onclick=, @import) bu CSP ile bozulacağından yalnızca
+# portal HTML'lerine uygulanır; PDF'ler dışarıda kalsın diye dizinler tek tek yazıldı (/support-v2/docs/* yok).
+# 25 portal sayfasında 0 ihlalle denendi (harness: Firebase SDK taklit edildi) — gerçek Firebase Auth iframe'i / Analytics
+# uçları canlıda Report-Only ile doğrulanmalı. EMAIL_API_URL başka origin'e çevrilirse connect-src'ye eklenmeli.
+
+[[headers]]
+  for = "/support-v2/login.html"
+  [headers.values]
+    Reporting-Endpoints = 'csp="/api/csp-report"'
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://apis.google.com; style-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src-attr 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob: https://cdn.jsdelivr.net https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://cdn.jsdelivr.net; frame-src https://parla-bt-web.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; report-uri /api/csp-report; report-to csp"
+
+[[headers]]
+  for = "/support-v2/auth-action.html"
+  [headers.values]
+    Reporting-Endpoints = 'csp="/api/csp-report"'
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://apis.google.com; style-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src-attr 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob: https://cdn.jsdelivr.net https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://cdn.jsdelivr.net; frame-src https://parla-bt-web.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; report-uri /api/csp-report; report-to csp"
+
+[[headers]]
+  for = "/support-v2/change-password.html"
+  [headers.values]
+    Reporting-Endpoints = 'csp="/api/csp-report"'
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://apis.google.com; style-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src-attr 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob: https://cdn.jsdelivr.net https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://cdn.jsdelivr.net; frame-src https://parla-bt-web.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; report-uri /api/csp-report; report-to csp"
+
+[[headers]]
+  for = "/support-v2/admin/*"
+  [headers.values]
+    Reporting-Endpoints = 'csp="/api/csp-report"'
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://apis.google.com; style-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src-attr 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob: https://cdn.jsdelivr.net https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://cdn.jsdelivr.net; frame-src https://parla-bt-web.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; report-uri /api/csp-report; report-to csp"
+
+[[headers]]
+  for = "/support-v2/customer/*"
+  [headers.values]
+    Reporting-Endpoints = 'csp="/api/csp-report"'
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' https://www.gstatic.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://apis.google.com; style-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src-attr 'unsafe-inline'; font-src 'self' https://cdnjs.cloudflare.com data:; img-src 'self' data: blob: https://cdn.jsdelivr.net https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://*.firebasedatabase.app wss://*.firebasedatabase.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://firebaseinstallations.googleapis.com https://firebase.googleapis.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://cdn.jsdelivr.net; frame-src https://parla-bt-web.firebaseapp.com; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; report-uri /api/csp-report; report-to csp"
+
+# --- Önbellek başlıkları (mevcut; korunur) ---------------------------------------------------------------------
 [[headers]]
   for = "/assets/js/support-v2/*"
   [headers.values]

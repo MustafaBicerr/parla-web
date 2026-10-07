@@ -16,6 +16,11 @@ const DB_URL = (
 const CERTS_URL =
   "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
 const CLOCK_SKEW_SEC = 300;
+/** Dış çağrı zaman aşımları (ms): Netlify varsayılan 10 sn bütçesinin tek askıdaki çağrıyla tükenmemesi için. */
+const CERTS_TIMEOUT_MS = 3000;
+const RTDB_TIMEOUT_MS = 3000;
+/** Bilinmeyen `kid` için sertifikaları zorla yenileme en fazla bu aralıkla yapılır (sahte token amplifikasyonu). */
+const FORCE_REFRESH_MIN_INTERVAL_MS = 60 * 1000;
 
 class HttpError extends Error {
   constructor(statusCode, message, code) {
@@ -26,30 +31,53 @@ class HttpError extends Error {
 }
 
 let certCache = { certs: null, expires: 0 };
+let certInflight = null; // eşzamanlı isteklerin tek sertifika çağrısını paylaşması için
+let lastForcedRefresh = 0;
 
 function resetCertCache() {
   certCache = { certs: null, expires: 0 };
+  certInflight = null;
+  lastForcedRefresh = 0;
 }
 
-async function fetchCerts(fetchImpl, force) {
+async function loadCerts(fetchImpl) {
   const now = Date.now();
-  if (!force && certCache.certs && certCache.expires > now) return certCache.certs;
-
   let res;
   try {
-    res = await fetchImpl(CERTS_URL);
+    res = await fetchImpl(CERTS_URL, { signal: AbortSignal.timeout(CERTS_TIMEOUT_MS) });
   } catch {
     throw new HttpError(503, "Kimlik doğrulama anahtarları alınamadı.", "certs_unreachable");
   }
   if (!res.ok) {
     throw new HttpError(503, "Kimlik doğrulama anahtarları alınamadı.", "certs_unreachable");
   }
-  const certs = await res.json();
+  let certs;
+  try {
+    certs = await res.json();
+  } catch {
+    throw new HttpError(503, "Kimlik doğrulama anahtarları alınamadı.", "certs_unreachable");
+  }
   const cacheControl = (res.headers && res.headers.get && res.headers.get("cache-control")) || "";
   const match = /max-age=(\d+)/.exec(cacheControl);
   const ttlMs = Math.min((match ? Number(match[1]) : 3600) * 1000, 6 * 3600 * 1000);
   certCache = { certs, expires: now + ttlMs };
   return certs;
+}
+
+async function fetchCerts(fetchImpl, force) {
+  const now = Date.now();
+  if (!force && certCache.certs && certCache.expires > now) return certCache.certs;
+  if (force) {
+    // Bilinmeyen kid ile zorla yenileme: dakikada en fazla bir kez; aksi halde mevcut önbellek kullanılır.
+    if (certCache.certs && now - lastForcedRefresh < FORCE_REFRESH_MIN_INTERVAL_MS) return certCache.certs;
+    lastForcedRefresh = now;
+  }
+  if (!certInflight) {
+    certInflight = loadCerts(fetchImpl).finally(() => {
+      certInflight = null;
+    });
+  }
+  return certInflight;
 }
 
 function decodeSegment(segment) {
@@ -102,6 +130,9 @@ async function verifyIdToken(token, options) {
     payload.iss !== `https://securetoken.google.com/${PROJECT_ID}` ||
     !payload.sub ||
     typeof payload.sub !== "string" ||
+    // exp/iat zorunlu ve sayısal olmalı (alan yoksa `undefined <= now` yanlışlıkla geçerdi).
+    typeof payload.exp !== "number" ||
+    typeof payload.iat !== "number" ||
     payload.exp <= nowSec ||
     payload.iat > nowSec + CLOCK_SKEW_SEC
   ) {
@@ -118,16 +149,23 @@ function isSafeKey(value) {
 
 /**
  * RTDB REST GET — kullanıcının token'ı ile.
+ * `options.query` (ör. { orderBy: '"$key"', limitToLast: 5 }) `auth` parametresinden SONRA eklenir.
  * @returns {Promise<any|null>} 404/boş düğüm için null
  */
 async function rtdbGet(path, token, options) {
   const fetchImpl = (options && options.fetchImpl) || fetch;
   const clean = String(path).replace(/^\/+|\/+$/g, "");
-  const url = `${DB_URL}/${clean}.json?auth=${encodeURIComponent(token)}`;
+  let url = `${DB_URL}/${clean}.json?auth=${encodeURIComponent(token)}`;
+  const query = options && options.query;
+  if (query && typeof query === "object") {
+    Object.keys(query).forEach((k) => {
+      url += `&${encodeURIComponent(k)}=${encodeURIComponent(String(query[k]))}`;
+    });
+  }
 
   let res;
   try {
-    res = await fetchImpl(url);
+    res = await fetchImpl(url, { signal: AbortSignal.timeout(RTDB_TIMEOUT_MS) });
   } catch {
     throw new HttpError(503, "Veritabanına ulaşılamadı.", "db_unreachable");
   }
@@ -137,7 +175,11 @@ async function rtdbGet(path, token, options) {
   if (!res.ok) {
     throw new HttpError(502, "Veritabanı okunamadı.", "db_error");
   }
-  return res.json();
+  try {
+    return await res.json();
+  } catch {
+    throw new HttpError(502, "Veritabanı okunamadı.", "db_error");
+  }
 }
 
 module.exports = {

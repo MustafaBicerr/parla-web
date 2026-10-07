@@ -4,6 +4,7 @@
  * Gerekli: openssl (test sertifikası üretmek için)
  */
 const test = require("node:test");
+const { mock } = require("node:test");
 const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
 const { execFileSync } = require("node:child_process");
@@ -128,6 +129,7 @@ function resetState() {
 process.env.RESEND_API_KEY = "re_test";
 const { handler } = require("../functions/send-email");
 const { resetCertCache } = require("../lib/firebase-auth");
+const { MemoryStore, setStoreForTests } = require("../lib/guard-store");
 
 function post(body, token, extraHeaders) {
   return handler({
@@ -149,13 +151,31 @@ test.beforeEach(() => {
   resetState();
   resetCertCache();
   installFetch();
+  setStoreForTests(new MemoryStore()); // her test temiz hız sınırı/kota/olay sayaçlarıyla başlar
+  mock.method(console, "warn", () => {});
+  mock.method(console, "error", () => {});
 });
 
-test("GET yapılandırma durumunu döner", async () => {
-  const res = await handler({ httpMethod: "GET", headers: {} });
-  const body = JSON.parse(res.body);
-  assert.equal(res.statusCode, 200);
-  assert.equal(body.configured, true);
+test.afterEach(() => {
+  mock.restoreAll();
+});
+
+test("GET: kimliksiz yalnızca erişilebilirlik + destek adresi döner; yönetici token'ıyla yapılandırma ve kota", async () => {
+  const anon = await handler({ httpMethod: "GET", headers: {} });
+  const anonBody = JSON.parse(anon.body);
+  assert.equal(anon.statusCode, 200);
+  assert.equal(anonBody.success, true);
+  assert.equal(anonBody.contact, "info@parlabilgiteknolojileri.net");
+  assert.equal(anonBody.configured, undefined, "kimliksiz GET yapılandırma bilgisi vermez (EML-23)");
+  assert.equal(anonBody.from, undefined);
+
+  const asCustomer = JSON.parse((await handler({ httpMethod: "GET", headers: { authorization: `Bearer ${makeToken({ sub: "uid-cust" })}` } })).body);
+  assert.equal(asCustomer.configured, undefined);
+
+  const admin = JSON.parse((await handler({ httpMethod: "GET", headers: { authorization: `Bearer ${makeToken()}` } })).body);
+  assert.equal(admin.configured, true);
+  assert.equal(typeof admin.quota.soft_limit, "number");
+  assert.equal(admin.quota.used, 0);
 });
 
 test("OPTIONS: izinli origin için CORS başlıkları", async () => {
@@ -200,9 +220,19 @@ test("pasif hesap 403", async () => {
   assert.equal(res.statusCode, 403);
 });
 
+function addHistoryNote(id, uid, note) {
+  db.v2.ticket_history = db.v2.ticket_history || { T123456789: {} };
+  db.v2.ticket_history.T123456789[id] = { action: "status_note", note, changed_by_uid: uid, changed_by_name: "Ali Veli", changed_at: new Date().toISOString() };
+}
+function addMessage(id, uid, message, extra) {
+  db.v2.ticket_messages = db.v2.ticket_messages || { T123456789: {} };
+  db.v2.ticket_messages.T123456789[id] = { message_id: id, user_id: uid, author_name: "Yazar Kişi", message, is_internal: false, created_at: new Date().toISOString(), ...extra };
+}
+
 test("personel: talep sahibine durum maili gönderir; içerik veritabanından gelir", async () => {
+  addHistoryNote("h1", "uid-1", "Test notu");
   const res = await post(
-    { ...ticketMail("ticket_status_changed", ["musteri@abc.com"], { note: "Test notu" }), requestId: "r1" },
+    { ...ticketMail("ticket_status_changed", ["musteri@abc.com"], { history_id: "h1" }), requestId: "r1" },
     makeToken()
   );
   const body = JSON.parse(res.body);
@@ -211,9 +241,10 @@ test("personel: talep sahibine durum maili gönderir; içerik veritabanından ge
   assert.equal(resendCalls.length, 1);
   const { payload, headers } = resendCalls[0];
   assert.deepEqual(payload.to, ["musteri@abc.com"]);
-  assert.match(payload.subject, /Durum güncellendi · SUP-ABC-FI-2610-0001/);
+  assert.match(payload.subject, /Durum güncellendi · SUP-ABC-FI-2610-0001 · Fatura hatası/);
   assert.match(payload.html, /customer\/ticket-detail\.html\?id=T123456789/);
   assert.match(payload.html, /Test notu/);
+  assert.match(payload.text, /Test notu/, "düz metin alternatifi de notu içerir");
   assert.equal(headers["Idempotency-Key"], "r1:customer");
 });
 
@@ -264,8 +295,9 @@ test("pasif personele gönderim reddedilir", async () => {
 
 test("müşteri, talep gerçekten yeniden açıldıysa personele 'tekrar açıldı' bildirimi gönderebilir", async () => {
   db.v2.tickets.T123456789.status = "reopened";
+  addHistoryNote("h2", "uid-cust", "Hata sürüyor");
   const res = await post(
-    ticketMail("ticket_reopened", ["danisman@parla.com", "info@parlabilgiteknolojileri.net"], { note: "Hata sürüyor" }),
+    ticketMail("ticket_reopened", ["danisman@parla.com", "info@parlabilgiteknolojileri.net"], { history_id: "h2" }),
     makeToken({ sub: "uid-cust" })
   );
   assert.equal(res.statusCode, 200, res.body);
@@ -275,7 +307,7 @@ test("müşteri, talep gerçekten yeniden açıldıysa personele 'tekrar açıld
 
 test("müşteri kapanış onayını bildirebilir (durum 'closed' ise)", async () => {
   db.v2.tickets.T123456789.status = "closed";
-  const res = await post(ticketMail("ticket_closed", ["info@parlabilgiteknolojileri.net"], { note: "onay" }), makeToken({ sub: "uid-cust" }));
+  const res = await post(ticketMail("ticket_closed", ["info@parlabilgiteknolojileri.net"]), makeToken({ sub: "uid-cust" }));
   assert.equal(res.statusCode, 200, res.body);
 });
 
@@ -309,9 +341,11 @@ test("müşteri personel tiplerini (atama/durum) gönderemez", async () => {
 });
 
 test("müşteri yanıt bildirimini CONTACT_EMAIL'e gönderebilir", async () => {
-  const res = await post(ticketMail("ticket_message", ["info@parlabilgiteknolojileri.net"], { note: "Merhaba" }), makeToken({ sub: "uid-cust" }));
+  addMessage("m1", "uid-cust", "Merhaba, ekran görüntüsü ekte");
+  const res = await post(ticketMail("ticket_message", ["info@parlabilgiteknolojileri.net"], { message_id: "m1" }), makeToken({ sub: "uid-cust" }));
   assert.equal(res.statusCode, 200, res.body);
   assert.match(resendCalls[0].payload.html, /admin\/ticket-detail\.html/);
+  assert.match(resendCalls[0].payload.html, /ekran görüntüsü ekte/);
 });
 
 test("ticket'a erişimi olmayan kullanıcı mail tetikleyemez (RTDB kuralı)", async () => {
@@ -332,14 +366,30 @@ test("form tipleri artık kabul edilmez", async () => {
   assert.equal(res.statusCode, 400);
 });
 
-test("user_credentials yalnızca admin rolleri için", async () => {
-  const payload = { type: "user_credentials", to: "yeni@abc.com", ticketData: { password: "Abc123xyz!", name: "Yeni", portalUrl: "https://evil.example" } };
+test("user_credentials: yalnızca admin rolleri; parola gönderilmez, portalUrl/ad istemciden alınmaz", async () => {
+  db.v2.users["uid-new"] = { role: "customer", is_active: true, email: "Yeni@abc.com", first_name: "Yeni", last_name: "Kişi" };
+  const payload = {
+    type: "user_credentials",
+    to: "yeni@abc.com",
+    ticketData: { password: "Abc123xyz!GIZLI", name: "SAHTE AD", portalUrl: "https://evil.example", loginUrl: "https://evil.example/login" },
+  };
   assert.equal((await post(payload, makeToken({ sub: "uid-cust" }))).statusCode, 403);
   const ok = await post(payload, makeToken());
   assert.equal(ok.statusCode, 200, ok.body);
-  // portalUrl izinli değil -> marka adresi kullanılır
-  assert.match(resendCalls[0].payload.html, /https:\/\/www\.parlabilgiteknolojileri\.net\/support-v2\/login\.html/);
-  assert.doesNotMatch(resendCalls[0].payload.html, /evil\.example/);
+  const mail = resendCalls[0].payload;
+  assert.match(mail.html, /https:\/\/www\.parlabilgiteknolojileri\.net\/support-v2\/login\.html/);
+  assert.doesNotMatch(mail.html + mail.text, /evil\.example/);
+  assert.doesNotMatch(mail.html + mail.text, /GIZLI|Abc123xyz/, "parola e-postaya girmez");
+  assert.doesNotMatch(mail.html + mail.text, /SAHTE AD/);
+  assert.match(mail.text, /yeni@abc\.com/, "düz metin kullanıcı adını içerir");
+  assert.match(mail.html, /Yeni Kişi/);
+});
+
+test("user_credentials: kayıtlı olmayan alıcıya gönderilmez", async () => {
+  const res = await post({ type: "user_credentials", to: "rastgele@baska.com" }, makeToken());
+  assert.equal(res.statusCode, 404);
+  assert.equal(JSON.parse(res.body).code, "recipient_not_registered");
+  assert.equal(resendCalls.length, 0);
 });
 
 test("test_email her zaman çağıranın kendi adresine gider", async () => {
@@ -356,14 +406,21 @@ test("diagnostic alan adı durumunu döner", async () => {
   assert.equal(resendCalls.length, 0);
 });
 
-test("Resend alan adı doğrulanmamış hatası anlaşılır mesaj döner", async () => {
+test("Resend alan adı hatası: kullanıcıya genel mesaj, ayrıntı yalnızca yöneticiye", async () => {
   resendResponder = () =>
     jsonResponse(403, { name: "validation_error", message: "The parlabilgiteknolojileri.net domain is not verified." });
-  const res = await post(ticketMail("ticket_message", ["musteri@abc.com"]), makeToken());
-  const body = JSON.parse(res.body);
-  assert.equal(res.statusCode, 400);
-  assert.equal(body.code, "domain_not_verified");
-  assert.match(body.message, /doğrulanmamış/);
+  const asAdmin = await post(ticketMail("ticket_message", ["musteri@abc.com"]), makeToken());
+  const adminBody = JSON.parse(asAdmin.body);
+  assert.equal(asAdmin.statusCode, 502);
+  assert.equal(adminBody.code, "domain_not_verified");
+  assert.match(adminBody.detail, /doğrulanmamış/);
+  assert.equal(adminBody.message, adminBody.detail, "yönetici eyleme dönük ayrıntıyı message'da da görür (pano toast'ı)");
+
+  db.v2.users["uid-cons"] = { role: "consultant", is_active: true };
+  const asStaff = JSON.parse((await post(ticketMail("ticket_message", ["musteri@abc.com"]), makeToken({ sub: "uid-cons" }))).body);
+  assert.equal(asStaff.code, "domain_not_verified");
+  assert.equal(asStaff.detail, undefined, "yönetici olmayanlara altyapı ayrıntısı verilmez (SEN-41/MUS-30)");
+  assert.doesNotMatch(asStaff.message, /Resend|DNS|API|alan adı/i);
 });
 
 test("RESEND_API_KEY yoksa 500 + not_configured", async () => {
@@ -372,7 +429,9 @@ test("RESEND_API_KEY yoksa 500 + not_configured", async () => {
   try {
     const res = await post(ticketMail("ticket_message", ["musteri@abc.com"]), makeToken());
     assert.equal(res.statusCode, 500);
-    assert.equal(JSON.parse(res.body).code, "not_configured");
+    const body = JSON.parse(res.body);
+    assert.equal(body.code, "not_configured");
+    assert.doesNotMatch(body.message, /RESEND_API_KEY/, "iç yapılandırma adı kullanıcıya gösterilmez (SEN-41)");
   } finally {
     process.env.RESEND_API_KEY = saved;
   }

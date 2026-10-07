@@ -1,0 +1,49 @@
+name: RTDB yedeği
+
+# Günlük tam Realtime Database yedeği (D-14 A). Netlify tarafındaki backup-export.mjs 30 sn sınırıyla kısmi kalabilir; bu iş SÜRESİZ çalışır.
+# Gereksinimler: GitHub secret FIREBASE_SERVICE_ACCOUNT (tek satır JSON; deploy-rules.yml ile aynı). Secret yoksa iş "atlandı" olarak biter.
+# GÜVENLİK: yedek KİŞİSEL VERİ içerir. Artifact yalnızca ÖZEL depoda saklanmalıdır (D-02 A). Tercihen BACKUP_PASSPHRASE secret'ı ekleyin:
+# tanımlıysa dosyalar AES-256 ile (gpg) şifrelenir. Saklama: 30 gün.
+on:
+  schedule:
+    - cron: "45 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Yedeği al
+        id: export
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "::notice::FIREBASE_SERVICE_ACCOUNT tanımlı değil; yedek atlandı."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          node netlify/lib/backup-cli.mjs backup-out
+      - name: Şifrele (BACKUP_PASSPHRASE varsa)
+        if: steps.export.outputs.skipped != 'true' && env.BACKUP_PASSPHRASE != ''
+        run: |
+          find backup-out -type f ! -name '*.gpg' -print0 | while IFS= read -r -d '' f; do
+            gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" --symmetric --cipher-algo AES256 -o "$f.gpg" "$f"
+            rm -f "$f"
+          done
+      - name: Artifact olarak sakla (30 gün)
+        if: steps.export.outputs.skipped != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rtdb-backup-${{ github.run_id }}
+          path: backup-out
+          retention-days: 30
+          if-no-files-found: error

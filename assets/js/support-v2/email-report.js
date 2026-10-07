@@ -1,12 +1,19 @@
 /**
  * E-posta gönderim sonucunu kullanıcıya bildirir ve başarısızlıkları aktivite kaydına yazar.
  * Böylece "mail gitmiyor" durumu sessizce yutulmaz; Aktiviteler sayfasından izlenebilir.
+ *
+ * Kullanıcıya (müşteri dahil) YALNIZCA sade, teknik olmayan metin gösterilir (altyapı adı, anahtar, DNS vb. yok).
+ * Teknik ayrıntı (kod, HTTP durumu, kuyruğa alındı mı, alıcı sayısı, kısmi başarı) aktivite kaydına yazılır;
+ * sunucunun `detail` alanı yalnızca yönetici rollerine döner ve yalnızca onlara gösterilir.
  */
 import ParlaDb from "./firebase-client.js";
 import { toast } from "./ui-shell.js";
+import { emailFailureMessage, emailFailureDetails } from "./email-service.js";
+
+export { emailFailureMessage, emailFailureDetails };
 
 /**
- * @param {{success:boolean, message?:string, code?:string, partial?:boolean}} res
+ * @param {{success:boolean, message?:string, code?:string, partial?:boolean, queued?:boolean, status?:number}} res
  * @param {{ eventType?: string, label?: string, ticket?: object, actor?: object, silent?: boolean }} ctx
  * @returns {Promise<boolean>} gönderim başarılı mı
  */
@@ -14,9 +21,8 @@ export async function reportEmailResult(res, ctx) {
   if (!res || res.success) return true;
   ctx = ctx || {};
 
-  const reason = res.message || "bilinmeyen hata";
   if (!ctx.silent) {
-    toast(`${ctx.label || "E-posta bildirimi"} gönderilemedi: ${reason}`, "warning");
+    toast(emailFailureMessage(res, ctx.label), "warning");
   }
 
   try {
@@ -26,7 +32,7 @@ export async function reportEmailResult(res, ctx) {
       "ticket",
       ticket.id || ticket.ticket_id || "",
       ticket.ticket_number || "",
-      `${ctx.eventType || "e-posta"} — ${res.code ? `[${res.code}] ` : ""}${reason}`.slice(0, 300),
+      emailFailureDetails(res, ctx),
       ctx.actor || {}
     );
   } catch {

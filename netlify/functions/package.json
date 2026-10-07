@@ -1,0 +1,8 @@
+{
+  "name": "parla-netlify-functions",
+  "private": true,
+  "description": "Netlify Functions bağımlılıkları (send-email hız sınırı/kota/tekilleştirme deposu için Netlify Blobs).",
+  "dependencies": {
+    "@netlify/blobs": "^10.7.13"
+  }
+}
