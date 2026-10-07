@@ -1,5 +1,10 @@
 /**
  * Parla BT Ticket V2 — Projeler (admin)
+ *
+ * WP-09: firma adı yazılır/çözülür ("—" ve ham kimlik biter), yönetici = kullanıcı kimliği (personel kaydına bağlıysa)
+ * + personel kimliği + ad ("Seçiniz" kaydedilmez), tarih doğrulaması, rozetler mevcut CSS sınıflarıyla,
+ * firma adıyla arama, pasif firmanın projesi düzenlenebilir, PRJ taleplerinin proje bağı ("Aktif Task" sayacı).
+ * WP-13: sayaç için tüm talepler indirilmez (açık talepler durum bazlı indeksli sorgularla), sıralama + sayfalama + debounce.
  */
 import ParlaDb from "../firebase-client.js";
 import { canWrite } from "../access-control.js";
@@ -13,27 +18,33 @@ import {
   toast,
   showLoading,
   handleError,
+  handleLoadError,
   linkCompany,
   linkProject,
   escapeHtml,
   formatDate,
 } from "../ui-shell.js";
-import { required } from "../validators.js";
+import { matchesSearch } from "../ticket-utils.js";
+import {
+  PROJECT_STATUS,
+  projectBadgeClass,
+  projectStatusLabel,
+  selectableCompanies,
+  validateProjectInput,
+  personnelFullName,
+} from "../entity-utils.js";
+import { sortRows, paginateRows, debounce, nextSort, makeHeadersSortable } from "../table-utils.js";
 
-const PROJECT_STATUS = {
-  planning: "Planlama",
-  active: "Aktif",
-  on_hold: "Beklemede",
-  completed: "Tamamlandı",
-  cancelled: "İptal",
-};
+const PAGE_SIZE = 25;
 
 let session = null;
 let allProjects = [];
 let allCompanies = [];
 let allPersonnel = [];
-let allTickets = [];
+let openProjectTasks = [];
 let searchTerm = "";
+let sort = { key: "created_at", dir: "desc" };
+let page = 1;
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -56,7 +67,7 @@ async function init() {
           <div class="sv2-section-body">
             <div class="sv2-search-bar" style="margin-bottom:1.25rem">
               <i class="fas fa-search"></i>
-              <input type="search" id="project-search" placeholder="Proje kodu, adı, firma..." autocomplete="off">
+              <input type="search" id="project-search" aria-label="Proje ara" placeholder="Proje kodu, adı, firma, yönetici..." autocomplete="off">
             </div>
             <div id="projects-table"></div>
           </div>
@@ -66,7 +77,7 @@ async function init() {
     bindEvents();
   } catch (err) {
     if (err.message !== "not_authenticated" && err.message !== "not_admin") {
-      handleError(err, "Sayfa yüklenemedi");
+      handleLoadError(err, "Sayfa yüklenemedi");
     }
   }
 }
@@ -74,15 +85,17 @@ async function init() {
 async function loadData() {
   showLoading(true);
   try {
-    [allProjects, allCompanies, allPersonnel, allTickets] = await Promise.all([
+    let tasks;
+    [allProjects, allCompanies, allPersonnel, tasks] = await Promise.all([
       ParlaDb.getAllProjects(),
       ParlaDb.getAllCompanies(),
       ParlaDb.getAllPersonnel(),
-      ParlaDb.getAllTickets(),
+      ParlaDb.getOpenTickets(), // yalnız açık talepler (durum bazlı indeksli sorgular); tüm koleksiyon indirilmez
     ]);
+    openProjectTasks = tasks.filter((t) => t.project_id && String(t.ticket_type || "").toUpperCase() === "PRJ");
     renderTable();
   } catch (err) {
-    handleError(err, "Veriler yüklenemedi");
+    handleLoadError(err, "Veriler yüklenemedi");
   } finally {
     showLoading(false);
   }
@@ -90,155 +103,160 @@ async function loadData() {
 
 function bindEvents() {
   document.getElementById("btn-new-project")?.addEventListener("click", () => openFormModal(null));
-  document.getElementById("project-search")?.addEventListener("input", (e) => {
-    searchTerm = e.target.value.trim().toLowerCase();
+  const applySearch = debounce(() => {
+    page = 1;
     renderTable();
+  }, 200);
+  document.getElementById("project-search")?.addEventListener("input", (e) => {
+    searchTerm = e.target.value.trim();
+    applySearch();
   });
 }
 
-async function generateProjectCode() {
-  let max = 0;
-  for (const p of allProjects) {
-    const match = String(p.project_code || "").match(/^PRJ(\d+)$/i);
-    if (match) max = Math.max(max, parseInt(match[1], 10));
-  }
-  return `PRJ${String(max + 1).padStart(4, "0")}`;
+function projectId(p) {
+  return p.id || p.project_id;
 }
 
-function activeTaskCount(projectId) {
-  return allTickets.filter(
-    (t) =>
-      t.project_id === projectId &&
-      t.ticket_type === "PRJ" &&
-      !["closed", "resolved"].includes(String(t.status || "").toLowerCase())
-  ).length;
+function companyName(p) {
+  const c = allCompanies.find((x) => (x.id || x.company_id) === p.company_id);
+  return (c && c.name) || p.company_name || "";
+}
+
+function activeTaskCount(id) {
+  return openProjectTasks.filter((t) => t.project_id === id).length;
 }
 
 function filterProjects() {
-  if (!searchTerm) return allProjects;
-  return allProjects.filter((p) => {
-    const hay = [p.project_code, p.name, p.company_name, p.manager_name]
-      .join(" ")
-      .toLowerCase();
-    return hay.includes(searchTerm);
-  });
+  return allProjects.filter((p) =>
+    matchesSearch(searchTerm, [p.project_code, p.name, companyName(p), p.manager_name, projectStatusLabel(p.status)])
+  );
 }
 
 function projectStatusBadge(status) {
-  const key = String(status || "planning");
-  const label = PROJECT_STATUS[key] || key;
-  const cls =
-    key === "active"
-      ? "open"
-      : key === "completed"
-        ? "resolved"
-        : key === "on_hold"
-          ? "waiting"
-          : key === "cancelled"
-            ? "closed"
-            : "in-progress";
-  return `<span class="sv2-badge sv2-badge-${cls}">${escapeHtml(label)}</span>`;
+  return `<span class="sv2-badge ${projectBadgeClass(status)}">${escapeHtml(projectStatusLabel(status))}</span>`;
 }
+
+const SORT_ACCESSORS = {
+  project_code: (r) => r.project_code,
+  name: (r) => r.name,
+  company_name: (r) => r.company_label,
+  manager_name: (r) => r.manager_name,
+  start_date: (r) => r.start_date,
+  end_date: (r) => r.end_date,
+  status: (r) => projectStatusLabel(r.status),
+  tasks: (r) => r.task_count,
+  created_at: (r) => (r.created_at ? Date.parse(r.created_at) || 0 : 0),
+};
 
 function renderTable() {
   const el = document.getElementById("projects-table");
   if (!el) return;
 
-  const filtered = filterProjects().sort(
-    (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
-  );
+  const rows = filterProjects().map((p) => ({
+    ...p,
+    id: projectId(p),
+    company_label: companyName(p),
+    task_count: activeTaskCount(projectId(p)),
+  }));
+  const paged = paginateRows(sortRows(rows, sort, SORT_ACCESSORS), page, PAGE_SIZE);
+  page = paged.page;
 
-  el.innerHTML = renderDataTable({
-    columns: [
-      {
-        key: "project_code",
-        label: "PROJE KODU",
-        render: (v, row) => linkProject(row.id || row.project_id, v || "—"),
-      },
-      { key: "name", label: "PROJE ADI" },
-      {
-        key: "company_name",
-        label: "FİRMA",
-        render: (_, row) =>
-          row.company_id
-            ? linkCompany(row.company_id, row.company_name || "—")
-            : escapeHtml(row.company_name || "—"),
-      },
-      {
-        key: "manager_name",
-        label: "YÖNETİCİ",
-        render: (v) => escapeHtml(v || "—"),
-      },
-      {
-        key: "start_date",
-        label: "BAŞLANGIÇ",
-        render: (v) => escapeHtml(formatDate(v)),
-      },
-      {
-        key: "end_date",
-        label: "BİTİŞ",
-        render: (v) => escapeHtml(formatDate(v)),
-      },
-      {
-        key: "status",
-        label: "DURUM",
-        render: (v) => projectStatusBadge(v),
-      },
-      {
-        key: "tasks",
-        label: "AKTİF TASK",
-        render: (_, row) => {
-          const count = activeTaskCount(row.id || row.project_id);
-          return `<span class="sv2-badge sv2-badge-open">${count}</span>`;
-        },
-      },
-      {
-        key: "actions",
-        label: "İŞLEMLER",
-        render: (_, row) =>
-          `<div class="sv2-actions">
-            <a href="${PATHS.adminProjectDetail}?id=${encodeURIComponent(row.id || row.project_id)}" class="sv2-btn sv2-btn-sm sv2-btn-secondary">
+  const columns = [
+    { key: "project_code", label: "PROJE KODU", sortable: true, render: (v, row) => linkProject(row.id, v || "—") },
+    { key: "name", label: "PROJE ADI", sortable: true },
+    {
+      key: "company_name",
+      label: "FİRMA",
+      sortable: true,
+      render: (_, row) =>
+        row.company_id && row.company_label
+          ? linkCompany(row.company_id, row.company_label)
+          : escapeHtml(row.company_label || "—"),
+    },
+    { key: "manager_name", label: "YÖNETİCİ", sortable: true, render: (v) => escapeHtml(v || "—") },
+    { key: "start_date", label: "BAŞLANGIÇ", sortable: true, render: (v) => escapeHtml(formatDate(v)) },
+    { key: "end_date", label: "BİTİŞ", sortable: true, render: (v) => escapeHtml(formatDate(v)) },
+    { key: "status", label: "DURUM", sortable: true, render: (v) => projectStatusBadge(v) },
+    {
+      key: "tasks",
+      label: "AKTİF TASK",
+      sortable: true,
+      render: (_, row) => `<span class="sv2-badge sv2-badge-assigned" data-task-count="${escapeHtml(row.id)}">${row.task_count}</span>`,
+    },
+    {
+      key: "actions",
+      label: "İŞLEMLER",
+      render: (_, row) =>
+        `<div class="sv2-actions">
+            <a href="${PATHS.adminProjectDetail}?id=${encodeURIComponent(row.id)}" class="sv2-btn sv2-btn-sm sv2-btn-secondary">
               <i class="fas fa-eye"></i> Detay
             </a>
-            ${canWrite(session, "project") ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-id="${escapeHtml(row.id || row.project_id)}">
+            ${canWrite(session, "project") ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-id="${escapeHtml(row.id)}">
               <i class="fas fa-edit"></i> Düzenle
             </button>` : ""}
           </div>`,
-      },
-    ],
-    rows: filtered.map((p) => ({ ...p, id: p.id || p.project_id })),
+    },
+  ];
+
+  el.innerHTML = renderDataTable({
+    columns,
+    rows: paged.rows,
     emptyMessage: "Proje bulunamadı.",
+    pagination: {
+      page: paged.page,
+      totalPages: paged.totalPages,
+      total: paged.total,
+      onPageChange: (p) => {
+        page = p;
+        renderTable();
+      },
+    },
+  });
+  makeHeadersSortable(el, columns, sort, (key) => {
+    sort = nextSort(sort, key);
+    page = 1;
+    renderTable();
   });
 
   el.querySelectorAll(".btn-edit").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const project = allProjects.find((p) => (p.id || p.project_id) === btn.dataset.id);
+      const project = allProjects.find((p) => projectId(p) === btn.dataset.id);
       if (project) openFormModal(project);
     });
   });
 }
 
+/** Pasif firmanın projesi düzenlenirken mevcut firma "(pasif)" etiketiyle seçenekte kalır (YON-11). */
 function companyOptions(selectedId) {
-  return allCompanies
-    .filter((c) => c.is_active !== false)
-    .sort((a, b) => String(a.name).localeCompare(String(b.name), "tr"))
-    .map((c) => {
-      const id = c.id || c.company_id;
-      return `<option value="${escapeHtml(id)}"${id === selectedId ? " selected" : ""}>${escapeHtml(c.name)}</option>`;
-    })
+  return selectableCompanies(allCompanies, selectedId)
+    .map((o) => `<option value="${escapeHtml(o.id)}"${o.id === selectedId ? " selected" : ""}>${escapeHtml(o.label)}</option>`)
     .join("");
 }
 
-function managerOptions(selectedUid) {
-  const admins = allPersonnel.filter((p) => p.is_active !== false);
-  return admins
-    .sort((a, b) =>
-      `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`, "tr")
-    )
+/** Yönetici seçeneği: personel kimliği; eski kayıtlarda `manager_uid` personel kimliği ya da kullanıcı kimliği olabilir. */
+function selectedManagerPersonnelId(project) {
+  if (!project) return "";
+  if (project.manager_personnel_id) return project.manager_personnel_id;
+  const byId = allPersonnel.find((p) => (p.id || p.personnel_id) === project.manager_uid);
+  if (byId) return byId.id || byId.personnel_id;
+  const byUid = allPersonnel.find((p) => p.uid && p.uid === project.manager_uid);
+  return byUid ? byUid.id || byUid.personnel_id : "";
+}
+
+/** Personel kaydıyla eşleşmeyen eski yönetici adı (ör. personel kaydı olmayan PM) seçenek olarak korunur; ezilmez. */
+function legacyManagerOption(project) {
+  if (!project || !project.manager_name || selectedManagerPersonnelId(project)) return "";
+  return `<option value="__legacy" selected>${escapeHtml(project.manager_name)} (kayıtlı yönetici)</option>`;
+}
+
+function managerOptions(selectedPersonnelId) {
+  return allPersonnel
+    .filter((p) => p.is_active !== false || (p.id || p.personnel_id) === selectedPersonnelId)
+    .sort((a, b) => personnelFullName(a).localeCompare(personnelFullName(b), "tr"))
     .map((p) => {
       const id = p.id || p.personnel_id;
-      const name = `${p.first_name || ""} ${p.last_name || ""}`.trim();
-      return `<option value="${escapeHtml(id)}" data-name="${escapeHtml(name)}"${id === selectedUid ? " selected" : ""}>${escapeHtml(name)}</option>`;
+      const name = personnelFullName(p) || p.email || id;
+      return `<option value="${escapeHtml(id)}" data-name="${escapeHtml(name)}" data-uid="${escapeHtml(p.uid || "")}"${id === selectedPersonnelId ? " selected" : ""}>${escapeHtml(name)}${p.is_active === false ? " (pasif)" : ""}</option>`;
     })
     .join("");
 }
@@ -247,12 +265,10 @@ function personnelCheckboxes(selected) {
   const sel = selected || {};
   return allPersonnel
     .filter((p) => p.is_active !== false)
-    .sort((a, b) =>
-      `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`, "tr")
-    )
+    .sort((a, b) => personnelFullName(a).localeCompare(personnelFullName(b), "tr"))
     .map((p) => {
       const id = p.id || p.personnel_id;
-      const name = `${p.first_name || ""} ${p.last_name || ""}`.trim();
+      const name = personnelFullName(p);
       const checked = sel[id] ? " checked" : "";
       return `<label style="display:block;margin-bottom:0.375rem">
         <input type="checkbox" class="pf-personnel" value="${escapeHtml(id)}" data-name="${escapeHtml(name)}"${checked}>
@@ -264,7 +280,7 @@ function personnelCheckboxes(selected) {
 
 async function projectFormBody(data) {
   const d = data || {};
-  const code = d.project_code || (await generateProjectCode());
+  const code = d.project_code || (await ParlaDb.generateProjectCode());
   return `
     <form id="project-form">
       <div class="sv2-form-row">
@@ -286,13 +302,13 @@ async function projectFormBody(data) {
       </div>
       <div class="sv2-form-group">
         <label for="pf-name">Proje Adı *</label>
-        <input type="text" id="pf-name" value="${escapeHtml(d.name || "")}" required>
+        <input type="text" id="pf-name" value="${escapeHtml(d.name || "")}" maxlength="200" required>
         <div class="sv2-field-error" id="err-name" hidden></div>
       </div>
       <div class="sv2-form-group">
         <label for="pf-company">Firma *</label>
         <select id="pf-company" required>
-          <option value="">Firma seçiniz</option>
+          <option value="">Firma seçin</option>
           ${companyOptions(d.company_id)}
         </select>
         <div class="sv2-field-error" id="err-company" hidden></div>
@@ -300,18 +316,21 @@ async function projectFormBody(data) {
       <div class="sv2-form-group">
         <label for="pf-manager">Proje Yöneticisi</label>
         <select id="pf-manager">
-          <option value="">Seçiniz</option>
-          ${managerOptions(d.manager_uid)}
+          <option value="">Seçilmedi</option>
+          ${legacyManagerOption(data)}
+          ${managerOptions(selectedManagerPersonnelId(data))}
         </select>
       </div>
       <div class="sv2-form-row">
         <div class="sv2-form-group">
           <label for="pf-start">Başlangıç</label>
-          <input type="date" id="pf-start" value="${escapeHtml(d.start_date || "")}">
+          <input type="date" id="pf-start" min="2000-01-01" max="2100-12-31" value="${escapeHtml(d.start_date || "")}">
+          <div class="sv2-field-error" id="err-start" hidden></div>
         </div>
         <div class="sv2-form-group">
           <label for="pf-end">Bitiş</label>
-          <input type="date" id="pf-end" value="${escapeHtml(d.end_date || "")}">
+          <input type="date" id="pf-end" min="2000-01-01" max="2100-12-31" value="${escapeHtml(d.end_date || "")}">
+          <div class="sv2-field-error" id="err-end" hidden></div>
         </div>
       </div>
       <div class="sv2-form-group">
@@ -319,7 +338,7 @@ async function projectFormBody(data) {
         <textarea id="pf-desc" rows="3">${escapeHtml(d.description || "")}</textarea>
       </div>
       <div class="sv2-form-group">
-        <label>Atanan Personel</label>
+        <label>Atanan Danışman</label>
         <div style="max-height:160px;overflow-y:auto;border:1px solid var(--sv2-gray-200);padding:0.75rem;border-radius:var(--sv2-radius-sm)">
           ${personnelCheckboxes(d.assigned_personnel) || "<span style='color:var(--sv2-gray-500)'>Personel kaydı yok.</span>"}
         </div>
@@ -342,23 +361,32 @@ async function openFormModal(project) {
   openModal(modalId);
 
   document.getElementById("project-save")?.addEventListener("click", () =>
-    saveProject(project?.id || project?.project_id)
+    saveProject(project ? projectId(project) : "")
   );
 }
 
+function showError(field, message) {
+  const el = document.getElementById(`err-${field}`);
+  if (!el) return;
+  el.hidden = false;
+  el.textContent = message;
+}
+
 async function saveProject(editId) {
-  const nameEl = document.getElementById("pf-name");
-  const companyEl = document.getElementById("pf-company");
-  const errName = document.getElementById("err-name");
-  const errCompany = document.getElementById("err-company");
+  ["name", "company", "start", "end"].forEach((f) => {
+    const el = document.getElementById(`err-${f}`);
+    if (el) {
+      el.hidden = true;
+      el.textContent = "";
+    }
+  });
 
-  errName.hidden = true;
-  errCompany.hidden = true;
-
-  const companyId = companyEl?.value || "";
+  const companyId = document.getElementById("pf-company")?.value || "";
   const company = allCompanies.find((c) => (c.id || c.company_id) === companyId);
   const managerEl = document.getElementById("pf-manager");
-  const managerOpt = managerEl?.selectedOptions?.[0];
+  const keepLegacy = managerEl?.value === "__legacy";
+  const existing = editId ? allProjects.find((p) => projectId(p) === editId) : null;
+  const managerOpt = managerEl?.value && !keepLegacy ? managerEl.selectedOptions?.[0] : null;
 
   const assigned = {};
   document.querySelectorAll(".pf-personnel:checked").forEach((cb) => {
@@ -367,28 +395,24 @@ async function saveProject(editId) {
 
   const payload = {
     project_code: document.getElementById("pf-code")?.value.trim(),
-    name: nameEl?.value.trim(),
+    name: document.getElementById("pf-name")?.value.trim(),
     company_id: companyId,
+    company_name: company?.name || "",
     customer_code: company?.customer_code || "",
     status: document.getElementById("pf-status")?.value || "planning",
     start_date: document.getElementById("pf-start")?.value || "",
     end_date: document.getElementById("pf-end")?.value || "",
     description: document.getElementById("pf-desc")?.value.trim() || "",
-    manager_uid: managerEl?.value || "",
-    manager_name: managerOpt?.dataset?.name || managerOpt?.textContent?.trim() || "",
+    // Yönetici: yalnız gerçekten seçildiyse (yer tutucu metin asla kaydedilmez)
+    manager_uid: keepLegacy ? existing?.manager_uid || "" : managerOpt?.dataset?.uid || "",
+    manager_personnel_id: keepLegacy ? existing?.manager_personnel_id || "" : managerOpt ? managerEl.value : "",
+    manager_name: keepLegacy ? existing?.manager_name || "" : managerOpt ? managerOpt.dataset.name || "" : "",
     assigned_personnel: assigned,
   };
 
-  if (!required(payload.name)) {
-    errName.hidden = false;
-    errName.textContent = "Proje adı zorunludur.";
-    return;
-  }
-  if (!required(payload.company_id)) {
-    errCompany.hidden = false;
-    errCompany.textContent = "Firma seçiniz.";
-    return;
-  }
+  const check = validateProjectInput(payload);
+  for (const [field, message] of Object.entries(check.errors)) showError(field, message);
+  if (!check.valid) return;
 
   showLoading(true);
   try {
@@ -398,30 +422,18 @@ async function saveProject(editId) {
         ...payload,
         updated_by: session.uid,
       });
-      await ParlaDb.logActivity(
-        "updated",
-        "project",
-        editId,
-        payload.project_code,
-        `Proje güncellendi: ${payload.name}`,
-        actor
-      );
-      toast("Proje güncellendi.", "info");
+      await ParlaDb.logActivity("updated", "project", editId, payload.project_code, `Proje güncellendi: ${payload.name}`, actor);
+      toast("Proje güncellendi.", "success");
     } else {
+      // Kod, kayıt anında yeniden denetlenir (eşzamanlı iki yönetici aynı kodu almasın).
+      payload.project_code = await ParlaDb.generateProjectCode();
       const created = await ParlaDb.createProject({
         ...payload,
         created_by: session.uid,
         updated_by: session.uid,
       });
-      await ParlaDb.logActivity(
-        "created",
-        "project",
-        created.id,
-        payload.project_code,
-        `Yeni proje: ${payload.name}`,
-        actor
-      );
-      toast("Proje oluşturuldu.", "info");
+      await ParlaDb.logActivity("created", "project", created.id, payload.project_code, `Yeni proje: ${payload.name}`, actor);
+      toast("Proje oluşturuldu.", "success");
     }
     closeModal("project-modal");
     await loadData();

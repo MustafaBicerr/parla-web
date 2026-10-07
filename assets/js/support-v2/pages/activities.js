@@ -8,43 +8,23 @@ import {
   renderDataTable,
   renderTimeline,
   showLoading,
-  handleError,
+  handleLoadError,
+  loadingStateHtml,
+  withInflight,
   linkUser,
   escapeHtml,
   formatDateTime,
 } from "../ui-shell.js";
+import { ENTITY_LABELS, formatActivityAction, formatActivityEntity, isDeleteAction } from "../activity-labels.js";
+import { isSafeId, safeText } from "../safe-utils.js";
 
-const ACTION_LABELS = {
-  created: "Oluşturuldu",
-  updated: "Güncellendi",
-  deleted: "Silindi",
-  status_changed: "Durum Değişti",
-  assigned: "Atandı",
-  login: "Giriş",
-  ticket_created: "Talep Oluşturuldu",
-  ticket_updated: "Talep Güncellendi",
-  ticket_assigned: "Talep Atandı",
-  ticket_message: "Yeni Mesaj",
-  user_created: "Kullanıcı Oluşturuldu",
-  company_created: "Firma Oluşturuldu",
-  email_failed: "E-posta Gönderilemedi",
-};
-
-const ENTITY_LABELS = {
-  ticket: "Ticket",
-  user: "Kullanıcı",
-  company: "Firma",
-  contract: "Sözleşme",
-  project: "Proje",
-  personnel: "Danışman",
-  department: "Departman",
-  sap_module: "Modül",
-  support_type: "Destek Türü",
-};
+/** Sayfa başına yüklenen en son kayıt sayısı; "Daha eski yükle" bu kadar artırır (PER-30, OLC). */
+const PAGE_SIZE = 200;
 
 let session = null;
 let allActivities = [];
 let allUsers = [];
+let limit = PAGE_SIZE;
 let viewMode = "table";
 let filters = {
   action: "",
@@ -56,6 +36,24 @@ let filters = {
 
 document.addEventListener("DOMContentLoaded", init);
 
+function pageContent(inner) {
+  return `
+        <div class="sv2-section">
+          <div class="sv2-section-header">
+            <h3>Denetim Günlüğü</h3>
+            <div class="sv2-view-toggle" id="view-toggle">
+              <button type="button" class="${viewMode === "table" ? "active" : ""}" data-view="table"><i class="fas fa-table"></i> Tablo</button>
+              <button type="button" class="${viewMode === "timeline" ? "active" : ""}" data-view="timeline"><i class="fas fa-stream"></i> Zaman Çizelgesi</button>
+            </div>
+          </div>
+          <div class="sv2-section-body">
+            <div class="sv2-filters" id="activity-filters"></div>
+            <div id="activities-content">${inner || ""}</div>
+            <div id="activities-more" class="sv2-load-more"></div>
+          </div>
+        </div>`;
+}
+
 async function init() {
   try {
     session = await requireAuth({ adminOnly: true });
@@ -64,27 +62,12 @@ async function init() {
       activePage: "activities",
       profile: session,
       isAdmin: true,
-      content: `
-        <div class="sv2-section">
-          <div class="sv2-section-header">
-            <h3>Denetim Günlüğü</h3>
-            <div class="sv2-view-toggle" id="view-toggle">
-              <button type="button" class="active" data-view="table"><i class="fas fa-table"></i> Tablo</button>
-              <button type="button" data-view="timeline"><i class="fas fa-stream"></i> Zaman Çizelgesi</button>
-            </div>
-          </div>
-          <div class="sv2-section-body">
-            <div class="sv2-filters" id="activity-filters"></div>
-            <div id="activities-content"></div>
-          </div>
-        </div>`,
+      content: pageContent(loadingStateHtml("Aktiviteler yükleniyor…")),
     });
-    await loadData();
     bindEvents();
-  } catch (err) {
-    if (err.message !== "not_authenticated" && err.message !== "not_admin") {
-      handleError(err, "Sayfa yüklenemedi");
-    }
+    await loadData();
+  } catch {
+    /* requireAuth yönlendirir ya da hata kartını kendisi çizer */
   }
 }
 
@@ -92,16 +75,34 @@ async function loadData() {
   showLoading(true);
   try {
     [allActivities, allUsers] = await Promise.all([
-      ParlaDb.getActivities(),
+      ParlaDb.getActivities(limit),
       ParlaDb.getAllUsers().catch(() => []), // kullanıcı listesi yalnızca admin rollerine açık
     ]);
     renderFilters();
     renderContent();
+    renderMore();
   } catch (err) {
-    handleError(err, "Veriler yüklenemedi");
+    handleLoadError(err, "Aktiviteler yüklenemedi", { retry: loadData, activePage: "activities", pageTitle: "Aktiviteler", isAdmin: true });
   } finally {
     showLoading(false);
   }
+}
+
+/** "Daha eski yükle": limit artırılıp en son N kayıt yeniden okunur (sunucu tarafı limitToLast). */
+function renderMore() {
+  const el = document.getElementById("activities-more");
+  if (!el) return;
+  const mayHaveMore = allActivities.length >= limit;
+  el.innerHTML = `
+    <p class="sv2-text-muted" id="activities-count">En son ${allActivities.length.toLocaleString("tr-TR")} kayıt yüklendi${mayHaveMore ? "; daha eski kayıtlar olabilir." : "."}</p>
+    ${mayHaveMore ? '<button type="button" class="sv2-btn sv2-btn-outline" id="activities-load-more"><i class="fas fa-history"></i> Daha eski yükle</button>' : ""}`;
+  const btn = document.getElementById("activities-load-more");
+  btn?.addEventListener("click", () => {
+    withInflight(btn, async () => {
+      limit += PAGE_SIZE;
+      await loadData();
+    });
+  });
 }
 
 function bindEvents() {
@@ -115,15 +116,18 @@ function bindEvents() {
   });
 }
 
+/** Olay tipleri Türkçe etikete göre sıralanır (ham kod sırasına göre değil). */
 function uniqueActions() {
-  const set = new Set(allActivities.map((a) => a.action).filter(Boolean));
-  return [...set].sort();
+  const set = new Set(allActivities.map((a) => safeText(a.action)).filter(Boolean));
+  return [...set].sort((x, y) => formatActivityAction(x).localeCompare(formatActivityAction(y), "tr"));
 }
 
 function entityLink(activity) {
-  const type = activity.entity_type;
-  const id = activity.entity_id;
-  const label = activity.entity_label || id || "—";
+  const type = safeText(activity.entity_type);
+  const id = safeText(activity.entity_id);
+  const label = safeText(activity.entity_label) || id || "—";
+  // Silinen varlığın sayfası yok: bağlantısız göster. Geçersiz kimlikli bağlantı da çizilmez.
+  if (isDeleteAction(activity.action) || !isSafeId(id)) return escapeHtml(label);
   const map = {
     ticket: `${PATHS.adminTicketDetail}?id=${encodeURIComponent(id)}`,
     user: `${PATHS.adminUserDetail}?uid=${encodeURIComponent(id)}`,
@@ -135,26 +139,26 @@ function entityLink(activity) {
     sap_module: PATHS.adminModules,
     support_type: PATHS.adminSupportTypes,
   };
-  const href = map[type];
-  if (href && id) {
-    return `<a href="${href}" class="sv2-link">${escapeHtml(label)}</a>`;
+  const href = Object.prototype.hasOwnProperty.call(map, type) ? map[type] : "";
+  if (href) {
+    return `<a href="${escapeHtml(href)}" class="sv2-link">${escapeHtml(label)}</a>`;
   }
   return escapeHtml(label);
 }
 
 function formatAction(action) {
-  return ACTION_LABELS[action] || action || "—";
+  return formatActivityAction(action);
 }
 
 function formatEntityType(type) {
-  return ENTITY_LABELS[type] || type || "—";
+  return formatActivityEntity(type);
 }
 
 function filterActivities() {
   return allActivities.filter((a) => {
-    if (filters.action && a.action !== filters.action) return false;
-    if (filters.userUid && a.user_uid !== filters.userUid) return false;
-    if (filters.entityType && a.entity_type !== filters.entityType) return false;
+    if (filters.action && safeText(a.action) !== filters.action) return false;
+    if (filters.userUid && safeText(a.user_uid) !== filters.userUid) return false;
+    if (filters.entityType && safeText(a.entity_type) !== filters.entityType) return false;
     if (filters.dateFrom) {
       const from = new Date(filters.dateFrom);
       from.setHours(0, 0, 0, 0);
@@ -174,11 +178,19 @@ function renderFilters() {
   if (!el) return;
 
   const actions = uniqueActions();
-  const users = allUsers
+  // Kullanıcı listesini okuyamayan roller (PM/danışman) için süzgeç aktivitelerin kendisinden türetilir (PER-29).
+  let users = allUsers
     .filter((u) => u.is_active !== false)
-    .sort((a, b) =>
-      `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`, "tr")
-    );
+    .map((u) => ({ uid: u.uid, name: `${safeText(u.first_name)} ${safeText(u.last_name)}`.trim() || safeText(u.email) }));
+  if (!users.length) {
+    const seen = new Map();
+    allActivities.forEach((a) => {
+      const uid = safeText(a.user_uid);
+      if (uid && !seen.has(uid)) seen.set(uid, safeText(a.user_name) || uid);
+    });
+    users = [...seen].map(([uid, name]) => ({ uid, name }));
+  }
+  users.sort((a, b) => a.name.localeCompare(b.name, "tr"));
 
   el.innerHTML = `
     <div class="sv2-form-group">
@@ -193,10 +205,7 @@ function renderFilters() {
       <select id="f-user">
         <option value="">Tümü</option>
         ${users
-          .map((u) => {
-            const name = `${u.first_name || ""} ${u.last_name || ""}`.trim() || u.email;
-            return `<option value="${escapeHtml(u.uid)}"${filters.userUid === u.uid ? " selected" : ""}>${escapeHtml(name)}</option>`;
-          })
+          .map((u) => `<option value="${escapeHtml(u.uid)}"${filters.userUid === u.uid ? " selected" : ""}>${escapeHtml(u.name)}</option>`)
           .join("")}
       </select>
     </div>
@@ -207,7 +216,7 @@ function renderFilters() {
         ${Object.entries(ENTITY_LABELS)
           .map(
             ([k, v]) =>
-              `<option value="${k}"${filters.entityType === k ? " selected" : ""}>${escapeHtml(v)}</option>`
+              `<option value="${escapeHtml(k)}"${filters.entityType === k ? " selected" : ""}>${escapeHtml(v)}</option>`
           )
           .join("")}
       </select>
@@ -251,10 +260,10 @@ function renderContent() {
 
   if (viewMode === "timeline") {
     const items = filtered.map((a) => ({
-      author: a.user_name || "Sistem",
-      created_at: a.created_at,
-      message: `${formatAction(a.action)} — ${formatEntityType(a.entity_type)}: ${a.entity_label || a.entity_id || ""}${a.details ? " · " + a.details : ""}`,
-      variant: a.action === "deleted" ? "danger" : "",
+      author: safeText(a.user_name) || "Sistem",
+      created_at: safeText(a.created_at),
+      message: `${formatAction(a.action)} — ${formatEntityType(a.entity_type)}: ${safeText(a.entity_label) || safeText(a.entity_id)}${a.details ? " · " + safeText(a.details) : ""}`,
+      variant: isDeleteAction(a.action) ? "danger" : "",
     }));
     el.innerHTML = renderTimeline(items);
     return;
@@ -265,15 +274,15 @@ function renderContent() {
       {
         key: "created_at",
         label: "TARİH",
-        render: (v) => escapeHtml(formatDateTime(v)),
+        render: (v) => escapeHtml(formatDateTime(safeText(v))),
       },
       {
         key: "user_name",
         label: "KULLANICI",
         render: (_, row) =>
-          row.user_uid
-            ? linkUser(row.user_uid, row.user_name || row.user_uid)
-            : escapeHtml(row.user_name || "Sistem"),
+          row.user_uid && isSafeId(safeText(row.user_uid))
+            ? linkUser(safeText(row.user_uid), safeText(row.user_name) || safeText(row.user_uid))
+            : escapeHtml(safeText(row.user_name) || "Sistem"),
       },
       {
         key: "action",
@@ -289,10 +298,10 @@ function renderContent() {
       {
         key: "details",
         label: "DETAYLAR",
-        render: (v) => escapeHtml(v || "—"),
+        render: (v) => escapeHtml(safeText(v) || "—"),
       },
     ],
-    rows: filtered.map((a) => ({ ...a, id: a.id || a.activity_id })),
+    rows: filtered.map((a) => ({ ...a, id: a.id })),
     emptyMessage: "Aktivite kaydı bulunamadı.",
   });
 }

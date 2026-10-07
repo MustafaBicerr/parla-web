@@ -161,6 +161,19 @@ function buildSeed(now) {
   };
   const counters = { SUP: { ORN: { "2610": 12 }, DMR: { "2610": 10 } }, ARZ: { ORN: { "2610": 11 } } };
 
+  // D-08: danışman yazma yetkisi talepteki `assigned_uids` haritasına bağlıdır; personel kaydı kullanıcıya `uid` ile bağlanır.
+  // Kapanış damgası ayrıca ms olarak tutulur (müşterinin 14 günlük yeniden açma penceresi kurallarda buna bağlıdır).
+  const uidByPid = { p1: "u_cons1", p2: "u_cons2", p3: "u_service" };
+  for (const [pid, uid] of Object.entries(uidByPid)) personnel[pid].uid = uid;
+  for (const [tid, byPid] of Object.entries(ticket_assignments)) {
+    for (const pid of Object.keys(byPid)) {
+      tickets[tid].assigned_uids = Object.assign(tickets[tid].assigned_uids || {}, { [uidByPid[pid]]: true });
+    }
+  }
+  for (const t of Object.values(tickets)) {
+    if (t.closed_at) t.closed_at_ms = Date.parse(t.closed_at);
+  }
+
   return { v2: { users, companies, departments, personnel, contracts, projects, sap_modules, support_types, tickets, ticket_messages, ticket_internal_notes, ticket_history, ticket_assignments, ticket_efforts, activities, counters, notifications: {} } };
 }
 

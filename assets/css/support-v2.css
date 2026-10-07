@@ -7,21 +7,18 @@
   --sv2-navy: #1a2332;
   --sv2-navy-mid: #243044;
   --sv2-navy-light: #2d3d56;
-  --sv2-navy-muted: #3d5068;
   --sv2-accent: #2563eb;
   --sv2-accent-hover: #1d4ed8;
   --sv2-accent-soft: #eff6ff;
   --sv2-accent-muted: #93c5fd;
 
   /* Semantic */
-  --sv2-success: #059669;
+  --sv2-success: #047857; /* beyaz metinle ≥4.5:1 (toast) */
   --sv2-success-soft: #d1fae5;
-  --sv2-warning: #d97706;
+  --sv2-warning: #b45309; /* beyaz metinle ≥4.5:1 (uyarı toast'ı, çevrimdışı şeridi) */
   --sv2-warning-soft: #fef3c7;
   --sv2-danger: #dc2626;
   --sv2-danger-soft: #fee2e2;
-  --sv2-info: #0284c7;
-  --sv2-info-soft: #e0f2fe;
 
   /* Neutrals */
   --sv2-white: #ffffff;
@@ -30,17 +27,16 @@
   --sv2-gray-200: #e2e8f0;
   --sv2-gray-300: #cbd5e1;
   --sv2-gray-400: #94a3b8;
-  --sv2-gray-500: #64748b;
+  --sv2-gray-500: #566579; /* sönük metin: beyaz/gri/açık mavi zeminde ≥4.5:1 */
   --sv2-gray-600: #475569;
   --sv2-gray-700: #334155;
   --sv2-gray-800: #1e293b;
-  --sv2-gray-900: #0f172a;
 
   /* Layout */
   --sv2-sidebar-width: 260px;
-  --sv2-sidebar-collapsed: 72px;
   --sv2-topbar-height: 60px;
   --sv2-radius-sm: 6px;
+  --sv2-touch: 44px; /* dokunma hedefi asgarisi */
   --sv2-radius: 10px;
   --sv2-radius-lg: 14px;
   --sv2-radius-full: 9999px;
@@ -64,7 +60,6 @@
 
   /* Z-index scale */
   --sv2-z-sidebar: 200;
-  --sv2-z-overlay: 250;
   --sv2-z-topbar: 100;
   --sv2-z-modal: 1000;
   --sv2-z-loading: 2000;
@@ -90,7 +85,9 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.sv2-body img {
+.sv2-card img,
+.sv2-timeline img,
+.sv2-section-body img {
   max-width: 100%;
   height: auto;
 }
@@ -119,58 +116,6 @@
   overflow: hidden;
 }
 
-.sv2-sidebar.collapsed {
-  width: var(--sv2-sidebar-collapsed);
-}
-
-.sv2-sidebar-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.25rem 1.25rem 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  min-height: var(--sv2-topbar-height);
-  flex-shrink: 0;
-}
-
-.sv2-sidebar-brand img,
-.sv2-sidebar-brand .sv2-brand-logo {
-  height: 36px;
-  width: auto;
-  flex-shrink: 0;
-  border-radius: var(--sv2-radius-sm);
-}
-
-.sv2-sidebar-brand .sv2-brand-text {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--sv2-white);
-  white-space: nowrap;
-  overflow: hidden;
-  transition: opacity var(--sv2-duration) var(--sv2-ease);
-}
-
-.sv2-sidebar.collapsed .sv2-brand-text,
-.sv2-sidebar.collapsed .sv2-nav-item span,
-.sv2-sidebar.collapsed .sv2-nav-section-label,
-.sv2-sidebar.collapsed .sv2-sidebar-footer .sv2-user-info {
-  opacity: 0;
-  width: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.sv2-sidebar.collapsed .sv2-nav-item {
-  justify-content: center;
-  padding-left: 0;
-  padding-right: 0;
-}
-
-.sv2-sidebar.collapsed .sv2-nav-item i {
-  margin: 0;
-  font-size: 1.15rem;
-}
-
 .sv2-nav {
   flex: 1;
   overflow-y: auto;
@@ -187,18 +132,6 @@
 .sv2-nav::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
   border-radius: var(--sv2-radius-full);
-}
-
-.sv2-nav-section-label {
-  display: block;
-  padding: 0.75rem 0.75rem 0.35rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255, 255, 255, 0.4);
-  white-space: nowrap;
-  transition: opacity var(--sv2-duration) var(--sv2-ease);
 }
 
 .sv2-nav-item {
@@ -252,73 +185,6 @@
   flex-shrink: 0;
 }
 
-.sv2-sidebar-footer .sv2-user-block {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.sv2-sidebar-footer .sv2-user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--sv2-radius-full);
-  background: var(--sv2-navy-light);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--sv2-white);
-  flex-shrink: 0;
-}
-
-.sv2-sidebar-footer .sv2-user-info {
-  overflow: hidden;
-  transition: opacity var(--sv2-duration) var(--sv2-ease);
-}
-
-.sv2-sidebar-footer .sv2-user-name {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--sv2-white);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sv2-sidebar-footer .sv2-user-email {
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.5);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sv2-sidebar-footer .sv2-logout-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: var(--sv2-radius-sm);
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.8125rem;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background var(--sv2-duration) var(--sv2-ease),
-              color var(--sv2-duration) var(--sv2-ease);
-}
-
-.sv2-sidebar-footer .sv2-logout-btn:hover {
-  background: rgba(220, 38, 38, 0.2);
-  border-color: rgba(220, 38, 38, 0.4);
-  color: #fca5a5;
-}
-
 .sv2-sidebar-overlay {
   display: none;
   position: fixed;
@@ -346,11 +212,6 @@
   flex-direction: column;
   min-height: 100vh;
   transition: margin-left var(--sv2-duration-slow) var(--sv2-ease);
-}
-
-.sv2-sidebar.collapsed ~ .sv2-main,
-.sv2-app.sidebar-collapsed .sv2-main {
-  margin-left: var(--sv2-sidebar-collapsed);
 }
 
 .sv2-topbar {
@@ -382,14 +243,13 @@
   flex-shrink: 0;
 }
 
-.sv2-topbar-toggle,
 .sv2-menu-toggle,
 .sv2-sidebar-close {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: var(--sv2-touch);
+  height: var(--sv2-touch);
   border: none;
   border-radius: var(--sv2-radius-sm);
   background: transparent;
@@ -453,26 +313,6 @@
   text-overflow: ellipsis;
 }
 
-.sv2-topbar-toggle {
-  color: var(--sv2-gray-600);
-  border: 1px solid var(--sv2-gray-200);
-  background: var(--sv2-white);
-}
-
-.sv2-topbar-toggle:hover {
-  background: var(--sv2-gray-100);
-}
-
-.sv2-topbar-title {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--sv2-navy);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .sv2-content {
   flex: 1;
   padding: 1.5rem;
@@ -482,7 +322,7 @@
 .sv2-auth-wrap {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
 .sv2-auth-brand {
@@ -667,12 +507,6 @@
   font-size: 0.8125rem;
 }
 
-.sv2-btn-icon {
-  padding: 0.5rem;
-  width: 36px;
-  height: 36px;
-}
-
 /* ─── Forms ───────────────────────────────────────────────────────────────── */
 .sv2-form-group {
   margin-bottom: 1rem;
@@ -686,14 +520,14 @@
   color: var(--sv2-gray-700);
 }
 
-.sv2-form-group input,
+.sv2-form-group input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]),
 .sv2-form-group select,
 .sv2-form-group textarea {
   width: 100%;
   padding: 0.625rem 0.875rem;
   border: 1px solid var(--sv2-gray-200);
   border-radius: var(--sv2-radius-sm);
-  font-size: 0.9375rem;
+  font-size: 1rem; /* ≥16 px: iOS odakta yakınlaştırmaz */
   font-family: inherit;
   color: var(--sv2-gray-800);
   background: var(--sv2-white);
@@ -703,7 +537,7 @@
 
 .sv2-form-group input::placeholder,
 .sv2-form-group textarea::placeholder {
-  color: var(--sv2-gray-400);
+  color: var(--sv2-gray-500);
 }
 
 .sv2-form-group input:focus,
@@ -719,12 +553,15 @@
   resize: vertical;
 }
 
-.sv2-form-group.has-error input,
+.sv2-form-group.has-error input:not([type="checkbox"]):not([type="radio"]),
 .sv2-form-group.has-error select,
 .sv2-form-group.has-error textarea,
-.has-error .sv2-form-group input,
+.has-error .sv2-form-group input:not([type="checkbox"]):not([type="radio"]),
 .has-error .sv2-form-group select,
-.has-error .sv2-form-group textarea {
+.has-error .sv2-form-group textarea,
+.sv2-form-group input[aria-invalid="true"],
+.sv2-form-group select[aria-invalid="true"],
+.sv2-form-group textarea[aria-invalid="true"] {
   border-color: var(--sv2-danger);
 }
 
@@ -735,9 +572,43 @@
 }
 
 .sv2-field-error {
+  display: block;
   font-size: 0.8125rem;
   color: var(--sv2-danger);
   margin-top: 0.25rem;
+}
+
+.sv2-field-error[hidden] {
+  display: none;
+}
+
+/* Onay kutusu / radyo + etiket: tek satırda hizalı (UX-30) */
+.sv2-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.sv2-form-group label.sv2-check,
+.sv2-form-group > label:has(> input[type="checkbox"]),
+.sv2-form-group > label:has(> input[type="radio"]) {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sv2-form-group input[type="checkbox"],
+.sv2-form-group input[type="radio"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  flex: 0 0 auto;
+  accent-color: var(--sv2-accent);
 }
 
 .sv2-form-row {
@@ -888,7 +759,7 @@
 }
 
 .sv2-assign-row.is-assigned .sv2-assign-primary-label {
-  color: var(--sv2-warning);
+  color: var(--sv2-warning); /* #b45309: açık mavi zeminde ≥4.5:1 */
 }
 
 .sv2-assign-check,
@@ -951,15 +822,17 @@
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: var(--sv2-gray-400);
+  color: var(--sv2-gray-500);
   cursor: pointer;
-  padding: 0.375rem;
+  padding: 0.5rem;
+  min-width: 40px;
+  min-height: 40px;
   font-size: 0.9375rem;
   line-height: 1;
 }
 
 .sv2-toggle-password button:hover {
-  color: var(--sv2-gray-600);
+  color: var(--sv2-gray-700);
 }
 
 /* ─── Stats grid ──────────────────────────────────────────────────────────── */
@@ -1020,12 +893,6 @@
   font-weight: 500;
 }
 
-.sv2-stat-card .sv2-stat-icon {
-  float: right;
-  font-size: 1.25rem;
-  color: var(--sv2-gray-300);
-}
-
 /* ─── Sections ────────────────────────────────────────────────────────────── */
 .sv2-section {
   background: var(--sv2-white);
@@ -1034,6 +901,7 @@
   border: 1px solid var(--sv2-gray-100);
   margin-bottom: 1.5rem;
   overflow: hidden;
+  overflow-wrap: anywhere; /* uzun URL / günlük satırları kırpılmak yerine kırılır (UX-17, MUS-22) */
 }
 
 .sv2-section-header {
@@ -1045,6 +913,10 @@
   flex-wrap: wrap;
   gap: 0.75rem;
   background: var(--sv2-white);
+}
+
+.sv2-section-header > * {
+  min-width: 0;
 }
 
 .sv2-section-header h3 {
@@ -1165,58 +1037,6 @@
   color: #c2410c;
 }
 
-/* Priority badges */
-.sv2-badge-priority-low {
-  background: var(--sv2-gray-100);
-  color: var(--sv2-gray-600);
-}
-
-.sv2-badge-priority-medium {
-  background: var(--sv2-accent-soft);
-  color: var(--sv2-accent-hover);
-}
-
-.sv2-badge-priority-high {
-  background: var(--sv2-warning-soft);
-  color: #b45309;
-}
-
-.sv2-badge-priority-critical {
-  background: var(--sv2-danger-soft);
-  color: var(--sv2-danger);
-}
-
-/* Type badges — SUP ARZ PRJ INT DEV BUG */
-.sv2-badge-type-sup {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.sv2-badge-type-arz {
-  background: #e0e7ff;
-  color: #4338ca;
-}
-
-.sv2-badge-type-prj {
-  background: #f3e8ff;
-  color: #7e22ce;
-}
-
-.sv2-badge-type-int {
-  background: #ccfbf1;
-  color: #0f766e;
-}
-
-.sv2-badge-type-dev {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.sv2-badge-type-bug {
-  background: var(--sv2-danger-soft);
-  color: #991b1b;
-}
-
 .sv2-role-badge {
   display: inline-flex;
   align-items: center;
@@ -1310,7 +1130,7 @@
   padding: 0.625rem 0.875rem 0.625rem 2.5rem;
   border: 1px solid var(--sv2-gray-200);
   border-radius: var(--sv2-radius-sm);
-  font-size: 0.9375rem;
+  font-size: 1rem; /* ≥16 px: iOS odakta yakınlaştırmaz */
   font-family: inherit;
   background: var(--sv2-white);
   transition: border-color var(--sv2-duration) var(--sv2-ease),
@@ -1335,14 +1155,16 @@
   padding: 1.5rem;
   opacity: 0;
   visibility: hidden;
+  /* kapanırken görünürlük gecikmeli, AÇILIRKEN anında: odak hemen pencereye taşınabilsin */
   transition: opacity var(--sv2-duration-slow) var(--sv2-ease),
-              visibility var(--sv2-duration-slow) var(--sv2-ease);
+              visibility 0s linear var(--sv2-duration-slow);
   backdrop-filter: blur(2px);
 }
 
 .sv2-modal-overlay.is-open {
   opacity: 1;
   visibility: visible;
+  transition-delay: 0s;
 }
 
 .sv2-modal {
@@ -1351,7 +1173,10 @@
   max-width: 560px;
   width: 100%;
   max-height: 90vh;
-  overflow-y: auto;
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-shadow: var(--sv2-shadow-lg);
   transform: translateY(12px) scale(0.98);
   transition: transform var(--sv2-duration-slow) var(--sv2-ease);
@@ -1370,6 +1195,11 @@
   gap: 1rem;
 }
 
+.sv2-modal-header {
+  flex: 0 0 auto;
+}
+
+.sv2-modal-header h2,
 .sv2-modal-header h3 {
   margin: 0;
   font-size: 1.125rem;
@@ -1382,8 +1212,10 @@
   border: none;
   font-size: 1.375rem;
   cursor: pointer;
-  color: var(--sv2-gray-400);
+  color: var(--sv2-gray-500);
   line-height: 1;
+  min-width: 40px;
+  min-height: 40px;
   padding: 0.25rem;
   border-radius: var(--sv2-radius-sm);
   transition: color var(--sv2-duration) var(--sv2-ease),
@@ -1397,6 +1229,10 @@
 
 .sv2-modal-body {
   padding: 1.5rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
 }
 
 .sv2-modal-footer {
@@ -1407,6 +1243,7 @@
   gap: 0.75rem;
   background: var(--sv2-gray-50);
   border-radius: 0 0 var(--sv2-radius-lg) var(--sv2-radius-lg);
+  flex: 0 0 auto; /* altbilgi hep görünür: yalnız gövde kayar */
 }
 
 /* ─── Timeline ────────────────────────────────────────────────────────────── */
@@ -1502,6 +1339,12 @@
   font-size: 0.9375rem;
   color: var(--sv2-gray-700);
   line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sv2-timeline-bubble {
+  min-width: 0;
 }
 
 /* ─── Reply box ───────────────────────────────────────────────────────────── */
@@ -1518,7 +1361,7 @@
   border: 1px solid var(--sv2-gray-200);
   border-radius: var(--sv2-radius-sm);
   font-family: inherit;
-  font-size: 0.9375rem;
+  font-size: 1rem; /* ≥16 px: iOS odakta yakınlaştırmaz */
   resize: vertical;
   transition: border-color var(--sv2-duration) var(--sv2-ease),
               box-shadow var(--sv2-duration) var(--sv2-ease);
@@ -1557,11 +1400,17 @@
   font-weight: 600;
 }
 
-.sv2-meta-grid .sv2-meta-item span,
-.sv2-meta-grid .sv2-meta-item div {
+.sv2-meta-item {
+  min-width: 0;
+}
+
+/* Yalnız sınıfsız düz değer öğeleri; rozetler (sınıflı) kendi stilini korur. */
+.sv2-meta-grid .sv2-meta-item > span:not([class]),
+.sv2-meta-grid .sv2-meta-item > div:not([class]) {
   font-weight: 600;
   color: var(--sv2-navy);
   font-size: 0.9375rem;
+  overflow-wrap: anywhere;
 }
 
 /* ─── Warning card ────────────────────────────────────────────────────────── */
@@ -1710,10 +1559,6 @@
 }
 
 /* ─── Autocomplete ────────────────────────────────────────────────────────── */
-.sv2-autocomplete {
-  position: relative;
-}
-
 .sv2-autocomplete-list {
   position: absolute;
   top: calc(100% + 4px);
@@ -1741,26 +1586,6 @@
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
-}
-
-.sv2-autocomplete-item {
-  padding: 0.625rem 0.875rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  color: var(--sv2-gray-700);
-  transition: background var(--sv2-duration) var(--sv2-ease);
-}
-
-.sv2-autocomplete-item:hover,
-.sv2-autocomplete-item.highlighted {
-  background: var(--sv2-accent-soft);
-  color: var(--sv2-accent-hover);
-}
-
-.sv2-autocomplete-item .sv2-autocomplete-meta {
-  font-size: 0.75rem;
-  color: var(--sv2-gray-400);
-  margin-top: 0.125rem;
 }
 
 .sv2-autocomplete-wrap {
@@ -1885,8 +1710,8 @@
 }
 
 .sv2-notif-item .sv2-notif-time {
-  font-size: 0.6875rem;
-  color: var(--sv2-gray-400);
+  font-size: 0.75rem;
+  color: var(--sv2-gray-500);
   margin-top: 0.25rem;
 }
 
@@ -2123,10 +1948,6 @@
   text-decoration: underline;
 }
 
-.sv2-text-center {
-  text-align: center;
-}
-
 .sv2-text-muted {
   color: var(--sv2-gray-500);
 }
@@ -2171,14 +1992,8 @@
   padding: 0.625rem 0.875rem;
   border: 1px solid var(--sv2-gray-200);
   border-radius: var(--sv2-radius-sm);
-  font-size: 0.9375rem;
+  font-size: 1rem; /* ≥16 px: iOS odakta yakınlaştırmaz */
   font-family: inherit;
-}
-
-.sv2-chip.is-active {
-  background: var(--sv2-accent);
-  border-color: var(--sv2-accent);
-  color: var(--sv2-white);
 }
 
 .sv2-text-danger {
@@ -2200,9 +2015,18 @@
 }
 
 .sv2-switch input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   opacity: 0;
-  width: 0;
-  height: 0;
+  cursor: pointer;
+}
+
+.sv2-switch input:focus-visible + .sv2-switch-slider {
+  outline: 2px solid var(--sv2-accent);
+  outline-offset: 2px;
 }
 
 .sv2-switch-slider {
@@ -2290,27 +2114,6 @@
   color: var(--sv2-white);
 }
 
-.sv2-meta-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-}
-
-.sv2-meta-item label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--sv2-gray-500);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 0.25rem;
-}
-
-.sv2-meta-item span {
-  font-size: 0.9375rem;
-  color: var(--sv2-gray-800);
-}
-
 .sv2-color-swatch {
   display: inline-block;
   width: 24px;
@@ -2336,35 +2139,14 @@
   .sv2-sidebar {
     transform: translateX(-100%);
     width: var(--sv2-sidebar-width);
+    visibility: hidden; /* kapalı çekmece sekme sırasından ve erişilebilirlik ağacından çıkar */
+    transition: transform var(--sv2-duration-slow) var(--sv2-ease), visibility 0s linear var(--sv2-duration-slow);
   }
 
   .sv2-sidebar.is-open {
     transform: translateX(0);
-  }
-
-  .sv2-sidebar.collapsed {
-    width: var(--sv2-sidebar-width);
-    transform: translateX(-100%);
-  }
-
-  .sv2-sidebar.collapsed.is-open {
-    transform: translateX(0);
-  }
-
-  .sv2-sidebar.collapsed .sv2-brand-text,
-  .sv2-sidebar.collapsed .sv2-nav-item span,
-  .sv2-sidebar.collapsed .sv2-nav-section-label,
-  .sv2-sidebar.collapsed .sv2-sidebar-footer .sv2-user-info {
-    opacity: 1;
-    width: auto;
-    overflow: visible;
-    pointer-events: auto;
-  }
-
-  .sv2-sidebar.collapsed .sv2-nav-item {
-    justify-content: flex-start;
-    padding-left: 0.875rem;
-    padding-right: 0.875rem;
+    visibility: visible;
+    transition-delay: 0s;
   }
 
   .sv2-sidebar-overlay {
@@ -2375,14 +2157,13 @@
     margin-left: 0 !important;
   }
 
-  .sv2-topbar-toggle,
   .sv2-menu-toggle,
   .sv2-sidebar-close {
     display: flex;
   }
 
   .sv2-auth-wrap {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .sv2-auth-brand {
@@ -2394,17 +2175,6 @@
     grid-template-columns: 1fr;
   }
 
-  .sv2-notif-panel {
-    position: fixed;
-    top: var(--sv2-topbar-height);
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-height: calc(100vh - var(--sv2-topbar-height));
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-  }
 }
 
 /* ─── Responsive: 600px — table cards, full modal ─────────────────────────── */
@@ -2415,10 +2185,6 @@
 
   .sv2-topbar {
     padding: 0 1rem;
-  }
-
-  .sv2-topbar-title {
-    font-size: 1rem;
   }
 
   .sv2-card {
@@ -2503,6 +2269,7 @@
   .sv2-modal {
     max-width: none;
     max-height: 95vh;
+    max-height: 95dvh;
     border-radius: var(--sv2-radius-lg) var(--sv2-radius-lg) 0 0;
     margin-top: auto;
   }
@@ -2552,7 +2319,7 @@
   flex-wrap: wrap;
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;
-  border-radius: var(--sv2-radius-md, 10px);
+  border-radius: var(--sv2-radius);
   border: 1px solid var(--sv2-gray-200);
   border-left-width: 4px;
   background: #fff;
@@ -2567,7 +2334,6 @@
   flex: none;
 }
 .sv2-lifecycle-body { flex: 1 1 260px; min-width: 0; }
-.sv2-lifecycle-body h4 { margin: 0 0 0.25rem; font-size: 1rem; }
 .sv2-lifecycle-body p { margin: 0; color: var(--sv2-gray-600); font-size: 0.875rem; line-height: 1.5; }
 .sv2-lifecycle-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .sv2-lifecycle--pending_close { border-left-color: #6d28d9; background: #faf8ff; }
@@ -2599,12 +2365,24 @@
 .sv2-sla--paused { background: var(--sv2-gray-200); color: var(--sv2-gray-700); }
 
 /* ─── Bildirim zili (türetilmiş bildirimler) ──────────────────────────────── */
-.sv2-notif-panel--fixed { position: fixed; top: 64px; right: 16px; width: min(380px, calc(100vw - 32px)); }
+.sv2-notif-panel--fixed {
+  position: fixed;
+  top: calc(var(--sv2-topbar-height) + 6px);
+  right: 16px;
+  left: auto;
+  width: min(380px, calc(100vw - 32px));
+  max-height: calc(100vh - var(--sv2-topbar-height) - 16px);
+  max-height: calc(100dvh - var(--sv2-topbar-height) - 16px);
+  display: flex;
+  flex-direction: column;
+}
+.sv2-notif-panel--fixed .sv2-notif-panel-body { flex: 1 1 auto; min-height: 0; max-height: none; }
+.sv2-notif-more { margin: 0; padding: 0.75rem 1rem; font-size: 0.8125rem; color: var(--sv2-gray-600); text-align: center; background: var(--sv2-gray-50); }
 .sv2-notif-panel a.sv2-notif-item { text-decoration: none; color: inherit; align-items: flex-start; }
 .sv2-notif-item .sv2-notif-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .sv2-notif-item .sv2-notif-text strong { color: var(--sv2-navy); font-weight: 600; }
 .sv2-notif-item .sv2-notif-text span { color: var(--sv2-gray-600); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.sv2-notif-item .sv2-notif-text em { font-style: normal; font-size: 0.6875rem; color: var(--sv2-gray-400); }
+.sv2-notif-item .sv2-notif-text em { font-style: normal; font-size: 0.75rem; color: var(--sv2-gray-500); }
 .sv2-notif-item.is-action .sv2-notif-icon { background: #fff1e6; color: #c2410c; }
 .sv2-notif-readall { background: none; border: none; color: var(--sv2-accent); cursor: pointer; font-size: 0.75rem; font-weight: 600; }
 .sv2-notif-empty { padding: 2rem 1rem; text-align: center; color: var(--sv2-gray-500); }
@@ -2638,7 +2416,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.7);
 }
 .sv2-nav-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
@@ -2681,7 +2459,7 @@
 .sv2-topbar-user { display: flex; align-items: center; gap: 0.6rem; }
 .sv2-topbar-name { font-size: 0.875rem; font-weight: 600; color: var(--sv2-gray-700); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.sv2-stat-hint { margin-top: 0.25rem; font-size: 0.6875rem; color: var(--sv2-gray-400); }
+.sv2-stat-hint { margin-top: 0.25rem; font-size: 0.75rem; color: var(--sv2-gray-500); }
 
 .sv2-pagination-info { font-size: 0.8125rem; color: var(--sv2-gray-500); }
 .sv2-pagination-btns { display: flex; gap: 0.5rem; }
@@ -2741,7 +2519,7 @@
 .sv2-auth-guides { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--sv2-gray-200); }
 .sv2-auth-guides h3 { margin: 0 0 0.6rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--sv2-gray-500); }
 .sv2-guide-card {
-  display: flex; align-items: center; gap: 0.75rem; padding: 0.7rem 0.85rem; margin-bottom: 0.5rem;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; padding: 0.7rem 0.85rem; margin-bottom: 0.5rem;
   border: 1px solid var(--sv2-gray-200); border-radius: var(--sv2-radius-lg, 10px); background: var(--sv2-white);
 }
 .sv2-guide-card:hover { border-color: var(--sv2-accent); }
@@ -2760,3 +2538,665 @@
 .sv2-guide-actions a:hover { background: var(--sv2-gray-200); }
 .sv2-guide-actions a.is-primary { background: var(--sv2-accent); color: var(--sv2-white); }
 .sv2-guide-actions a.is-primary:hover { filter: brightness(1.08); }
+
+/* ─── WP-02/WP-11: durum bileşenleri, toast kapatma, çevrimdışı şeridi, bilgi bandı ─────────── */
+.sv2-fatal-wrap { max-width: 560px; margin: 12vh auto 0; padding: 0 1rem; }
+
+.sv2-error-state {
+  text-align: center; padding: 2.5rem 1.5rem; margin: 0 0 1.25rem;
+  border: 1px solid var(--sv2-danger-soft); border-radius: var(--sv2-radius-lg);
+  background: var(--sv2-white); box-shadow: var(--sv2-shadow-xs);
+}
+.sv2-error-state > i { font-size: 2.5rem; color: var(--sv2-danger); margin-bottom: 0.75rem; opacity: 0.8; }
+.sv2-error-state h4 { margin: 0 0 0.5rem; color: var(--sv2-navy); font-size: 1.0625rem; }
+.sv2-error-state p { margin: 0 auto 1.25rem; max-width: 460px; color: var(--sv2-gray-600); font-size: 0.9375rem; line-height: 1.55; }
+.sv2-error-actions { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; }
+.sv2-error-actions .sv2-btn { text-decoration: none; }
+
+.sv2-skeleton { padding: 1.25rem; border-radius: var(--sv2-radius-lg); background: var(--sv2-white); border: 1px solid var(--sv2-gray-200); }
+.sv2-skeleton-line, .sv2-skeleton-block {
+  border-radius: var(--sv2-radius-sm); margin-bottom: 0.75rem;
+  background: linear-gradient(90deg, var(--sv2-gray-100) 25%, var(--sv2-gray-200) 37%, var(--sv2-gray-100) 63%);
+  background-size: 400% 100%; animation: sv2-skeleton 1.4s ease infinite;
+}
+.sv2-skeleton-line { height: 0.875rem; width: 100%; }
+.sv2-skeleton-title { height: 1.25rem; width: 40%; }
+.sv2-skeleton-short { width: 65%; }
+.sv2-skeleton-block { height: 8rem; margin-bottom: 0; }
+@keyframes sv2-skeleton { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+.sv2-toast-text { flex: 1; }
+.sv2-toast-close {
+  flex: 0 0 auto; background: transparent; border: 0; color: inherit; font-size: 1.25rem; line-height: 1;
+  cursor: pointer; padding: 0 0.25rem; opacity: 0.85;
+}
+.sv2-toast-close:hover, .sv2-toast-close:focus-visible { opacity: 1; }
+
+.sv2-offline-bar {
+  position: sticky; top: 0; z-index: var(--sv2-z-toast); padding: 0.5rem 1rem; text-align: center;
+  background: var(--sv2-warning); color: var(--sv2-white); font-size: 0.875rem; font-weight: 600;
+}
+
+.sv2-alert {
+  display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.75rem 0.9rem; margin: 0 0 1rem;
+  border-radius: var(--sv2-radius); font-size: 0.875rem; line-height: 1.45;
+}
+.sv2-alert-warning { background: var(--sv2-warning-soft); color: #92400e; border: 1px solid #fcd34d; }
+
+.sv2-load-more { margin-top: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.sv2-load-more p { margin: 0; }
+
+:focus-visible { outline: 2px solid var(--sv2-accent); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* ─── WP-12: erişilebilirlik, mobil/tablet ve görsel düzeltmeler ─────────────────────────────────────── */
+
+/* Kaydırma kilidi: pencere ya da mobil çekmece açıkken arka plan kaymaz (UX-03, UX-09) */
+body.sv2-modal-open,
+body.sv2-sidebar-open {
+  overflow: hidden;
+}
+
+.sv2-noscript {
+  max-width: 560px;
+  margin: 3rem auto;
+  padding: 1rem 1.25rem;
+  border: 1px solid #fcd34d;
+  border-radius: var(--sv2-radius);
+  background: var(--sv2-warning-soft);
+  color: #92400e;
+}
+
+/* "İçeriğe geç" bağlantısı: yalnız odaklanınca görünür (UX-10) */
+.sv2-skip {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: calc(var(--sv2-z-toast) + 1);
+  padding: 0.65rem 1.1rem;
+  border-radius: var(--sv2-radius-sm);
+  background: var(--sv2-navy);
+  color: var(--sv2-white);
+  font-weight: 600;
+  text-decoration: none;
+  transform: translateY(-300%);
+}
+
+.sv2-skip:focus {
+  transform: none;
+  outline: 3px solid var(--sv2-accent-muted);
+  outline-offset: 2px;
+}
+
+.sv2-content:focus,
+.sv2-modal:focus {
+  outline: none; /* programlı odak hedefleri (ana bölge, pencere kabı) halka çizmez */
+}
+
+/* Odak halkası: koyu menüde beyaz, kaydırılabilir bölgede içeride (UX-22, UX-45) */
+.sv2-sidebar :focus-visible,
+.sv2-offline-bar :focus-visible {
+  outline-color: var(--sv2-white);
+}
+
+[role="region"][tabindex="0"]:focus-visible {
+  outline: 2px solid var(--sv2-accent);
+  outline-offset: -2px;
+}
+
+.sv2-btn-logout--link {
+  margin-bottom: 0.5rem;
+  text-decoration: none;
+}
+
+/* Üst çubuk: başlık esner, kullanıcı adı/kılavuz dar ekranda gizlenir (UX-18) */
+.sv2-topbar-left {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sv2-page-title {
+  min-width: 0;
+}
+
+/* Boş durum başlığı artık <p> (başlık hiyerarşisi) */
+.sv2-empty-title {
+  margin: 0 0 0.5rem;
+  color: var(--sv2-navy);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.sv2-lifecycle-title {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+}
+
+.sv2-reply-title {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+}
+
+/* Sıralama seçicisi, çalışma saati ve açılır listeler: yerel stil yerine tutarlı alan görünümü (UX-20, UX-46) */
+.sv2-filter-sort select,
+.sv2-filter-search input,
+.sv2-reply-actions input[type="number"],
+.sv2-reply-actions select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--sv2-gray-300);
+  border-radius: var(--sv2-radius-sm);
+  background: var(--sv2-white);
+  color: var(--sv2-gray-800);
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.sv2-filter-search input {
+  width: 100%;
+}
+
+.sv2-reply-actions input[type="number"] {
+  width: 5rem;
+}
+
+.sv2-ac-item {
+  font-family: inherit;
+}
+
+.sv2-ac-item.is-active {
+  background: var(--sv2-accent-soft);
+  color: var(--sv2-accent-hover);
+}
+
+.sv2-confirm-modal .sv2-modal-body p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+/* Rol rozeti satıra bölünmez (UX-46) */
+.sv2-role-badge {
+  white-space: nowrap;
+}
+
+/* Mesaj zaman çizelgesi: gönderen rolü görsel olarak ayrışır (UX-41) */
+.sv2-timeline-item.customer .sv2-timeline-dot {
+  background: var(--sv2-gray-600);
+  box-shadow: 0 0 0 2px var(--sv2-gray-600);
+}
+
+.sv2-timeline-role {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: var(--sv2-radius-full);
+  background: var(--sv2-gray-200);
+  color: var(--sv2-gray-700);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.sv2-timeline-role--admin {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.sv2-timeline-role--internal {
+  background: var(--sv2-warning-soft);
+  color: #92400e;
+}
+
+.sv2-timeline-author,
+.sv2-timeline-head {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Bildirim paneli: açılışta anında görünür (odak taşınabilsin), kapanırken yumuşak */
+.sv2-notif-panel {
+  transition: opacity var(--sv2-duration) var(--sv2-ease), transform var(--sv2-duration) var(--sv2-ease),
+              visibility 0s linear var(--sv2-duration);
+}
+
+.sv2-notif-panel.is-open {
+  transition-delay: 0s;
+}
+
+.sv2-toast-close {
+  min-width: 32px;
+  min-height: 32px;
+}
+
+/* Tablo sütun ipuçları ve kaydırma gölgesi (UX-11, UX-12) */
+.sv2-col-wide {
+  min-width: 13rem;
+}
+
+.sv2-col-nowrap {
+  white-space: nowrap;
+}
+
+.sv2-table-wrap {
+  background:
+    linear-gradient(to right, var(--sv2-white) 30%, rgba(255, 255, 255, 0)),
+    linear-gradient(to right, rgba(255, 255, 255, 0), var(--sv2-white) 70%) 100% 0,
+    radial-gradient(farthest-side at 0 50%, rgba(26, 35, 50, 0.16), rgba(26, 35, 50, 0)),
+    radial-gradient(farthest-side at 100% 50%, rgba(26, 35, 50, 0.16), rgba(26, 35, 50, 0)) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
+}
+
+/* overflow-wrap:anywhere, en küçük içerik genişliğini 1 harfe indirip sütunları ezer: tablolarda sözcük sınırında kırılır */
+.sv2-table th,
+.sv2-table td {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.sv2-table td[data-label="NO"],
+.sv2-table td[data-label="Talep No"],
+.sv2-table td[data-label="TARİH"],
+.sv2-table td[data-label="Tarih"],
+.sv2-table td[data-label="MÜŞTERİ NO"] {
+  white-space: nowrap;
+}
+
+.sv2-table .sv2-badge,
+.sv2-table .sv2-priority,
+.sv2-table .sv2-sla,
+.sv2-table .sv2-type-badge {
+  white-space: nowrap;
+}
+
+/* ─── Tablet ve telefon (≤ 900 px) ────────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  /* iOS Safari 16 px altındaki alanlara odaklanınca yakınlaştırır (UX-20) */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Dokunma hedefleri ≥ 44 px (UX-19) */
+  .sv2-btn,
+  .sv2-chip,
+  .sv2-tab,
+  .sv2-notif-btn,
+  .sv2-topbar-guide,
+  .sv2-view-toggle button,
+  .sv2-pagination button,
+  .sv2-pagination a,
+  .sv2-btn-logout,
+  .sv2-notif-readall {
+    min-height: var(--sv2-touch);
+  }
+
+  .sv2-btn-sm {
+    min-height: 40px;
+  }
+
+  .sv2-notif-btn {
+    min-width: var(--sv2-touch);
+  }
+
+  .sv2-nav-item {
+    min-height: var(--sv2-touch);
+  }
+
+  .sv2-nav-guide-dl {
+    width: var(--sv2-touch);
+    height: var(--sv2-touch);
+    margin-right: 0;
+  }
+
+  .sv2-table a,
+  .sv2-breadcrumb-link {
+    display: inline-block;
+    padding: 0.55rem 0;
+  }
+
+  .sv2-form-group input[type="checkbox"],
+  .sv2-form-group input[type="radio"] {
+    width: 1.375rem;
+    height: 1.375rem;
+  }
+
+  .sv2-form-group label:has(> input[type="checkbox"]),
+  .sv2-form-group label:has(> input[type="radio"]) {
+    min-height: 2.5rem;
+  }
+
+  /* Giriş sayfası: marka paneli kısalır; "Giriş Yap" ilk ekranda görünür (UX-16) */
+  .sv2-auth-brand {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .sv2-auth-brand p,
+  .sv2-auth-brand ul {
+    display: none;
+  }
+
+  .sv2-auth-brand h1 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  .sv2-auth-logo {
+    height: 44px;
+    margin-bottom: 0.75rem;
+  }
+
+  .sv2-auth-panel {
+    padding: 1.25rem 1rem;
+    align-items: flex-start;
+  }
+
+  .sv2-card {
+    padding: 1.5rem;
+  }
+
+  /* Tablo → kart: her hücre kendi başlığıyla (data-label) alt alta (UX-11, MUS-24, PER-41) */
+  .sv2-table-wrap.sv2-table-responsive {
+    overflow: visible;
+    background: none;
+  }
+
+  .sv2-table-responsive .sv2-table,
+  .sv2-table-responsive .sv2-table tbody,
+  .sv2-table-responsive .sv2-table tr,
+  .sv2-table-responsive .sv2-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .sv2-table-responsive .sv2-table thead {
+    display: none;
+  }
+
+  .sv2-table-responsive .sv2-table tbody tr {
+    margin-bottom: 0.75rem;
+    padding: 0.25rem 1rem;
+    border: 1px solid var(--sv2-gray-200);
+    border-radius: var(--sv2-radius);
+    background: var(--sv2-white);
+    box-shadow: var(--sv2-shadow-xs);
+  }
+
+  .sv2-table-responsive .sv2-table tbody tr:hover {
+    background: var(--sv2-white);
+  }
+
+  .sv2-table-responsive .sv2-table td,
+  .sv2-table-responsive .sv2-table td:first-child {
+    word-break: normal;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--sv2-gray-100);
+    text-align: right;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  .sv2-table-responsive .sv2-table tbody tr td:last-child {
+    border-bottom: none;
+  }
+
+  .sv2-table-responsive .sv2-table td::before {
+    content: attr(data-label);
+    flex: 0 0 34%;
+    max-width: 40%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-align: left;
+    text-transform: uppercase;
+    color: var(--sv2-gray-600);
+  }
+
+  .sv2-table-responsive .sv2-table td[data-label=""]::before {
+    display: none;
+  }
+
+  .sv2-table-responsive .sv2-table td.sv2-col-wide {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    min-width: 0;
+    text-align: left;
+  }
+
+  .sv2-table-responsive .sv2-table td.sv2-card-hide {
+    display: none;
+  }
+
+  .sv2-table-responsive .sv2-actions {
+    justify-content: flex-end;
+  }
+
+  .sv2-table td:first-child a {
+    white-space: normal;
+  }
+}
+
+/* ─── Telefon (≤ 600 px) ──────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .sv2-topbar-name,
+  .sv2-topbar-guide {
+    display: none; /* menüde zaten var; başlık için yer açılır (UX-18) */
+  }
+
+  /* Uzun başlık (ör. talep numarası) kesilmek yerine en çok 2 satıra sarılır */
+  .sv2-page-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .sv2-topbar-right {
+    gap: 0.25rem;
+  }
+
+  .sv2-notif-panel--fixed {
+    left: 8px;
+    right: 8px;
+    width: auto;
+  }
+
+  .sv2-filter-search,
+  .sv2-filter-search input,
+  .sv2-filter-sort,
+  .sv2-filter-sort select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .sv2-filter-sort {
+    margin-left: 0;
+  }
+
+  .sv2-pagination {
+    justify-content: space-between;
+  }
+
+  .sv2-meta-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sv2-skip,
+  .sv2-notif-panel,
+  .sv2-modal-overlay,
+  .sv2-sidebar {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+}
+
+.sv2-filter-search {
+  flex: 1 1 260px;
+  max-width: 420px;
+}
+
+.sv2-btn-block {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.sv2-btn-link {
+  background: none;
+  border: none;
+  color: var(--sv2-accent);
+  font-size: 0.875rem;
+  padding: 0.5rem 0.75rem;
+  min-height: 40px;
+}
+
+.sv2-btn-link:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.sv2-auth-links {
+  margin: 0.75rem 0 0;
+  text-align: center;
+}
+
+.sv2-ticket-description {
+  margin-top: 1rem;
+}
+
+.sv2-ticket-description p {
+  margin: 0.5rem 0 0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sv2-meta-label {
+  display: block;
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--sv2-gray-500);
+}
+
+.sv2-form-group .sv2-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--sv2-gray-700);
+}
+
+/* Çok sütunlu masaüstü tabloları (≥ 9 sütun, ör. yönetici talep listesi) sıkılaştırılır: SLA ve İşlemler sütunları
+   1366–1440 px'te ekran dışında kalmasın (UX-12). Daha dar alanda tablo kaydırılabilir bölge olarak kalır. */
+@media (min-width: 901px) {
+  .sv2-table:has(thead th:nth-child(9)) th,
+  .sv2-table:has(thead th:nth-child(9)) td {
+    padding: 0.55rem 0.45rem;
+    font-size: 0.8125rem;
+  }
+
+  .sv2-table:has(thead th:nth-child(9)) th {
+    font-size: 0.6875rem;
+    letter-spacing: 0.02em;
+  }
+
+  .sv2-table:has(thead th:nth-child(9)) .sv2-btn-sm {
+    padding: 0.3rem 0.55rem;
+  }
+}
+
+/* Grafikler: çubuk yüksekliği kapla orantılı çözülür; değer/etiket taşmaz (UX-13) */
+.sv2-bar-chart .sv2-bar {
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.sv2-bar-chart .sv2-bar-fill {
+  flex-shrink: 1;
+}
+
+.sv2-report-card .sv2-bar-chart {
+  height: 250px;
+}
+
+.sv2-report-card:has(.sv2-table) {
+  grid-column: 1 / -1;
+}
+
+.sv2-bar-chart .sv2-bar-label {
+  font-size: 0.75rem;
+}
+
+/* Düşük öncelikli sütunlar (col.lowPriority) orta genişlikli masaüstünde gizlenir; SLA ve İşlemler ekranda kalır (UX-12) */
+@media (min-width: 901px) and (max-width: 1499px) {
+  .sv2-table th.sv2-col-lo,
+  .sv2-table td.sv2-col-lo {
+    display: none;
+  }
+}
+
+/* Çok sütunlu masaüstü tablolarında bağlantı yazısı hücre boyutunda; KONU sütunu daha dar asgari genişlikte */
+@media (min-width: 901px) {
+  .sv2-table:has(thead th:nth-child(9)) a.sv2-link {
+    font-size: inherit;
+  }
+
+  .sv2-table:has(thead th:nth-child(9)) .sv2-col-wide {
+    min-width: 11rem;
+  }
+
+  /* Kaydırma gerektiğinde bile son sütun (İşlemler) görünür kalır */
+  .sv2-table:has(thead th:nth-child(9)) th:last-child,
+  .sv2-table:has(thead th:nth-child(9)) td:last-child {
+    position: sticky;
+    right: 0;
+    background: var(--sv2-white);
+    box-shadow: -6px 0 8px -6px rgba(26, 35, 50, 0.18);
+  }
+
+  .sv2-table:has(thead th:nth-child(9)) th:last-child {
+    background: var(--sv2-gray-50);
+  }
+
+  .sv2-table:has(thead th:nth-child(9)) tbody tr:hover td:last-child {
+    background: var(--sv2-accent-soft);
+  }
+}
+
+/* Sığmayan çok sütunlu tablolarda rozetler gerekirse iki satıra sarılır (SLA ve Durum ekranda kalsın) */
+@media (min-width: 901px) and (max-width: 1599px) {
+  .sv2-table:has(thead th:nth-child(9)) td .sv2-sla,
+  .sv2-table:has(thead th:nth-child(9)) td .sv2-badge {
+    white-space: normal;
+    max-width: 9.5rem;
+    line-height: 1.3;
+  }
+}
+
+/* Geniş (uzun metinli) sütun: asgari genişlik korunur, çok uzun kesilmez dize en çok 26rem'de kırılır */
+.sv2-table td.sv2-col-wide {
+  max-width: 26rem;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .sv2-table-responsive .sv2-table td.sv2-col-wide {
+    max-width: none;
+  }
+}

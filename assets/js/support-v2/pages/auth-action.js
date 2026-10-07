@@ -19,36 +19,60 @@ const ERROR_MESSAGES = {
   "auth/user-disabled": "Hesabınız devre dışı bırakılmış. Lütfen sistem yöneticinizle iletişime geçin.",
   "auth/user-not-found": "Bu bağlantıya ait kullanıcı bulunamadı.",
   "auth/weak-password": `Şifre çok zayıf. En az ${MIN_PASSWORD_LENGTH} karakter kullanın.`,
-  "auth/network-request-failed": "İnternet bağlantınızı kontrol edip tekrar deneyin.",
+  "auth/network-request-failed": "İnternet bağlantınızı kontrol edip yeniden deneyin.",
 };
 
 function mapError(err) {
-  return ERROR_MESSAGES[err?.code] || err?.message || "Bir hata oluştu. Lütfen tekrar deneyin.";
+  return ERROR_MESSAGES[err?.code] || err?.message || "Bir hata oluştu. Lütfen yeniden deneyin.";
 }
 
 function shell(inner) {
   app.innerHTML = `
     <div class="sv2-auth-wrap">
-      <div class="sv2-auth-brand">
-        <img src="/assets/img/parla-logo/parla-logo.png" alt="Parla BT" class="sv2-auth-logo">
+      <header class="sv2-auth-brand">
+        <img src="/assets/img/parla-logo/parla-logo-320.png" alt="Parla BT" class="sv2-auth-logo" width="160" height="64">
         <h1>Parla BT Destek Portalı</h1>
         <p>Hesap güvenliğiniz için bu işlemi tamamlayın.</p>
-      </div>
-      <div class="sv2-auth-panel">
+      </header>
+      <main class="sv2-auth-panel" id="sv2-main">
         <div class="sv2-card">${inner}</div>
-      </div>
+      </main>
     </div>`;
 }
 
 function renderMessage(icon, color, title, message, withLoginLink) {
   shell(`
-    <h2><i class="fas ${icon}" style="color:${color}"></i> ${escapeHtml(title)}</h2>
+    <h2><i class="fas ${icon}" style="color:${color}" aria-hidden="true"></i> ${escapeHtml(title)}</h2>
     <p class="sv2-subtitle">${escapeHtml(message)}</p>
     ${
       withLoginLink
-        ? `<a href="${PATHS.login}" class="sv2-btn sv2-btn-primary" style="display:block;text-align:center;margin-top:1rem"><i class="fas fa-sign-in-alt"></i> Giriş sayfasına git</a>`
+        ? `<a href="${PATHS.login}" class="sv2-btn sv2-btn-primary" style="display:block;text-align:center;margin-top:1rem"><i class="fas fa-sign-in-alt" aria-hidden="true"></i> Giriş sayfasına git</a>`
         : `<a href="${PATHS.login}" class="sv2-link">Giriş sayfasına dön</a>`
     }`);
+}
+
+/**
+ * Bağlantıyla şifresini kendisi belirleyen kullanıcının `must_change_password` bayrağı kapatılır (EML-17, SEN-10): aksi halde ilk
+ * girişte az önce belirlediği şifreden FARKLI yeni bir şifre seçmeye zorlanırdı. Kurallar kullanıcıya yalnızca kendi bayrağını
+ * `false` yapma izni verir; bu yüzden yeni şifreyle kısa süre oturum açılıp bayrak yazılır ve oturum kapatılır. En iyi çabadır:
+ * başarısız olursa (hesap pasif, ağ vb.) şifre yine güncellenmiştir ve giriş akışı olağan biçimde sürer.
+ */
+async function clearTempPasswordFlag(auth, email, newPassword) {
+  const { authFn } = window.__PARLA_FIREBASE;
+  if (typeof authFn.signInWithEmailAndPassword !== "function") return;
+  try {
+    const credential = await authFn.signInWithEmailAndPassword(auth, email, newPassword);
+    const uid = credential?.user?.uid;
+    if (uid) await ParlaDb.updateUserProfile(uid, { must_change_password: false });
+  } catch {
+    /* en iyi çaba */
+  } finally {
+    try {
+      await authFn.signOut(auth);
+    } catch {
+      /* oturum açılmamış olabilir */
+    }
+  }
 }
 
 function renderResetForm(email, auth, oobCode) {
@@ -64,8 +88,8 @@ function renderResetForm(email, auth, oobCode) {
       <div class="sv2-form-group">
         <label for="sv2-new-password2">Yeni şifre (tekrar)</label>
         <input type="password" id="sv2-new-password2" autocomplete="new-password" minlength="${MIN_PASSWORD_LENGTH}" required>
-        <span class="sv2-field-error" id="sv2-reset-error" hidden></span>
       </div>
+      <div class="sv2-field-error" id="sv2-reset-error" role="alert" hidden></div>
       <button type="submit" class="sv2-btn sv2-btn-primary" id="sv2-reset-submit" style="width:100%;margin-top:0.5rem">
         <i class="fas fa-key"></i> Şifreyi Kaydet
       </button>
@@ -73,9 +97,20 @@ function renderResetForm(email, auth, oobCode) {
 
   const form = document.getElementById("sv2-reset-form");
   const errEl = document.getElementById("sv2-reset-error");
-  const showError = (msg) => {
+  const pw1 = document.getElementById("sv2-new-password");
+  const pw2 = document.getElementById("sv2-new-password2");
+  const showError = (msg, field) => {
     errEl.textContent = msg;
     errEl.hidden = !msg;
+    [pw1, pw2].forEach((f) => {
+      f.removeAttribute("aria-invalid");
+      f.removeAttribute("aria-describedby");
+    });
+    if (msg && field) {
+      field.setAttribute("aria-invalid", "true");
+      field.setAttribute("aria-describedby", "sv2-reset-error");
+      field.focus();
+    }
   };
 
   form.addEventListener("submit", async (e) => {
@@ -85,11 +120,11 @@ function renderResetForm(email, auth, oobCode) {
     const p2 = document.getElementById("sv2-new-password2").value;
 
     if (!passwordPolicyOk(p1)) {
-      showError(`Şifre en az ${MIN_PASSWORD_LENGTH} karakter olmalı; en az bir büyük harf ve bir rakam içermelidir.`);
+      showError(`Şifre en az ${MIN_PASSWORD_LENGTH} karakter olmalı; en az bir büyük harf ve bir rakam içermelidir.`, pw1);
       return;
     }
     if (p1 !== p2) {
-      showError("Şifreler eşleşmiyor.");
+      showError("Şifreler eşleşmiyor.", pw2);
       return;
     }
 
@@ -97,6 +132,7 @@ function renderResetForm(email, auth, oobCode) {
     btn.disabled = true;
     try {
       await window.__PARLA_FIREBASE.authFn.confirmPasswordReset(auth, oobCode, p1);
+      await clearTempPasswordFlag(auth, email, p1);
       renderMessage("fa-check-circle", "#0d7d4d", "Şifreniz güncellendi", "Yeni şifrenizle giriş yapabilirsiniz.", true);
     } catch (err) {
       showError(mapError(err));

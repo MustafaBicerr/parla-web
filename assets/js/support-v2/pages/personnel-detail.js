@@ -1,6 +1,7 @@
 /**
  * Parla BT Ticket V2 — Admin Personel Detayı
  */
+import { formatNumber } from "../safe-utils.js";
 import ParlaDb from "../firebase-client.js";
 import { canWrite } from "../access-control.js";
 import { requireAuth, PATHS } from "../auth-guard.js";
@@ -16,6 +17,7 @@ import {
   renderConfirmDialog,
   renderTimeline,
   handleError,
+  handleLoadError,
   linkTicket,
   escapeHtml,
   formatDate,
@@ -23,14 +25,24 @@ import {
   renderPriorityBadge,
 } from "../ui-shell.js";
 import { validatePersonnelForm } from "../validators.js";
-import { STATUSES, SAP_MODULE_LABELS, isOpenStatus } from "../ticket-utils.js";
+import {
+  STATUSES,
+  SAP_MODULE_LABELS,
+  isOpenStatus,
+  getTicketKey,
+  isResolvedThisMonth,
+  resolutionDurationMs,
+} from "../ticket-utils.js";
 import { initPhoneInput, normalizePhone, formatPhoneDisplay, setPhoneValue } from "../phone-utils.js";
+import { selectableDepartments } from "../entity-utils.js";
 
 let session = null;
 let person = null;
 let departments = [];
 let tickets = [];
 let activities = [];
+let personEfforts = [];
+let assignmentByTicket = new Map(); // talep kimliği -> bu danışmanın atama kaydı ({is_primary, assigned_at})
 
 function getId() {
   return new URLSearchParams(window.location.search).get("id");
@@ -57,22 +69,15 @@ function completedTickets() {
 function computeStats() {
   const open = openTickets();
   const completed = completedTickets();
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  const closedThisMonth = completed.filter(
-    (t) => new Date(t.resolved_at || t.closed_at || t.updated_at) >= monthStart
-  ).length;
+  const closedThisMonth = completed.filter((t) => isResolvedThisMonth(t)).length;
 
-  const totalEffort = tickets.reduce((s, t) => s + (parseFloat(t.total_work_hours) || 0), 0);
+  // Danışmanın KENDİ girdiği efor (efor kayıtlarındaki personel kimliği): başkalarının eforu bu danışmana yazılmaz (YON-14).
+  const totalEffort = personEfforts.reduce((s, e) => s + (parseFloat(e.hours) || 0), 0);
 
   let avgDays = "—";
-  if (completed.length) {
-    const totalDays = completed.reduce((sum, t) => {
-      const end = new Date(t.resolved_at || t.closed_at || t.updated_at);
-      const start = new Date(t.created_at);
-      return sum + (end - start) / 86400000;
-    }, 0);
-    avgDays = (totalDays / completed.length).toFixed(1) + " gün";
+  const durations = completed.map(resolutionDurationMs).filter((d) => d !== null);
+  if (durations.length) {
+    avgDays = formatNumber(durations.reduce((a, b) => a + b, 0) / durations.length / 86400000) + " gün";
   }
 
   const moduleCounts = {};
@@ -86,24 +91,22 @@ function computeStats() {
     : "—";
 
   return [
-    { label: "Açık Ticket", value: open.length, variant: "open" },
+    { label: "Açık Talep", value: open.length, variant: "open" },
     { label: "Bu Ay Kapatılan", value: closedThisMonth, variant: "resolved" },
-    { label: "Toplam Efor", value: totalEffort.toFixed(1) + " sa", variant: "in_progress" },
+    { label: "Toplam Efor (kendi girdiği)", value: formatNumber(totalEffort) + " sa", variant: "in_progress" },
     { label: "Ort. Çözüm Süresi", value: avgDays, variant: "waiting" },
     { label: "En Yoğun Modül", value: topModuleLabel, variant: "critical" },
   ];
 }
 
 function resolutionDays(t) {
-  const end = new Date(t.resolved_at || t.closed_at || t.updated_at);
-  const start = new Date(t.created_at);
-  const days = (end - start) / 86400000;
-  return days >= 0 ? days.toFixed(1) + " gün" : "—";
+  const ms = resolutionDurationMs(t);
+  return ms !== null && ms >= 0 ? formatNumber(ms / 86400000) + " gün" : "—";
 }
 
 function buildContent() {
   if (!person) {
-    return `<div class="sv2-empty"><i class="fas fa-user-tie"></i><h4>Personel bulunamadı</h4></div>`;
+    return `<div class="sv2-empty"><i class="fas fa-user-tie"></i><h4>Danışman bulunamadı</h4></div>`;
   }
 
   const active = person.is_active !== false;
@@ -144,27 +147,38 @@ function buildContent() {
     ${renderStatsGrid(computeStats())}
 
     <div class="sv2-section">
-      <div class="sv2-section-header"><h3>Aktif Ticketlar</h3></div>
+      <div class="sv2-section-header"><h3>Aktif Talepler</h3></div>
       <div class="sv2-section-body">
         ${renderDataTable({
-          emptyMessage: "Açık ticket yok.",
+          emptyMessage: "Açık talep yok.",
           columns: [
             { key: "ticket_number", label: "NO", render: (v, r) => linkTicket(r.id, v) },
             { key: "title", label: "KONU" },
             { key: "priority", label: "ÖNCELİK", render: (v) => renderPriorityBadge(v) },
             { key: "status", label: "DURUM", render: (v) => renderStatusBadge(v) },
-            { key: "created_at", label: "ATANMA", render: (v) => escapeHtml(formatDate(v)) },
+            { key: "role", label: "ROL" },
+            { key: "assigned_at", label: "ATANMA", render: (v) => escapeHtml(formatDate(v)) },
           ],
-          rows: openTickets().map((t) => ({ ...t, id: t.id || t.ticket_id })),
+          rows: openTickets().map((t) => {
+            const id = t.id || t.ticket_id;
+            const a = assignmentByTicket.get(id);
+            return {
+              ...t,
+              id,
+              role: a ? (a.is_primary ? "Birincil" : "İkincil") : t.assigned_to_id === (person.id || person.personnel_id) ? "Birincil" : "İkincil",
+              // Atama tarihi: atama kaydındaki `assigned_at` (yoksa talepteki atama tarihi); talep oluşturma tarihi DEĞİL
+              assigned_at: (a && a.assigned_at) || t.assigned_at || t.created_at,
+            };
+          }),
         })}
       </div>
     </div>
 
     <div class="sv2-section">
-      <div class="sv2-section-header"><h3>Tamamlanan Ticketlar</h3></div>
+      <div class="sv2-section-header"><h3>Tamamlanan Talepler</h3></div>
       <div class="sv2-section-body">
         ${renderDataTable({
-          emptyMessage: "Tamamlanan ticket yok.",
+          emptyMessage: "Tamamlanan talep yok.",
           columns: [
             { key: "ticket_number", label: "NO", render: (v, r) => linkTicket(r.id, v) },
             { key: "title", label: "KONU" },
@@ -197,15 +211,13 @@ function buildContent() {
 }
 
 function openEditModal() {
-  const deptOpts = departments
-    .map(
-      (d) =>
-        `<option value="${escapeHtml(d.id || d.department_id)}"${(d.id || d.department_id) === person.department_id ? " selected" : ""}>${escapeHtml(d.name)}</option>`
-    )
+  // Pasif departman seçilemez; yalnız mevcut departman pasif olsa da "(pasif)" etiketiyle listede kalır (YON-35).
+  const deptOpts = selectableDepartments(departments, person.department_id)
+    .map((d) => `<option value="${escapeHtml(d.id)}"${d.id === person.department_id ? " selected" : ""}>${escapeHtml(d.label)}</option>`)
     .join("");
 
   renderModal("modal-edit-person", {
-    title: "Personel Düzenle",
+    title: "Danışman Düzenle",
     body: `
       <form id="edit-person-form">
         <div class="sv2-form-row">
@@ -261,11 +273,46 @@ function openEditModal() {
     }
     showLoading(true);
     try {
-      person = await ParlaDb.updatePersonnel(person.id || person.personnel_id, {
+      const pid = person.id || person.personnel_id;
+      data.email = data.email.trim().toLowerCase();
+      const emailChanged = data.email !== String(person.email || "").trim().toLowerCase();
+      let uidPatch = {};
+      if (emailChanged) {
+        // E-posta benzersizliği ve müşteri hesabıyla çakışma (YON-13).
+        const others = await ParlaDb.getAllPersonnel();
+        if (others.some((p) => (p.personnel_id || p.id) !== pid && String(p.email || "").trim().toLowerCase() === data.email)) {
+          toast("Bu e-posta başka bir personel kaydında kullanılıyor.", "error");
+          return;
+        }
+        const conflict = await ParlaDb.emailHasConflictingRole(data.email, "consultant");
+        if (conflict) {
+          toast(conflict, "error");
+          return;
+        }
+        // Yeni e-postayla eşleşen kullanıcı hesabı varsa kimlik bağı güncellenir.
+        try {
+          const match = (await ParlaDb.getAllUsers()).find(
+            (u) => String(u.email || "").trim().toLowerCase() === data.email && ["consultant", "project_manager", "service_admin", "super_admin"].includes(String(u.role || "").toLowerCase())
+          );
+          if (match) uidPatch = { uid: match.uid || match.id };
+        } catch {
+          /* kullanıcı listesi okunamadı */
+        }
+      }
+      // Kayıt + kopyalar: e-posta → atama kayıtlarındaki personnel_email (müşteri yanıtı doğru adrese gitsin; YON-04),
+      // ad → atama/talep/proje ad kopyaları (YON-09).
+      const result = await ParlaDb.updatePersonnelAndSync(pid, {
         ...data,
+        ...uidPatch,
         department_name: dept?.name || person.department_name,
         updated_by: session.uid,
       });
+      person = result.person;
+      if (result.failed) {
+        toast("Danışman güncellendi ancak atama/talep kopyaları tam güncellenemedi; düzenlemeyi yeniden kaydedin.", "warning");
+      } else if (result.synced) {
+        toast(`${result.synced} kayıttaki ad/e-posta kopyası güncellendi.`, "info");
+      }
       await ParlaDb.logActivity(
         "personnel_updated",
         "personnel",
@@ -275,7 +322,7 @@ function openEditModal() {
         session
       );
       closeModal("modal-edit-person");
-      toast("Personel güncellendi.", "success");
+      toast("Danışman güncellendi.", "success");
       refreshView();
     } catch (err) {
       handleError(err, "Güncelleme");
@@ -289,13 +336,22 @@ function bindEvents() {
   document.getElementById("btn-edit-person")?.addEventListener("click", openEditModal);
   document.getElementById("btn-toggle-person")?.addEventListener("click", () => {
     const next = person.is_active === false;
-    renderConfirmDialog(next ? "Personel aktive edilsin mi?" : "Personel pasife alınsın mı?", async () => {
+    const openCount = next ? 0 : openTickets().length;
+    const message = next
+      ? "Danışman aktive edilsin mi?"
+      : openCount
+        ? `Bu personele atanmış ${openCount} açık talep var. Pasife alınırsa bu talepler panoda "Pasif danışmanda" olarak sahipsiz görünür; önce başka danışmana devretmeniz önerilir. Yine de pasife alınsın mı?`
+        : "Danışman pasife alınsın mı?";
+    renderConfirmDialog(message, async () => {
       showLoading(true);
       try {
-        person = await ParlaDb.updatePersonnel(person.id || person.personnel_id, {
+        // Pasife alınca atama kayıtlarındaki e-posta kopyaları boşaltılır (müşteri yanıtı pasif kişiye gitmesin);
+        // yeniden aktifleşince geri yazılır.
+        const result = await ParlaDb.updatePersonnelAndSync(person.id || person.personnel_id, {
           is_active: next,
           updated_by: session.uid,
         });
+        person = result.person;
         await ParlaDb.logActivity(
           next ? "personnel_activated" : "personnel_deactivated",
           "personnel",
@@ -304,7 +360,7 @@ function bindEvents() {
           "",
           session
         );
-        toast(next ? "Personel aktive edildi." : "Personel pasife alındı.", "success");
+        toast(next ? "Danışman aktive edildi." : "Danışman pasife alındı.", "success");
         refreshView();
       } catch (err) {
         handleError(err, "Durum güncelleme");
@@ -330,21 +386,36 @@ async function loadData(id) {
   person = await ParlaDb.getPersonnel(id);
   if (!person) return;
 
-  const [depts, assignedTickets, allActivities] = await Promise.all([
+  // Yalnız bu danışmanı ilgilendiren veriler (birincil: assigned_to_id indeksi; ikincil: atama kayıtları; aktivite: sunucu süzmeli).
+  const [depts, primaryTickets, assignMap, entityActs, userActs, allEfforts] = await Promise.all([
     ParlaDb.getAllDepartments(),
     ParlaDb.getPersonnelTickets(id),
-    ParlaDb.getActivities(150),
+    ParlaDb.getAllAssignments().catch(() => ({})),
+    ParlaDb.getActivitiesByField("entity_id", id, 50).catch(() => []),
+    person.uid ? ParlaDb.getActivitiesByField("user_uid", person.uid, 50).catch(() => []) : Promise.resolve([]),
+    ParlaDb.getAllTicketEfforts().catch(() => []),
   ]);
 
   departments = depts;
-  tickets = assignedTickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-  activities = allActivities.filter(
-    (a) =>
-      a.entity_id === id ||
-      (a.entity_type === "personnel" && a.entity_id === id) ||
-      tickets.some((t) => a.entity_id === (t.id || t.ticket_id))
+  assignmentByTicket = new Map();
+  const secondaryIds = [];
+  for (const [tid, list] of Object.entries(assignMap)) {
+    const rec = (list || []).find((a) => a.personnel_id === id);
+    if (!rec) continue;
+    assignmentByTicket.set(tid, rec);
+    if (!primaryTickets.some((t) => getTicketKey(t) === tid)) secondaryIds.push(tid);
+  }
+  const secondary = (await Promise.all(secondaryIds.map((tid) => ParlaDb.getTicket(tid).catch(() => null)))).filter(
+    (t) => t && t.is_deleted !== true
   );
+  tickets = [...primaryTickets, ...secondary].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  const ticketIds = new Set(tickets.map((t) => getTicketKey(t)));
+  personEfforts = allEfforts.filter((e) => e.personnel_id === id);
+  activities = [...entityActs, ...userActs]
+    .filter((a, i, arr) => arr.findIndex((x) => x.id === a.id) === i)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+    .filter((a) => a.entity_id === id || a.user_uid === person.uid || ticketIds.has(a.entity_id));
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -359,14 +430,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     await ParlaDb.waitForFirebase();
     await loadData(id);
     if (!person) {
-      toast("Personel bulunamadı.", "error");
+      toast("Danışman bulunamadı.", "error");
       setTimeout(() => { window.location.href = PATHS.adminPersonnel; }, 1500);
       return;
     }
     refreshView();
   } catch (err) {
     if (err.message !== "not_authenticated" && err.message !== "not_admin") {
-      handleError(err, "Sayfa yüklenemedi");
+      handleLoadError(err, "Sayfa yüklenemedi");
     }
   } finally {
     showLoading(false);

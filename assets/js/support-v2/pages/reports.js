@@ -1,6 +1,7 @@
 /**
  * Parla BT Ticket V2 — Raporlar (admin)
  */
+import { formatNumber } from "../safe-utils.js";
 import ParlaDb from "../firebase-client.js";
 import { requireAuth } from "../auth-guard.js";
 import {
@@ -8,12 +9,20 @@ import {
   renderDataTable,
   showLoading,
   handleError,
+  handleLoadError,
   escapeHtml,
+  formatDate,
   formatTicketTypeLabel,
   renderEmptyState,
 } from "../ui-shell.js";
-import { SAP_MODULE_LABELS, formatPriorityLabel, getTicketKey } from "../ticket-utils.js";
+import { SAP_MODULE_LABELS, formatPriorityLabel, formatStatusLabel, getTicketKey, resolutionDurationMs } from "../ticket-utils.js";
 import { downloadCsv, downloadExcel } from "../export-utils.js";
+import { resolveReportRange, personnelFullName } from "../entity-utils.js";
+import { paginateRows } from "../table-utils.js";
+
+const EFFORT_PAGE_SIZE = 50;
+let effortPage = 1;
+let effortRowsCache = [];
 
 const PIE_COLORS = [
   "#2563eb",
@@ -77,15 +86,19 @@ async function init() {
         </div>`,
     });
     bindEvents();
-    try {
-      await loadData();
-    } catch (err) {
-      handleError(err, "Veriler yüklenemedi");
-    }
-    renderReports();
+    const loadAndRender = async () => {
+      try {
+        await loadData();
+        renderReports();
+      } catch (err) {
+        // Hata durumunda "Henüz ticket kaydı yok" göstermek yanıltıcıdır (PER-35): hata kartı + yeniden dene.
+        handleLoadError(err, "Veriler yüklenemedi", { retry: loadAndRender });
+      }
+    };
+    await loadAndRender();
   } catch (err) {
     if (err.message !== "not_authenticated" && err.message !== "not_admin") {
-      handleError(err, "Sayfa yüklenemedi");
+      handleLoadError(err, "Sayfa yüklenemedi");
     }
   } finally {
     showLoading(false);
@@ -117,33 +130,9 @@ function bindEvents() {
   });
 }
 
+/** Tarih aralığı (özel aralık doğrulanır; "Son 3 Ay" ay sonlarında taşmaz). `error` doluysa rapor çizilmez. */
 function getDateRange() {
-  const now = new Date();
-  let start;
-  let end = new Date(now);
-  end.setHours(23, 59, 59, 999);
-
-  if (datePreset === "week") {
-    start = new Date(now);
-    const day = start.getDay();
-    const diff = day === 0 ? 6 : day - 1;
-    start.setDate(start.getDate() - diff);
-    start.setHours(0, 0, 0, 0);
-  } else if (datePreset === "month") {
-    start = new Date(now.getFullYear(), now.getMonth(), 1);
-  } else if (datePreset === "3months") {
-    start = new Date(now);
-    start.setMonth(start.getMonth() - 3);
-    start.setHours(0, 0, 0, 0);
-  } else {
-    start = customFrom ? new Date(customFrom) : new Date(0);
-    start.setHours(0, 0, 0, 0);
-    if (customTo) {
-      end = new Date(customTo);
-      end.setHours(23, 59, 59, 999);
-    }
-  }
-  return { start, end };
+  return resolveReportRange(datePreset, customFrom, customTo);
 }
 
 function filteredTickets() {
@@ -157,13 +146,15 @@ function filteredTickets() {
 function filteredEfforts() {
   const { start, end } = getDateRange();
   const ticketMap = Object.fromEntries(allTickets.map((t) => [getTicketKey(t), t]));
+  // Silinmiş (arşivdeki) ya da kalıcı silinmiş talebin eforu raporlara girmez ("Bilinmiyor" firma satırı oluşmaz).
   return allEfforts.filter((e) => {
+    if (!ticketMap[e.ticket_id]) return false;
     const d = new Date(e.work_date || e.created_at);
     if (Number.isNaN(d.getTime())) return false;
     return d >= start && d <= end;
   }).map((e) => ({
     ...e,
-    ticket: ticketMap[e.ticket_id] || {},
+    ticket: ticketMap[e.ticket_id],
   }));
 }
 
@@ -240,25 +231,69 @@ function reportCard(id, title, bodyHtml) {
     </div>`;
 }
 
+/** Çözüm süresi (saat): pano ve raporlar aynı ortak tanımı kullanır (ticket-utils resolutionDurationMs). */
 function resolutionHours(ticket) {
-  if (!ticket.resolved_at || !ticket.created_at) return null;
-  const ms = new Date(ticket.resolved_at) - new Date(ticket.created_at);
-  return ms > 0 ? ms / (1000 * 60 * 60) : null;
+  const ms = resolutionDurationMs(ticket);
+  return ms && ms > 0 ? ms / (1000 * 60 * 60) : null;
+}
+
+/** Efor Detayı: 50'şer satır sayfalanır ve toplam kayıt sayısı açıkça yazılır (sessiz kırpma yok; PER-39). */
+function effortTableHtml() {
+  const paged = paginateRows(effortRowsCache, effortPage, EFFORT_PAGE_SIZE);
+  effortPage = paged.page;
+  const note = paged.total > EFFORT_PAGE_SIZE
+    ? `<p class="sv2-text-muted" id="effort-detail-note" style="margin:0 0 0.5rem;font-size:0.8125rem">${paged.total} kayıttan ${(paged.page - 1) * EFFORT_PAGE_SIZE + 1}–${Math.min(paged.total, paged.page * EFFORT_PAGE_SIZE)} arası gösteriliyor. Dışa aktarma tüm ${paged.total} kaydı içerir.</p>`
+    : "";
+  return (
+    note +
+    renderDataTable({
+      columns: [
+        { key: "work_date", label: "TARİH", render: (v) => escapeHtml(formatDate(v)) },
+        { key: "ticket_number", label: "Talep No" },
+        { key: "title", label: "KONU" },
+        { key: "consultant", label: "DANIŞMAN" },
+        { key: "hours", label: "SAAT" },
+        { key: "note", label: "NOT" },
+      ],
+      rows: paged.rows,
+      emptyMessage: "Seçili dönemde efor kaydı yok.",
+      pagination:
+        paged.total > EFFORT_PAGE_SIZE
+          ? {
+              page: paged.page,
+              totalPages: paged.totalPages,
+              total: paged.total,
+              onPageChange: (p) => {
+                effortPage = p;
+                const body = document.querySelector('[data-report="consultant-effort"] .sv2-report-card-body');
+                if (body) body.innerHTML = effortTableHtml();
+              },
+            }
+          : undefined,
+    })
+  );
 }
 
 function renderReports() {
   const el = document.getElementById("report-cards");
   if (!el) return;
 
+  const range = getDateRange();
+  if (range.error) {
+    // Geçersiz aralıkta "ticket bulunamadı" demek yanıltıcıdır: açık hata (PER-39).
+    el.innerHTML = `<div class="sv2-alert sv2-alert-warning" id="report-range-error" role="alert"><i class="fas fa-exclamation-triangle" aria-hidden="true"></i><span>${escapeHtml(range.error)}</span></div>`;
+    return;
+  }
+
   const tickets = filteredTickets();
   const noDataBanner =
     allTickets.length === 0
       ? renderEmptyState(
-          "Henüz ticket kaydı yok. Raporlar ticket oluşturuldukça dolacaktır.",
+          "Henüz talep kaydı yok. Raporlar talep oluşturuldukça dolacaktır.",
           "fa-chart-bar"
         )
       : tickets.length === 0
-        ? renderEmptyState("Seçilen tarih aralığında ticket bulunamadı.", "fa-calendar")
+        ? renderEmptyState("Seçilen tarih aralığında talep bulunamadı.", "fa-calendar")
         : "";
 
   // 1. Modül bazlı dağılım
@@ -311,7 +346,7 @@ function renderReports() {
         label: "ORT. SÜRE (SAAT)",
         render: (_, row) => {
           if (!row.resolvedCount) return "—";
-          return (row.totalHours / row.resolvedCount).toFixed(1);
+          return formatNumber(row.totalHours / row.resolvedCount);
         },
       },
     ],
@@ -326,12 +361,12 @@ function renderReports() {
   const arzTickets = tickets.filter((t) => String(t.ticket_type || "").toUpperCase() === "ARZ");
   const arcCompanies = allCompanies.filter((c) => String(c.customer_type || "").toUpperCase() === "ARC");
   const arzStats = [
-    ["Toplam ARZ Ticket", arzTickets.length],
+    ["Toplam ARZ Talebi", arzTickets.length],
     ["Açık ARZ", arzTickets.filter((t) => !["closed", "resolved"].includes(String(t.status).toLowerCase())).length],
     ["Arızi Müşteri (ARC)", arcCompanies.length],
     ["Ort. Çözüm (saat)", (() => {
       const hrs = arzTickets.map(resolutionHours).filter((h) => h !== null);
-      return hrs.length ? (hrs.reduce((a, b) => a + b, 0) / hrs.length).toFixed(1) : "—";
+      return hrs.length ? formatNumber(hrs.reduce((a, b) => a + b, 0) / hrs.length) : "—";
     })()],
   ];
 
@@ -376,33 +411,28 @@ function renderReports() {
     .sort((a, b) => b[1] - a[1])
     .slice(0, 15);
 
-  const consultantEffortRows = rangeEfforts.map((e) => ({
-    id: e.effort_id || e.id,
-    work_date: e.work_date,
-    ticket_number: e.ticket?.ticket_number || e.ticket_id,
-    title: e.ticket?.title || "",
-    status: e.ticket?.status || "",
-    consultant: e.personnel_name || "",
-    hours: e.hours || 0,
-    note: e.note || "",
-  }));
-
-  const consultantEffortTable = renderDataTable({
-    columns: [
-      { key: "work_date", label: "TARİH" },
-      { key: "ticket_number", label: "TICKET NO" },
-      { key: "title", label: "KONU" },
-      { key: "consultant", label: "DANIŞMAN" },
-      { key: "hours", label: "SAAT" },
-      { key: "note", label: "NOT" },
-    ],
-    rows: consultantEffortRows.slice(0, 50),
-    emptyMessage: "Seçili dönemde efor kaydı yok.",
-  });
+  // Danışman adı efor kaydındaki kopya yerine personel kaydından çözülür (ad değişse de güncel görünür; YON-09).
+  const nameByPid = new Map(allPersonnel.map((p) => [p.id || p.personnel_id, personnelFullName(p)]));
+  const consultantEffortRows = rangeEfforts
+    .map((e) => ({
+      id: e.effort_id || e.id,
+      work_date: e.work_date,
+      ticket_number: e.ticket?.ticket_number || e.ticket_id,
+      title: e.ticket?.title || "",
+      status: e.ticket?.status || "",
+      consultant: nameByPid.get(e.personnel_id) || e.personnel_name || "",
+      hours: e.hours || 0,
+      note: e.note || "",
+    }))
+    // En yeni efor önce (tarihe göre sıralı; sessiz kırpma yok: sayfalanır)
+    .sort((a, b) => String(b.work_date || "").localeCompare(String(a.work_date || "")));
+  effortRowsCache = consultantEffortRows;
+  effortPage = 1;
+  const consultantEffortTable = effortTableHtml();
 
   el.innerHTML =
     noDataBanner +
-    reportCard("company-effort", "Aylık Firma Eforu", renderBarChart(companyEffortData)) +
+    reportCard("company-effort", "Firma Eforu (Seçili Dönem)", renderBarChart(companyEffortData)) +
     reportCard("consultant-effort", "Danışman Efor Detayı", consultantEffortTable) +
     reportCard("modules", "Modül Bazlı Dağılım", renderPieChart(moduleData)) +
     reportCard("types", "Tip Bazlı Dağılım", renderPieChart(typeData)) +
@@ -473,7 +503,7 @@ async function exportReport(id, format, data) {
         r.name,
         r.assigned,
         r.resolved,
-        r.resolvedCount ? (r.totalHours / r.resolvedCount).toFixed(1) : "—",
+        r.resolvedCount ? formatNumber(r.totalHours / r.resolvedCount) : "—",
       ]),
       name: "Danisman",
       file: `danisman-performans-${ts}`,
@@ -491,12 +521,12 @@ async function exportReport(id, format, data) {
       file: `firma-efor-${ts}`,
     },
     "consultant-effort": {
-      headers: ["Tarih", "Ticket No", "Konu", "Durum", "Danışman", "Saat", "Not"],
+      headers: ["Tarih", "Talep No", "Konu", "Durum", "Danışman", "Saat", "Not"],
       rows: data.consultantEffortRows.map((r) => [
         r.work_date,
         r.ticket_number,
         r.title,
-        r.status,
+        formatStatusLabel(r.status),
         r.consultant,
         r.hours,
         r.note,
@@ -534,7 +564,7 @@ async function exportReport(id, format, data) {
         { name: item.name, headers: item.headers, rows: item.rows },
       ]);
     } catch (err) {
-      handleError(err, "Excel export");
+      handleError(err, "Excel dışa aktarma");
     } finally {
       showLoading(false);
     }

@@ -10,6 +10,7 @@ import {
   renderEmptyState,
   showLoading,
   handleError,
+  handleLoadError,
   linkCompany,
   linkPersonnel,
   linkTicket,
@@ -19,17 +20,12 @@ import {
   renderPriorityBadge,
 } from "../ui-shell.js";
 
-const PROJECT_STATUS = {
-  planning: "Planlama",
-  active: "Aktif",
-  on_hold: "Beklemede",
-  completed: "Tamamlandı",
-  cancelled: "İptal",
-};
+import { projectBadgeClass, projectStatusLabel } from "../entity-utils.js";
 
 let session = null;
 let project = null;
 let projectTickets = [];
+let companyDisplayName = "";
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -52,7 +48,7 @@ async function init() {
     await loadProject(projectId);
   } catch (err) {
     if (err.message !== "not_authenticated" && err.message !== "not_admin") {
-      handleError(err, "Sayfa yüklenemedi");
+      handleLoadError(err, "Sayfa yüklenemedi");
     }
   }
 }
@@ -69,14 +65,22 @@ async function loadProject(projectId) {
       return;
     }
 
-    const allTickets = await ParlaDb.getAllTickets();
-    projectTickets = allTickets
-      .filter((t) => t.project_id === projectId && t.ticket_type === "PRJ")
+    // Yalnız bu projenin talepleri (project_id indeksi): tüm talepler indirilmez (OLC-04).
+    const [linked, company] = await Promise.all([
+      ParlaDb.getTicketsByProject(projectId),
+      project.company_id ? ParlaDb.getCompany(project.company_id).catch(() => null) : Promise.resolve(null),
+    ]);
+    companyDisplayName = (company && company.name) || project.company_name || "";
+    projectTickets = linked
+      .filter((t) => String(t.ticket_type || "").toUpperCase() === "PRJ")
       .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
     renderDetail();
   } catch (err) {
-    handleError(err, "Proje yüklenemedi");
+    // Sonsuz "Yükleniyor..." yerine hata kartı + yeniden dene (UX-02).
+    const root = document.getElementById("project-detail-root");
+    if (root) root.innerHTML = "";
+    handleLoadError(err, "Proje yüklenemedi", { retry: () => loadProject(projectId) });
   } finally {
     showLoading(false);
   }
@@ -85,7 +89,7 @@ async function loadProject(projectId) {
 function personnelList() {
   const assigned = project.assigned_personnel || {};
   const items = Object.values(assigned).filter(Boolean);
-  if (!items.length) return "<span>Atanan personel yok.</span>";
+  if (!items.length) return "<span>Atanan danışman yok.</span>";
   return items
     .map((p) => linkPersonnel(p.id || p.personnel_id, p.name || "—"))
     .join(", ");
@@ -95,7 +99,7 @@ function renderDetail() {
   const root = document.getElementById("project-detail-root");
   if (!root) return;
 
-  const statusLabel = PROJECT_STATUS[project.status] || project.status || "—";
+  const statusBadge = `<span class="sv2-badge ${projectBadgeClass(project.status)}">${escapeHtml(projectStatusLabel(project.status))}</span>`;
   const activeTasks = projectTickets.filter(
     (t) => !["closed", "resolved"].includes(String(t.status || "").toLowerCase())
   ).length;
@@ -115,11 +119,11 @@ function renderDetail() {
         <div class="sv2-meta-grid">
           <div class="sv2-meta-item">
             <label>Durum</label>
-            <span>${escapeHtml(statusLabel)}</span>
+            <span>${statusBadge}</span>
           </div>
           <div class="sv2-meta-item">
             <label>Firma</label>
-            <span>${project.company_id ? linkCompany(project.company_id, project.company_name) : escapeHtml(project.company_name || "—")}</span>
+            <span>${project.company_id && companyDisplayName ? linkCompany(project.company_id, companyDisplayName) : escapeHtml(companyDisplayName || "—")}</span>
           </div>
           <div class="sv2-meta-item">
             <label>Yönetici</label>
@@ -144,7 +148,7 @@ function renderDetail() {
             : ""
         }
         <div style="margin-top:1.25rem">
-          <label style="font-size:0.75rem;font-weight:600;color:var(--sv2-gray-500);text-transform:uppercase">Atanan Personel</label>
+          <label style="font-size:0.75rem;font-weight:600;color:var(--sv2-gray-500);text-transform:uppercase">Atanan Danışman</label>
           <p style="margin:0.375rem 0 0">${personnelList()}</p>
         </div>
       </div>
@@ -165,7 +169,7 @@ function renderDetail() {
     columns: [
       {
         key: "ticket_number",
-        label: "TİCKET NO",
+        label: "Talep No",
         render: (v, row) => linkTicket(row.id || row.ticket_id, v),
       },
       { key: "title", label: "BAŞLIK" },

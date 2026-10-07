@@ -4,7 +4,7 @@
  * oturum açmış herkes kenar çubuğundan da ulaşabilir.
  */
 import { requireAuth, changePassword, redirectByRole } from "../auth-guard.js";
-import { renderShell, showLoading, toast } from "../ui-shell.js";
+import { renderShell, showLoading, toast, withInflight } from "../ui-shell.js";
 import { isAdminRole } from "../ticket-utils.js";
 import { password as passwordPolicyOk } from "../validators.js";
 
@@ -35,8 +35,8 @@ function render() {
           <div class="sv2-form-group">
             <label for="sv2-cp-new2">Yeni şifre (tekrar)</label>
             <input type="password" id="sv2-cp-new2" autocomplete="new-password" minlength="${MIN_PASSWORD_LENGTH}" required>
-            <span class="sv2-field-error" id="sv2-cp-error" hidden></span>
           </div>
+          <div class="sv2-field-error" id="sv2-cp-error" role="alert" hidden></div>
           <button type="submit" class="sv2-btn sv2-btn-primary" id="sv2-cp-submit">
             <i class="fas fa-key"></i> Şifreyi Güncelle
           </button>
@@ -54,9 +54,20 @@ function render() {
 
   const form = document.getElementById("sv2-change-password-form");
   const errEl = document.getElementById("sv2-cp-error");
-  const showError = (msg) => {
+  // Genel hata alanı formun sonunda; hatayla ilgili alan işaretlenir ve odak ona taşınır (UX-26, MUS-23).
+  const fields = ["sv2-cp-current", "sv2-cp-new", "sv2-cp-new2"].map((id) => document.getElementById(id));
+  const showError = (msg, field) => {
     errEl.textContent = msg;
     errEl.hidden = !msg;
+    fields.forEach((f) => {
+      f.removeAttribute("aria-invalid");
+      f.removeAttribute("aria-describedby");
+    });
+    if (msg && field) {
+      field.setAttribute("aria-invalid", "true");
+      field.setAttribute("aria-describedby", "sv2-cp-error");
+      field.focus();
+    }
   };
 
   form.addEventListener("submit", async (e) => {
@@ -66,24 +77,26 @@ function render() {
     const next = document.getElementById("sv2-cp-new").value;
     const next2 = document.getElementById("sv2-cp-new2").value;
 
-    if (!current) return showError("Mevcut şifrenizi girin.");
-    if (!passwordPolicyOk(next)) return showError(`Yeni şifre en az ${MIN_PASSWORD_LENGTH} karakter olmalı; en az bir büyük harf ve bir rakam içermelidir.`);
-    if (next === current) return showError("Yeni şifre mevcut şifreden farklı olmalıdır.");
-    if (next !== next2) return showError("Yeni şifreler eşleşmiyor.");
+    const [curEl, newEl, new2El] = fields;
+    if (!current) return showError("Mevcut şifrenizi girin.", curEl);
+    if (!passwordPolicyOk(next)) return showError(`Yeni şifre en az ${MIN_PASSWORD_LENGTH} karakter olmalı; en az bir büyük harf ve bir rakam içermelidir.`, newEl);
+    if (next === current) return showError("Yeni şifre mevcut şifreden farklı olmalıdır.", newEl);
+    if (next !== next2) return showError("Yeni şifreler eşleşmiyor.", new2El);
 
     const btn = document.getElementById("sv2-cp-submit");
-    btn.disabled = true;
-    showLoading(true);
-    try {
-      await changePassword(current, next);
-      toast("Şifreniz güncellendi.", "success");
-      redirectByRole(session);
-    } catch (err) {
-      showError(err.message || "Şifre güncellenemedi.");
-      btn.disabled = false;
-    } finally {
-      showLoading(false);
-    }
+    await withInflight(btn, async () => {
+      showLoading(true);
+      try {
+        await changePassword(current, next);
+        toast("Şifreniz güncellendi.", "success");
+        // Zorunlu değişimden sonra giriş öncesi hedefe (`?next=`) dönülür.
+        redirectByRole({ ...session, must_change_password: false });
+      } catch (err) {
+        showError(err.message || "Şifre güncellenemedi.", /mevcut|hatalı/i.test(err.message || "") ? curEl : null);
+      } finally {
+        showLoading(false);
+      }
+    });
   });
 }
 

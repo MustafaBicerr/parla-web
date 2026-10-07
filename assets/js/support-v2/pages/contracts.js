@@ -1,9 +1,13 @@
 /**
  * Parla BT Ticket V2 — Sözleşmeler (admin)
+ *
+ * WP-09: etkin durum TEK yardımcıdan (entity-utils), kendi etiket/rozetleri, değer/not görünür, bedel `contract_values`
+ * düğümünde (yalnız super/service okur-yazar; PM/danışman görmez), pasif firmanın sözleşmesi düzenlenebilir,
+ * form doğrulaması (benzersiz no, değer ≥ 0, tarih aralığı), firmanın "sözleşmeli" bayrağı sözleşmelerden türetilir.
  */
 import ParlaDb from "../firebase-client.js";
 import { canWrite } from "../access-control.js";
-import { requireAuth, PATHS } from "../auth-guard.js";
+import { requireAuth } from "../auth-guard.js";
 import {
   renderShell,
   renderFilterBar,
@@ -15,34 +19,42 @@ import {
   toast,
   showLoading,
   handleError,
+  handleLoadError,
   linkCompany,
   escapeHtml,
   formatDate,
 } from "../ui-shell.js";
-import { required } from "../validators.js";
+import { matchesSearch } from "../ticket-utils.js";
+import {
+  CONTRACT_TYPES,
+  CONTRACT_STATUS,
+  contractDaysRemaining,
+  effectiveContractStatus,
+  contractBadgeClass,
+  contractStatusLabel,
+  contractTypeLabel,
+  selectableCompanies,
+  validateContractInput,
+} from "../entity-utils.js";
+import { sortRows, paginateRows, debounce, nextSort, makeHeadersSortable } from "../table-utils.js";
 
-const CONTRACT_TYPES = {
-  yillik: "Yıllık Bakım",
-  bakim: "Bakım Anlaşması",
-  proje: "Proje Sözleşmesi",
-  lisans: "Lisans",
-  diger: "Diğer",
-};
-
-const CONTRACT_STATUS = {
-  active: "Aktif",
-  expired: "Sona Ermiş",
-  pending: "Beklemede",
-  cancelled: "İptal",
-};
+const PAGE_SIZE = 25;
 
 let session = null;
 let allContracts = [];
 let allCompanies = [];
+let contractValues = {};
 let activeFilter = "all";
 let searchTerm = "";
+let sort = { key: "created_at", dir: "desc" };
+let page = 1;
 
 document.addEventListener("DOMContentLoaded", init);
+
+/** Bedel `contract_values` düğümünde ve yalnız super/service tarafından okunur/yazılır. */
+function canSeeValue() {
+  return canWrite(session, "admin");
+}
 
 async function init() {
   try {
@@ -70,7 +82,7 @@ async function init() {
     bindEvents();
   } catch (err) {
     if (err.message !== "not_authenticated" && err.message !== "not_admin") {
-      handleError(err, "Sayfa yüklenemedi");
+      handleLoadError(err, "Sayfa yüklenemedi");
     }
   }
 }
@@ -78,14 +90,15 @@ async function init() {
 async function loadData() {
   showLoading(true);
   try {
-    [allContracts, allCompanies] = await Promise.all([
+    [allContracts, allCompanies, contractValues] = await Promise.all([
       ParlaDb.getAllContracts(),
       ParlaDb.getAllCompanies(),
+      canSeeValue() ? ParlaDb.getContractValues().catch(() => ({})) : Promise.resolve({}),
     ]);
     renderFilters();
     renderTable();
   } catch (err) {
-    handleError(err, "Veriler yüklenemedi");
+    handleLoadError(err, "Veriler yüklenemedi");
   } finally {
     showLoading(false);
   }
@@ -95,48 +108,21 @@ function bindEvents() {
   document.getElementById("btn-new-contract")?.addEventListener("click", () => openFormModal(null));
 }
 
-function daysRemaining(endDate) {
-  if (!endDate) return null;
-  const end = new Date(endDate);
-  if (Number.isNaN(end.getTime())) return null;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
-  return Math.ceil((end - today) / (1000 * 60 * 60 * 24));
-}
-
-function effectiveStatus(contract) {
-  const days = daysRemaining(contract.end_date);
-  if (contract.status === "cancelled") return "cancelled";
-  if (contract.status === "pending") return "pending";
-  if (contract.status === "expired" || (days !== null && days < 0)) return "expired";
-  return "active";
+function contractId(c) {
+  return c.id || c.contract_id;
 }
 
 function filterContracts() {
   return allContracts.filter((c) => {
-    const status = effectiveStatus(c);
-    const days = daysRemaining(c.end_date);
+    const status = effectiveContractStatus(c);
+    const days = contractDaysRemaining(c.end_date);
 
     if (activeFilter === "active" && status !== "active") return false;
     if (activeFilter === "expired" && status !== "expired") return false;
-    if (activeFilter === "renewal" && !(status === "active" && days !== null && days <= 30 && days >= 0))
-      return false;
+    if (activeFilter === "renewal" && !(status === "active" && days !== null && days <= 30 && days >= 0)) return false;
     if (activeFilter === "pending" && status !== "pending") return false;
 
-    if (searchTerm) {
-      const q = searchTerm.toLowerCase();
-      const hay = [
-        c.contract_number,
-        c.company_name,
-        CONTRACT_TYPES[c.type],
-        CONTRACT_STATUS[status],
-      ]
-        .join(" ")
-        .toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
+    return matchesSearch(searchTerm, [c.contract_number, c.company_name, contractTypeLabel(c.type), contractStatusLabel(status)]);
   });
 }
 
@@ -154,124 +140,154 @@ function renderFilters() {
     ],
   });
 
+  const applySearch = debounce(() => {
+    page = 1;
+    renderTable();
+  }, 200);
   document.getElementById("contract-search")?.addEventListener("input", (e) => {
     searchTerm = e.target.value.trim();
-    renderTable();
+    applySearch();
   });
 
   bindFilterChips("#sv2-filter-chips", (value) => {
     activeFilter = value;
+    page = 1;
     renderFilters();
     renderTable();
   });
 }
 
 function statusBadge(status) {
-  const cls =
-    status === "active"
-      ? "resolved"
-      : status === "expired"
-        ? "closed"
-        : status === "pending"
-          ? "waiting"
-          : "open";
-  return `<span class="sv2-badge sv2-badge-${cls}">${escapeHtml(CONTRACT_STATUS[status] || status)}</span>`;
+  return `<span class="sv2-badge ${contractBadgeClass(status)}">${escapeHtml(contractStatusLabel(status))}</span>`;
 }
+
+const SORT_ACCESSORS = {
+  contract_number: (r) => r.contract_number,
+  company_name: (r) => r.company_name,
+  type: (r) => contractTypeLabel(r.type),
+  start_date: (r) => r.start_date,
+  end_date: (r) => r.end_date,
+  days: (r) => contractDaysRemaining(r.end_date),
+  status: (r) => contractStatusLabel(effectiveContractStatus(r)),
+  value: (r) => (r.value === undefined || r.value === null ? null : Number(r.value)),
+  created_at: (r) => (r.created_at ? Date.parse(r.created_at) || 0 : 0),
+};
 
 function renderTable() {
   const el = document.getElementById("contracts-table");
   if (!el) return;
 
-  const filtered = filterContracts().sort(
-    (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
-  );
+  const rows = filterContracts().map((c) => ({
+    ...c,
+    id: contractId(c),
+    // Bedel contract_values'tan; henüz taşınmamış eski kayıtlarda contracts/<id>/value yedeği (yalnız bedeli görebilen roller)
+    value: canSeeValue() ? (contractValues[contractId(c)] ? contractValues[contractId(c)].value : c.value) : undefined,
+  }));
+  const sorted = sortRows(rows, sort, SORT_ACCESSORS);
+  const paged = paginateRows(sorted, page, PAGE_SIZE);
+  page = paged.page;
 
-  el.innerHTML = renderDataTable({
-    columns: [
-      { key: "contract_number", label: "SÖZLEŞME NO" },
-      {
-        key: "company_name",
-        label: "FİRMA",
-        render: (_, row) =>
-          row.company_id
-            ? linkCompany(row.company_id, row.company_name || "—")
-            : escapeHtml(row.company_name || "—"),
+  const columns = [
+    { key: "contract_number", label: "SÖZLEŞME NO", sortable: true },
+    {
+      key: "company_name",
+      label: "FİRMA",
+      sortable: true,
+      render: (_, row) =>
+        row.company_id
+          ? linkCompany(row.company_id, row.company_name || "—")
+          : escapeHtml(row.company_name || "—"),
+    },
+    { key: "type", label: "TİP", sortable: true, render: (v) => escapeHtml(contractTypeLabel(v)) },
+    { key: "start_date", label: "BAŞLANGIÇ", sortable: true, render: (v) => escapeHtml(formatDate(v)) },
+    { key: "end_date", label: "BİTİŞ", sortable: true, render: (v) => escapeHtml(formatDate(v)) },
+    {
+      key: "days",
+      label: "KALAN GÜN",
+      sortable: true,
+      render: (_, row) => {
+        const days = contractDaysRemaining(row.end_date);
+        if (days === null) return "—";
+        const cls = days <= 30 ? "sv2-text-danger" : "";
+        const label = days < 0 ? `${Math.abs(days)} gün geçti` : `${days} gün`;
+        return `<span class="${cls}">${escapeHtml(label)}</span>`;
       },
-      {
-        key: "type",
-        label: "TİP",
-        render: (v) => escapeHtml(CONTRACT_TYPES[v] || v || "—"),
+    },
+    { key: "status", label: "DURUM", sortable: true, render: (_, row) => statusBadge(effectiveContractStatus(row)) },
+  ];
+  if (canSeeValue()) {
+    columns.push({
+      key: "value",
+      label: "DEĞER (₺)",
+      sortable: true,
+      render: (v) => (v === undefined || v === null || v === "" || !Number.isFinite(Number(v)) ? "—" : escapeHtml(Number(v).toLocaleString("tr-TR"))),
+    });
+  }
+  columns.push(
+    {
+      key: "notes",
+      label: "NOT",
+      render: (v) => {
+        const text = String(v || "");
+        return text ? `<span title="${escapeHtml(text)}">${escapeHtml(text.length > 50 ? `${text.slice(0, 47)}…` : text)}</span>` : "—";
       },
-      {
-        key: "start_date",
-        label: "BAŞLANGIÇ",
-        render: (v) => escapeHtml(formatDate(v)),
-      },
-      {
-        key: "end_date",
-        label: "BİTİŞ",
-        render: (v) => escapeHtml(formatDate(v)),
-      },
-      {
-        key: "days",
-        label: "KALAN GÜN",
-        render: (_, row) => {
-          const days = daysRemaining(row.end_date);
-          if (days === null) return "—";
-          const cls = days <= 30 ? "sv2-text-danger" : "";
-          const label = days < 0 ? `${Math.abs(days)} gün geçti` : `${days} gün`;
-          return `<span class="${cls}">${escapeHtml(label)}</span>`;
-        },
-      },
-      {
-        key: "status",
-        label: "DURUM",
-        render: (_, row) => statusBadge(effectiveStatus(row)),
-      },
-      {
-        key: "actions",
-        label: "İŞLEMLER",
-        render: (_, row) =>
-          `<div class="sv2-actions">
+    },
+    {
+      key: "actions",
+      label: "İŞLEMLER",
+      render: (_, row) =>
+        `<div class="sv2-actions">
             ${canWrite(session, "admin") ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-id="${escapeHtml(row.id)}">
               <i class="fas fa-edit"></i> Düzenle
             </button>` : ""}
           </div>`,
-      },
-    ],
-    rows: filtered.map((c) => ({ ...c, id: c.id || c.contract_id })),
+    }
+  );
+
+  el.innerHTML = renderDataTable({
+    columns,
+    rows: paged.rows,
     emptyMessage: "Sözleşme bulunamadı.",
+    pagination: {
+      page: paged.page,
+      totalPages: paged.totalPages,
+      total: paged.total,
+      onPageChange: (p) => {
+        page = p;
+        renderTable();
+      },
+    },
+  });
+  makeHeadersSortable(el, columns, sort, (key) => {
+    sort = nextSort(sort, key);
+    page = 1;
+    renderTable();
   });
 
   el.querySelectorAll(".btn-edit").forEach((btn) => {
     btn.addEventListener("click", () => {
-      const id = btn.dataset.id;
-      const contract = allContracts.find((c) => (c.id || c.contract_id) === id);
+      const contract = allContracts.find((c) => contractId(c) === btn.dataset.id);
       if (contract) openFormModal(contract);
     });
   });
 }
 
+/** Pasif firmanın kaydı düzenlenirken mevcut firma "(pasif)" etiketiyle seçenekte kalır (YON-11). */
 function companyOptions(selectedId) {
-  return allCompanies
-    .filter((c) => c.is_active !== false)
-    .sort((a, b) => String(a.name).localeCompare(String(b.name), "tr"))
-    .map((c) => {
-      const id = c.id || c.company_id;
-      const sel = id === selectedId ? " selected" : "";
-      return `<option value="${escapeHtml(id)}"${sel}>${escapeHtml(c.name)}</option>`;
-    })
+  return selectableCompanies(allCompanies, selectedId)
+    .map((o) => `<option value="${escapeHtml(o.id)}"${o.id === selectedId ? " selected" : ""}>${escapeHtml(o.label)}</option>`)
     .join("");
 }
 
 function contractFormBody(data) {
   const d = data || {};
+  const currentValue = d.id || d.contract_id ? (contractValues[contractId(d)] ? contractValues[contractId(d)].value : d.value ?? "") : "";
   return `
     <form id="contract-form">
       <div class="sv2-form-row">
         <div class="sv2-form-group">
           <label for="cf-number">Sözleşme No *</label>
-          <input type="text" id="cf-number" value="${escapeHtml(d.contract_number || "")}" required>
+          <input type="text" id="cf-number" value="${escapeHtml(d.contract_number || "")}" maxlength="60" required>
           <div class="sv2-field-error" id="err-number" hidden></div>
         </div>
         <div class="sv2-form-group">
@@ -289,7 +305,7 @@ function contractFormBody(data) {
       <div class="sv2-form-group">
         <label for="cf-company">Firma *</label>
         <select id="cf-company" required>
-          <option value="">Firma seçiniz</option>
+          <option value="">Firma seçin</option>
           ${companyOptions(d.company_id)}
         </select>
         <div class="sv2-field-error" id="err-company" hidden></div>
@@ -297,12 +313,12 @@ function contractFormBody(data) {
       <div class="sv2-form-row">
         <div class="sv2-form-group">
           <label for="cf-start">Başlangıç *</label>
-          <input type="date" id="cf-start" value="${escapeHtml(d.start_date || "")}" required>
+          <input type="date" id="cf-start" min="2000-01-01" max="2100-12-31" value="${escapeHtml(d.start_date || "")}" required>
           <div class="sv2-field-error" id="err-start" hidden></div>
         </div>
         <div class="sv2-form-group">
           <label for="cf-end">Bitiş *</label>
-          <input type="date" id="cf-end" value="${escapeHtml(d.end_date || "")}" required>
+          <input type="date" id="cf-end" min="2000-01-01" max="2100-12-31" value="${escapeHtml(d.end_date || "")}" required>
           <div class="sv2-field-error" id="err-end" hidden></div>
         </div>
       </div>
@@ -318,15 +334,21 @@ function contractFormBody(data) {
               .join("")}
           </select>
         </div>
-        <div class="sv2-form-group">
+        ${
+          canSeeValue()
+            ? `<div class="sv2-form-group">
           <label for="cf-value">Değer (₺)</label>
-          <input type="number" id="cf-value" min="0" step="0.01" value="${d.value ?? ""}">
-        </div>
+          <input type="number" id="cf-value" min="0" step="0.01" value="${escapeHtml(String(currentValue ?? ""))}">
+          <div class="sv2-field-error" id="err-value" hidden></div>
+        </div>`
+            : ""
+        }
       </div>
       <div class="sv2-form-group">
         <label for="cf-notes">Notlar</label>
-        <textarea id="cf-notes" rows="3">${escapeHtml(d.notes || "")}</textarea>
+        <textarea id="cf-notes" rows="3" maxlength="2000">${escapeHtml(d.notes || "")}</textarea>
       </div>
+      <div id="cf-warnings" class="sv2-text-muted" style="font-size:0.8125rem"></div>
     </form>`;
 }
 
@@ -345,18 +367,20 @@ function openFormModal(contract) {
   openModal(modalId);
 
   document.getElementById("contract-save")?.addEventListener("click", () =>
-    saveContract(contract?.id || contract?.contract_id)
+    saveContract(contract ? contractId(contract) : "")
   );
 }
 
 function clearFormErrors() {
-  ["number", "company", "start", "end"].forEach((f) => {
+  ["number", "company", "start", "end", "value"].forEach((f) => {
     const el = document.getElementById(`err-${f}`);
     if (el) {
       el.hidden = true;
       el.textContent = "";
     }
   });
+  const warn = document.getElementById("cf-warnings");
+  if (warn) warn.textContent = "";
 }
 
 function showFormError(field, msg) {
@@ -380,66 +404,40 @@ async function saveContract(editId) {
     start_date: document.getElementById("cf-start")?.value,
     end_date: document.getElementById("cf-end")?.value,
     status: document.getElementById("cf-status")?.value || "active",
-    value: parseFloat(document.getElementById("cf-value")?.value) || null,
     notes: document.getElementById("cf-notes")?.value.trim() || "",
   };
+  const valueEl = document.getElementById("cf-value");
 
-  let valid = true;
-  if (!required(payload.contract_number)) {
-    showFormError("number", "Sözleşme numarası zorunludur.");
-    valid = false;
-  }
-  if (!required(payload.company_id)) {
-    showFormError("company", "Firma seçiniz.");
-    valid = false;
-  }
-  if (!required(payload.start_date)) {
-    showFormError("start", "Başlangıç tarihi zorunludur.");
-    valid = false;
-  }
-  if (!required(payload.end_date)) {
-    showFormError("end", "Bitiş tarihi zorunludur.");
-    valid = false;
-  }
-  if (payload.start_date && payload.end_date && payload.end_date < payload.start_date) {
-    showFormError("end", "Bitiş tarihi başlangıçtan önce olamaz.");
-    valid = false;
-  }
-  if (!valid) return;
+  const check = validateContractInput(
+    { ...payload, value: valueEl ? valueEl.value : "" },
+    allContracts,
+    editId
+  );
+  for (const [field, message] of Object.entries(check.errors)) showFormError(field, message);
+  if (!check.valid) return;
+  const warn = document.getElementById("cf-warnings");
+  if (warn && check.warnings.length) warn.textContent = check.warnings.join(" ");
 
   showLoading(true);
   try {
     const actor = { uid: session.uid, first_name: session.first_name, last_name: session.last_name };
-    if (editId) {
-      await ParlaDb.updateContract(editId, {
-        ...payload,
-        updated_by: session.uid,
-      });
-      await ParlaDb.logActivity(
-        "updated",
-        "contract",
-        editId,
-        payload.contract_number,
-        `Sözleşme güncellendi: ${payload.contract_number}`,
-        actor
-      );
-      toast("Sözleşme güncellendi.", "info");
-    } else {
-      const created = await ParlaDb.createContract({
-        ...payload,
-        created_by: session.uid,
-        updated_by: session.uid,
-      });
-      await ParlaDb.logActivity(
-        "created",
-        "contract",
-        created.id,
-        payload.contract_number,
-        `Yeni sözleşme: ${payload.contract_number}`,
-        actor
-      );
-      toast("Sözleşme oluşturuldu.", "info");
-    }
+    // Sözleşme + bedel (contract_values) + firma bayrağı tek atomik yazım.
+    const saved = await ParlaDb.saveContract({
+      id: editId || "",
+      data: payload,
+      value: check.value,
+      canWriteValue: !!valueEl,
+      actor,
+    });
+    await ParlaDb.logActivity(
+      editId ? "updated" : "created",
+      "contract",
+      saved.id,
+      payload.contract_number,
+      editId ? `Sözleşme güncellendi: ${payload.contract_number}` : `Yeni sözleşme: ${payload.contract_number}`,
+      actor
+    );
+    toast(editId ? "Sözleşme güncellendi." : "Sözleşme oluşturuldu.", "success");
     closeModal("contract-modal");
     await loadData();
   } catch (err) {

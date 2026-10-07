@@ -5,7 +5,6 @@ import ParlaDb from "../firebase-client.js";
 import ParlaEmailService from "../email-service.js";
 import { markTicketSeen } from "../notifications.js";
 import {
-  attachmentsNote,
   bindAttachmentClicks,
   bindFilePicker,
   renderAttachmentChips,
@@ -23,6 +22,11 @@ import {
   renderTypeBadge,
   showLoading,
   handleError,
+  handleLoadError,
+  loadingStateHtml,
+  errorStateHtml,
+  withInflight,
+  withTimeout,
   toast,
   formatDateTime,
   escapeHtml,
@@ -30,11 +34,13 @@ import {
   openModal,
   closeModal,
 } from "../ui-shell.js";
+import { isPermissionError } from "../ui-states.js";
+import { isSafeId, safeHttpUrl, safeText } from "../safe-utils.js";
+import { TICKET_LIMITS } from "../validators.js";
 import {
   computeSla,
   customerLifecycle,
   REOPEN_WINDOW_DAYS,
-  nowIso,
   STATUS_LABELS,
   PRIORITY_LABELS,
   STATUSES,
@@ -43,6 +49,8 @@ import {
   formatPriorityLabel,
   formatSapModuleLabel,
   getTicketKey,
+  normalizeStatusCode,
+  isDeletedTicket,
 } from "../ticket-utils.js";
 
 const app = document.getElementById("sv2-app");
@@ -58,6 +66,10 @@ function getTicketId() {
   return params.get("id");
 }
 
+/** Yanıt/yazma işlemleri bağlantı kopukken süresiz asılı kalmasın (MUS-21, SEN-24). */
+const WRITE_TIMEOUT_MSG =
+  "Bağlantı yok ya da çok yavaş: işlem tamamlanamadı. Bağlantı gelince talebi yenileyip kontrol edin; gönderilmediyse yeniden deneyin.";
+
 async function getTicketHistory(ticketId) {
   const snap = await window.__PARLA_FIREBASE.db.get(
     ParlaDb.v2Ref(`ticket_history/${ticketId}`)
@@ -67,58 +79,78 @@ async function getTicketHistory(ticketId) {
 }
 
 function formatHistoryMessage(entry) {
-  const field = entry.field_changed;
-  const action = entry.action || "";
+  const field = safeText(entry.field_changed);
+  const action = safeText(entry.action);
 
   if (action === "created") {
-    return `Talep oluşturuldu: ${entry.new_value}`;
+    return `Talep oluşturuldu: ${safeText(entry.new_value)}`;
   }
   if (field === "status") {
     const base = `Durum değişti: ${formatStatusLabel(entry.old_value)} → ${formatStatusLabel(entry.new_value)}`;
-    // Personelin/müşterinin durum değişikliği notu (ör. çözüm özeti) geçmişte de görünsün.
-    return action === "status_note" && entry.note ? `${base} — ${entry.note}` : base;
+    // Personelin/müşterinin durum değişikliği notu (ör. çözüm özeti) aynı satırda görünür (tek satır).
+    return entry.note ? `${base} — ${safeText(entry.note)}` : base;
   }
   if (field === "priority") {
     return `Öncelik değişti: ${formatPriorityLabel(entry.old_value)} → ${formatPriorityLabel(entry.new_value)}`;
   }
   if (field === "assigned_to_name") {
-    return `Danışman atandı: ${entry.new_value || "—"}`;
+    return `Danışman atandı: ${safeText(entry.new_value) || "—"}`;
   }
-  if (entry.note) return entry.note;
-  return entry.new_value || action || "Güncelleme yapıldı";
+  if (entry.note) return safeText(entry.note);
+  return safeText(entry.new_value) || action || "Güncelleme yapıldı";
 }
 
 function historyToTimeline(items) {
   // Aynı geçişin hem otomatik (status_changed) hem de notlu (status_note) kaydı varsa yalnızca notlu olanı göster.
   const noted = items.filter((h) => h.action === "status_note");
+  // Müşteriye iç bilgi gösterilmez: ham personel kimliği (eski kayıtlar), ikincil danışman, efor, arşiv işlemleri (SEN-32).
+  const INTERNAL_ONLY = ["assignment", "effort", "is_deleted", "ticket_type", "assigned_to_id"];
+  items = items.filter((h) => !INTERNAL_ONLY.includes(safeText(h.field_changed)));
   const visible = items.filter(
     (h) =>
       !(
         h.action === "status_changed" &&
         noted.some(
           (n) =>
-            formatStatusLabel(n.new_value) === formatStatusLabel(h.new_value) &&
+            normalizeStatusCode(n.new_value) === normalizeStatusCode(h.new_value) &&
             Math.abs(new Date(n.changed_at) - new Date(h.changed_at)) < 60000
         )
       )
   );
-  return visible.map((h) => ({
-    author: h.changed_by_name || "Sistem",
-    created_at: h.changed_at,
-    message: formatHistoryMessage(h),
-    variant: "admin",
-  }));
+  const out = [];
+  for (const h of visible) {
+    try {
+      out.push({
+        author: safeText(h.changed_by_name) || "Sistem",
+        created_at: h.changed_at,
+        message: formatHistoryMessage(h),
+        variant: "admin",
+      });
+    } catch (err) {
+      console.warn("[Parla V2] geçmiş kaydı atlandı", err); // zehirli kayıt sayfayı düşürmez (SEC-02)
+    }
+  }
+  return out;
 }
 
 function messagesToTimeline(items, isAdmin) {
   const visible = isAdmin ? items : items.filter((m) => !m.is_internal);
-  return visible.map((m) => ({
-    author: m.author_name || "Kullanıcı",
-    created_at: m.created_at,
-    message: m.message,
-    attachments_html: renderAttachmentChips(m.attachments, getTicketKey(ticket), m.is_internal),
-    variant: m.is_internal ? "internal" : m.author_role === "customer" ? "customer" : "admin",
-  }));
+  const out = [];
+  for (const m of visible) {
+    try {
+      out.push({
+        author: safeText(m.author_name) || "Kullanıcı",
+        created_at: m.created_at,
+        message: safeText(m.message),
+        attachments_html: renderAttachmentChips(m.attachments, getTicketKey(ticket), m.is_internal),
+        author_role: m.author_role,
+        variant: m.is_internal ? "internal" : m.author_role === "customer" ? "customer" : "admin",
+      });
+    } catch (err) {
+      console.warn("[Parla V2] mesaj kaydı atlandı", err);
+    }
+  }
+  return out;
 }
 
 function renderAdminPanel() {
@@ -181,8 +213,8 @@ function renderReplyBox(isAdmin) {
   if (isAdmin) {
     return `
       <div class="sv2-reply-box" id="sv2-reply-box">
-        <h4 style="margin:0 0 0.75rem;font-size:0.9375rem">Yanıt Yaz</h4>
-        <textarea id="sv2-reply-message" placeholder="Müşteriye veya ekibe yanıt yazın..." rows="4"></textarea>
+        <h3 class="sv2-reply-title">Yanıt Yaz</h3>
+        <textarea id="sv2-reply-message" data-keep-draft maxlength="${TICKET_LIMITS.message}" placeholder="Müşteriye veya ekibe yanıt yazın..." rows="4"></textarea>
         ${renderFilePicker("sv2-reply")}
         <div class="sv2-reply-actions">
           <label style="display:flex;align-items:center;gap:0.5rem;font-size:0.875rem;cursor:pointer">
@@ -191,7 +223,7 @@ function renderReplyBox(isAdmin) {
           <div style="display:flex;align-items:center;gap:0.75rem">
             <label style="font-size:0.875rem;display:flex;align-items:center;gap:0.35rem">
               Çalışma saati:
-              <input type="number" id="sv2-reply-hours" min="0" step="0.25" value="0" style="width:72px;padding:0.35rem 0.5rem;border:1px solid var(--sv2-gray-200);border-radius:var(--sv2-radius-sm)">
+              <input type="number" id="sv2-reply-hours" min="0" step="0.25" value="0">
             </label>
             <button type="button" class="sv2-btn sv2-btn-primary sv2-btn-sm" id="sv2-send-reply">
               <i class="fas fa-paper-plane"></i> Gönder
@@ -203,8 +235,8 @@ function renderReplyBox(isAdmin) {
 
   return `
     <div class="sv2-reply-box" id="sv2-reply-box">
-      <h4 style="margin:0 0 0.75rem;font-size:0.9375rem">Yanıt Yaz</h4>
-      <textarea id="sv2-reply-message" placeholder="Danışmanınıza yanıt yazın..." rows="4"></textarea>
+      <h3 class="sv2-reply-title">Yanıt Yaz</h3>
+      <textarea id="sv2-reply-message" data-keep-draft maxlength="${TICKET_LIMITS.message}" placeholder="Danışmanınıza yanıt yazın..." rows="4"></textarea>
       ${renderFilePicker("sv2-reply")}
       <div class="sv2-reply-actions">
         <span style="font-size:0.8125rem;color:var(--sv2-gray-500)">Yanıtınız danışman ekibimize iletilecektir.</span>
@@ -225,8 +257,8 @@ function renderLifecycleBanner() {
     </div>`;
   const banner = (kind, icon, title, text, extra) => `
     <div class="sv2-lifecycle sv2-lifecycle--${kind}" id="sv2-lifecycle-banner">
-      <div class="sv2-lifecycle-icon"><i class="fas ${icon}"></i></div>
-      <div class="sv2-lifecycle-body"><h4>${escapeHtml(title)}</h4><p>${escapeHtml(text)}</p></div>
+      <div class="sv2-lifecycle-icon"><i class="fas ${icon}" aria-hidden="true"></i></div>
+      <div class="sv2-lifecycle-body"><h2 class="sv2-lifecycle-title">${escapeHtml(title)}</h2><p>${escapeHtml(text)}</p></div>
       ${extra || ""}
     </div>`;
 
@@ -292,23 +324,42 @@ function openLifecycleModal(kind) {
   });
   openModal("sv2-lifecycle-modal");
 
-  document.getElementById("sv2-lifecycle-confirm")?.addEventListener("click", async () => {
-    const note = document.getElementById("sv2-lifecycle-note").value.trim();
-    const errEl = document.getElementById("sv2-lifecycle-error");
-    if (isReopen && note.length < 10) {
-      errEl.textContent = "Lütfen en az 10 karakterlik bir gerekçe yazın.";
-      errEl.hidden = false;
-      return;
-    }
-    closeModal("sv2-lifecycle-modal");
-    await (isReopen ? reopenTicket(note) : approveClosure(note));
+  const confirmBtn = document.getElementById("sv2-lifecycle-confirm");
+  confirmBtn?.addEventListener("click", () => {
+    // Enter/Boşluk tekrarı ikinci "yeniden açma gerekçesi"/onay yazmasın (MUS-11).
+    withInflight(confirmBtn, async () => {
+      const note = document.getElementById("sv2-lifecycle-note").value.trim();
+      const errEl = document.getElementById("sv2-lifecycle-error");
+      if (isReopen && note.length < 10) {
+        errEl.textContent = "Lütfen en az 10 karakterlik bir gerekçe yazın.";
+        errEl.hidden = false;
+        return;
+      }
+      closeModal("sv2-lifecycle-modal");
+      await (isReopen ? reopenTicket(note) : approveClosure(note));
+    });
   });
 }
 
-async function notifyStaff(eventType, updated, note, actor) {
+/** `refs`: { history_id } / { message_id } — e-posta metnini sunucu bu kayıtlardan okur (istemci metin göndermez). */
+async function notifyStaff(eventType, updated, refs, actor) {
   const recipients = ParlaEmailService.uniqueEmails(staffRecipients(), session.email);
-  const res = await ParlaEmailService.notifyTicketEvent(eventType, recipients, updated, { note });
+  const res = await ParlaEmailService.notifyTicketEvent(eventType, recipients, updated, refs || {});
   await reportEmailResult(res, { eventType, label: "Bildirim e-postası", ticket: updated, actor });
+}
+
+/** Durum çakışması: ekran bayatsa anlaşılır ileti + gerçek durumu yenile (yarım kayıt/e-posta yok; SEN-04, MUS-12). */
+async function handleLifecycleError(err, context) {
+  if (["status_conflict", "invalid_transition", "ticket_deleted"].includes(err?.code)) {
+    toast(err.message, "error");
+    try {
+      await reloadTicket();
+    } catch {
+      /* yenileme başarısız: ileti yeterli */
+    }
+    return;
+  }
+  handleError(err, context);
 }
 
 async function approveClosure(note) {
@@ -316,23 +367,18 @@ async function approveClosure(note) {
   try {
     const actor = getActor();
     const id = getTicketKey(ticket);
-    const previous = ticket.status;
-    const updated = await ParlaDb.updateTicket(id, { status: STATUSES.CLOSED }, actor);
-    await ParlaDb.addTicketHistory(id, {
-      action: "status_note",
-      field_changed: "status",
-      old_value: formatStatusLabel(previous),
-      new_value: formatStatusLabel(STATUSES.CLOSED),
-      changed_by_uid: session.uid,
-      changed_by_name: actor.name,
+    const report = {};
+    const updated = await ParlaDb.updateTicket(id, { status: STATUSES.CLOSED }, actor, {
+      expectedStatus: ticket.status,
       note: note ? `Müşteri kapanışı onayladı: ${note}` : "Müşteri kapanışı onayladı.",
+      report,
+      activity: { action: "ticket_closed", details: "Müşteri kapanışı onayladı" },
     });
-    await ParlaDb.logActivity("ticket_closed", "ticket", id, ticket.ticket_number, "Müşteri kapanışı onayladı", actor);
     toast("Talebiniz kapatıldı. Teşekkür ederiz.", "success");
     await reloadTicket();
-    notifyStaff("ticket_closed", updated, note || "Müşteri kapanışı onayladı.", actor).catch(() => {});
+    notifyStaff("ticket_closed", updated, { history_id: report.statusHistoryId }, actor).catch(() => {});
   } catch (err) {
-    handleError(err, "Talep kapatma");
+    await handleLifecycleError(err, "Talep kapatma");
   } finally {
     showLoading(false);
   }
@@ -343,8 +389,14 @@ async function reopenTicket(reason) {
   try {
     const actor = getActor();
     const id = getTicketKey(ticket);
-    const previous = ticket.status;
-    // Gerekçe mesaj olarak da kaydedilir; danışman konuşmada görür.
+    // Önce durum (koşullu + atomik: geçmiş/aktivite aynı yazımda), başarılıysa gerekçe konuşmaya mesaj olarak eklenir.
+    const report = {};
+    const updated = await ParlaDb.updateTicket(id, { status: STATUSES.REOPENED }, actor, {
+      expectedStatus: ticket.status,
+      note: `Müşteri talebi yeniden açtı: ${reason}`,
+      report,
+      activity: { action: "ticket_reopened", details: "Müşteri talebi yeniden açtı" },
+    });
     await ParlaDb.addTicketMessage(id, {
       user_id: session.uid,
       author_name: actor.name,
@@ -353,24 +405,11 @@ async function reopenTicket(reason) {
       message: `Yeniden açma gerekçesi: ${reason}`,
       is_internal: false,
     });
-    const patch = { status: STATUSES.REOPENED, reopened_at: nowIso() };
-    if (previous === STATUSES.CLOSED) patch.closed_at = null;
-    const updated = await ParlaDb.updateTicket(id, patch, actor);
-    await ParlaDb.addTicketHistory(id, {
-      action: "status_note",
-      field_changed: "status",
-      old_value: formatStatusLabel(previous),
-      new_value: formatStatusLabel(STATUSES.REOPENED),
-      changed_by_uid: session.uid,
-      changed_by_name: actor.name,
-      note: `Müşteri talebi yeniden açtı: ${reason}`,
-    });
-    await ParlaDb.logActivity("ticket_reopened", "ticket", id, ticket.ticket_number, "Müşteri talebi yeniden açtı", actor);
     toast("Talebiniz yeniden açıldı.", "success");
     await reloadTicket();
-    notifyStaff("ticket_reopened", updated, reason, actor).catch(() => {});
+    notifyStaff("ticket_reopened", updated, { history_id: report.statusHistoryId }, actor).catch(() => {});
   } catch (err) {
-    handleError(err, "Talebi yeniden açma");
+    await handleLifecycleError(err, "Talebi yeniden açma");
   } finally {
     showLoading(false);
   }
@@ -388,16 +427,14 @@ function renderPage() {
     !isAdmin ||
     String(ticket.status).toLowerCase() !== STATUSES.CLOSED;
 
-  const customerCanReply =
-    !isAdmin &&
-    String(ticket.status).toLowerCase() !== STATUSES.CLOSED &&
-    String(ticket.status).toLowerCase() !== STATUSES.RESOLVED;
+  // Kapanış onayı bekleyen/çözülmüş talebe yazılan müşteri yanıtı talebi otomatik yeniden açar (karar 28); yalnız kapalı talebe yazılamaz.
+  const customerCanReply = !isAdmin && String(ticket.status).toLowerCase() !== STATUSES.CLOSED;
 
   const showReply = isAdmin ? canReply : customerCanReply;
 
   const content = `
     ${renderBreadcrumb([
-      { label: isAdmin ? "Ticketlar" : "Taleplerim", href: ticketsPath },
+      { label: isAdmin ? "Talepler" : "Taleplerim", href: ticketsPath },
       { label: ticket.ticket_number || "Detay" },
     ])}
     ${isAdmin ? "" : renderLifecycleBanner()}
@@ -449,14 +486,17 @@ function renderPage() {
             <span>${escapeHtml(ticket.user_name || "—")}</span>
           </div>
         </div>
-        <div style="margin-top:1rem">
-          <label style="font-size:0.6875rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--sv2-gray-500);font-weight:600">Açıklama</label>
-          <p style="margin:0.5rem 0 0;line-height:1.6;white-space:pre-wrap">${escapeHtml(ticket.description || "—")}</p>
+        <div class="sv2-ticket-description">
+          <h3 class="sv2-meta-label">Açıklama</h3>
+          <p>${escapeHtml(ticket.description || "—")}</p>
         </div>
         ${
-          ticket.attachment_url
-            ? `<p style="margin-top:1rem"><a href="${escapeHtml(ticket.attachment_url)}" target="_blank" rel="noopener noreferrer" class="sv2-link"><i class="fas fa-paperclip"></i> Ek dosyayı görüntüle</a></p>`
-            : ""
+          // SEC-29/SEN-39: yalnız http(s) bağlantısı tıklanabilir; diğer şemalar (javascript: vb.) düz metin.
+          safeHttpUrl(ticket.attachment_url)
+            ? `<p style="margin-top:1rem"><a href="${escapeHtml(safeHttpUrl(ticket.attachment_url))}" target="_blank" rel="noopener noreferrer" class="sv2-link"><i class="fas fa-paperclip"></i> Ek dosyayı görüntüle</a></p>`
+            : ticket.attachment_url
+              ? `<p style="margin-top:1rem" class="sv2-text-muted"><i class="fas fa-paperclip"></i> Ek bağlantı geçersiz (yalnızca http/https adresleri açılır).</p>`
+              : ""
         }
       </div>
     </div>
@@ -469,7 +509,7 @@ function renderPage() {
       <div class="sv2-section-header"><h3>Mesajlar</h3></div>
       <div class="sv2-section-body">
         ${renderTimeline(messagesToTimeline(messages, isAdmin))}
-        ${showReply ? renderReplyBox(isAdmin) : `<p style="color:var(--sv2-gray-500);font-size:0.875rem;margin:0">Bu talep çözüldü veya kapatıldığı için yanıt yazılamaz. Gerekirse yukarıdaki düğmeyle yeniden açabilirsiniz.</p>`}
+        ${showReply ? renderReplyBox(isAdmin) : `<p style="color:var(--sv2-gray-500);font-size:0.875rem;margin:0">Bu talep kapatıldığı için yanıt yazılamaz. Gerekirse yukarıdaki düğmeyle yeniden açabilirsiniz.</p>`}
       </div>
     </div>`;
 
@@ -488,7 +528,8 @@ function renderPage() {
 
 function getActor() {
   const name = [session.first_name, session.last_name].filter(Boolean).join(" ");
-  return { uid: session.uid, name: name || session.email, email: session.email };
+  // role: durum geçişi damgaları ve yazma yetkisi rol bilgisine göre belirlenir (müşteri yalnız kendi damgalarını yazar).
+  return { uid: session.uid, name: name || session.email, email: session.email, role: session.role };
 }
 
 /** Müşteri yanıtının bildirileceği ekip: destek kutusu + atanmış tüm danışmanlar. */
@@ -502,82 +543,127 @@ function staffRecipients() {
 
 function bindReply(isAdmin) {
   const picker = bindFilePicker("sv2-reply");
-  document.getElementById("sv2-send-reply")?.addEventListener("click", async () => {
-    const text = document.getElementById("sv2-reply-message")?.value?.trim();
-    if (!text || text.length < 3) {
-      toast("Lütfen en az 3 karakterlik bir yanıt yazın.", "error");
-      return;
-    }
-
-    showLoading(true);
-    try {
-      const actor = getActor();
-      const isInternal = isAdmin && document.getElementById("sv2-reply-internal")?.checked;
-      const workHours = isAdmin
-        ? parseFloat(document.getElementById("sv2-reply-hours")?.value) || 0
-        : 0;
-
-      const prepared = await picker.getPrepared();
-      if (prepared === null) return; // dosya hatası seçicide gösterildi
-      const refs = prepared.length
-        ? await uploadAttachments(getTicketKey(ticket), prepared, { internal: !!isInternal, session })
-        : [];
-
-      await ParlaDb.addTicketMessage(getTicketKey(ticket), {
-        user_id: session.uid,
-        author_name: actor.name,
-        author_email: session.email,
-        author_role: isAdmin ? session.role : "customer",
-        message: text,
-        is_internal: !!isInternal,
-        work_hours: workHours,
-        attachments: refs,
-      });
-
-      if (!isAdmin && ticket.status === STATUSES.WAITING_CUSTOMER) {
-        await ParlaDb.updateTicket(
-          getTicketKey(ticket),
-          { status: STATUSES.IN_PROGRESS },
-          actor
-        );
-      }
-
-      await ParlaDb.logActivity(
-        "ticket_message",
-        "ticket",
-        getTicketKey(ticket),
-        ticket.ticket_number,
-        isInternal ? "Dahili not eklendi" : "Yeni yanıt",
-        actor
-      );
-
-      if (!isInternal) {
-        const recipients = isAdmin ? [ticket.user_email] : staffRecipients();
-        ParlaEmailService.notifyTicketEvent(
-          "ticket_message",
-          ParlaEmailService.uniqueEmails(recipients, session.email),
-          ticket,
-          { note: text.slice(0, 500) + attachmentsNote(refs) }
-        )
-          .then((res) =>
-            reportEmailResult(res, { eventType: "ticket_message", label: "Yanıt bildirimi", ticket, actor })
-          )
-          .catch(() => {});
-      }
-
-      toast("Yanıtınız gönderildi.", "success");
-      await reloadTicket();
-    } catch (err) {
-      handleError(err, "Yanıt gönderme");
-    } finally {
-      showLoading(false);
-    }
+  const sendBtn = document.getElementById("sv2-send-reply");
+  sendBtn?.addEventListener("click", () => {
+    // Tek tip "işlem sürüyor" koruması: Enter/Boşluk tekrarı ve hızlı çift tık tek yanıt üretir (MUS-11, UX-04).
+    withInflight(sendBtn, () => sendReply(isAdmin, picker));
   });
 }
 
+async function sendReply(isAdmin, picker) {
+  const textarea = document.getElementById("sv2-reply-message");
+  const text = textarea?.value?.trim();
+  if (!text || text.length < 3) {
+    toast("Lütfen en az 3 karakterlik bir yanıt yazın.", "error");
+    return;
+  }
+  if (text.length > TICKET_LIMITS.message) {
+    toast(`Yanıt en fazla ${TICKET_LIMITS.message.toLocaleString("tr-TR")} karakter olabilir.`, "error");
+    return;
+  }
+
+  showLoading(true);
+  try {
+    const actor = getActor();
+    const isInternal = isAdmin && document.getElementById("sv2-reply-internal")?.checked;
+    const workHours = isAdmin ? parseFloat(document.getElementById("sv2-reply-hours")?.value) || 0 : 0;
+
+    const prepared = await picker.getPrepared();
+    if (prepared === null) return; // dosya hatası seçicide gösterildi
+
+    await withTimeout(
+      (async () => {
+        const refs = prepared.length
+          ? await uploadAttachments(getTicketKey(ticket), prepared, { internal: !!isInternal, session })
+          : [];
+
+        const savedMessage = await ParlaDb.addTicketMessage(getTicketKey(ticket), {
+          user_id: session.uid,
+          author_name: actor.name,
+          author_email: session.email,
+          author_role: isAdmin ? session.role : "customer",
+          message: text,
+          is_internal: !!isInternal,
+          work_hours: workHours,
+          attachments: refs,
+        });
+
+        // Müşteri yanıtı durum geçişi: müşteri bekleniyor → işlemde; kapanış onayı bekliyor/çözüldü → yeniden açıldı (karar 28).
+        // Mesaj zaten kaydedildi: ekran bayatsa durum çakışır; yanıt, aktivite ve e-posta yine de tamamlanır (SEN-04).
+        let autoReopened = false;
+        const reopenReport = {};
+        if (!isAdmin) {
+          const prev = String(ticket.status || "").toLowerCase();
+          const next =
+            prev === STATUSES.WAITING_CUSTOMER
+              ? STATUSES.IN_PROGRESS
+              : prev === STATUSES.PENDING_CLOSE || prev === STATUSES.RESOLVED
+                ? STATUSES.REOPENED
+                : "";
+          if (next) {
+            try {
+              await ParlaDb.updateTicket(getTicketKey(ticket), { status: next }, actor, {
+                expectedStatus: ticket.status,
+                note: next === STATUSES.REOPENED ? `Müşteri yanıtı üzerine talep yeniden açıldı: "${text.slice(0, 300)}"` : "",
+                report: reopenReport,
+                activity: next === STATUSES.REOPENED ? { action: "ticket_reopened", details: "Müşteri yanıtı üzerine otomatik yeniden açıldı" } : undefined,
+              });
+              autoReopened = next === STATUSES.REOPENED;
+            } catch (statusErr) {
+              if (!["status_conflict", "invalid_transition", "ticket_deleted"].includes(statusErr?.code) && !isPermissionError(statusErr)) throw statusErr;
+            }
+          }
+        }
+
+        await ParlaDb.logActivity(
+          "ticket_message",
+          "ticket",
+          getTicketKey(ticket),
+          ticket.ticket_number,
+          isInternal ? "Dahili not eklendi" : "Yeni yanıt",
+          actor
+        );
+
+        if (!isInternal) {
+          const recipients = isAdmin ? [ticket.user_email] : staffRecipients();
+          // Yanıt talebi yeniden açtıysa tek e-posta ("tekrar açıldı", yanıt metniyle) gider: kota tasarrufu.
+          ParlaEmailService.notifyTicketEvent(
+            autoReopened ? "ticket_reopened" : "ticket_message",
+            ParlaEmailService.uniqueEmails(recipients, session.email),
+            ticket,
+            // Metni sunucu kayıttan okur: yeniden açma → durum geçmişi kaydı, normal yanıt → mesaj kaydı.
+            autoReopened ? { history_id: reopenReport.statusHistoryId } : { message_id: savedMessage.id }
+          )
+            .then((res) => reportEmailResult(res, { eventType: "ticket_message", label: "Yanıt bildirimi", ticket, actor }))
+            .catch(() => {});
+        }
+      })(),
+      0,
+      WRITE_TIMEOUT_MSG
+    );
+
+    // Gönderildi: taslak temizlenir (yeniden çizimde geri yazılmasın), sonra liste yenilenir.
+    if (textarea) textarea.value = "";
+    picker.clear();
+    toast("Yanıtınız gönderildi.", "success");
+    await reloadTicket();
+  } catch (err) {
+    handleError(err, "Yanıt gönderme");
+  } finally {
+    showLoading(false);
+  }
+}
+
 function bindAdminForm() {
-  document.getElementById("sv2-admin-form")?.addEventListener("submit", async (e) => {
+  const adminForm = document.getElementById("sv2-admin-form");
+  adminForm?.addEventListener("submit", (e) => {
     e.preventDefault();
+    withInflight(adminForm.querySelector('button[type="submit"]') || "admin-form", () => saveAdminForm());
+  });
+}
+
+async function saveAdminForm() {
+  {
     showLoading(true);
 
     try {
@@ -642,7 +728,7 @@ function bindAdminForm() {
     } finally {
       showLoading(false);
     }
-  });
+  }
 }
 
 async function reloadTicket() {
@@ -658,12 +744,37 @@ async function reloadTicket() {
   renderPage();
 }
 
+function shellOptions(extra) {
+  const isAdmin = isAdminRole(session.role);
+  return { title: "Talep Detayı", activePage: "tickets", profile: session, isAdmin, ...(extra || {}) };
+}
+
+/** Olmayan / yetkisiz / başkasına ait talep: kabuk + anlaşılır mesaj (MUS-07, SEN-06, UX-02). */
+function renderUnavailable(message) {
+  const isAdmin = isAdminRole(session.role);
+  renderShell(
+    app,
+    shellOptions({
+      title: "Talep bulunamadı",
+      content: errorStateHtml({
+        icon: "fa-lock",
+        title: "Bu talebe ulaşılamıyor",
+        message: message || "Talep bulunamadı ya da bu talebi görüntüleme yetkiniz yok. Bağlantı başka bir kullanıcıya ait ya da silinmiş olabilir.",
+        retry: false,
+        actions: [{ label: isAdmin ? "Taleplere dön" : "Taleplerime dön", href: isAdmin ? PATHS.adminTickets : PATHS.customerTickets }],
+      }),
+    })
+  );
+}
+
 async function loadTicket(ticketId) {
   showLoading(true);
+  let ticketLoaded = false;
   try {
     ticket = await ParlaDb.getTicket(ticketId);
+    ticketLoaded = !!ticket;
     if (!ticket) {
-      app.innerHTML = `<div class="sv2-content" style="padding:2rem"><div class="sv2-empty"><i class="fas fa-exclamation-circle"></i><h4>Talep bulunamadı.</h4></div></div>`;
+      renderUnavailable();
       return;
     }
 
@@ -671,8 +782,12 @@ async function loadTicket(ticketId) {
     const isCompanyColleague =
       session.role === "company_admin" && !!session.company_id && ticket.company_id === session.company_id;
     if (!isAdmin && ticket.user_id !== session.uid && !isCompanyColleague) {
-      toast("Bu talebe erişim yetkiniz yok.", "error");
-      window.location.href = PATHS.customerTickets;
+      renderUnavailable();
+      return;
+    }
+    // Yumuşak silinmiş (arşivdeki) talep müşteriye görünmez (D-05 B).
+    if (!isAdmin && isDeletedTicket(ticket)) {
+      renderUnavailable();
       return;
     }
 
@@ -687,7 +802,17 @@ async function loadTicket(ticketId) {
     markTicketSeen(session.uid, ticket);
     renderPage();
   } catch (err) {
-    handleError(err, "Talep yükleme");
+    // İlk okuma reddedilirse talep yok ya da başkasına ait demektir (kurallar ikisini ayırt ettirmez).
+    if (!ticketLoaded && isPermissionError(err)) {
+      renderUnavailable();
+    } else {
+      handleLoadError(err, "Talep yüklenemedi", {
+        retry: () => loadTicket(ticketId),
+        activePage: "tickets",
+        pageTitle: "Talep Detayı",
+        isAdmin: isAdminRole(session.role),
+      });
+    }
   } finally {
     showLoading(false);
   }
@@ -696,17 +821,24 @@ async function loadTicket(ticketId) {
 async function init() {
   bindAttachmentClicks();
   const ticketId = getTicketId();
-  if (!ticketId) {
-    app.innerHTML = `<div class="sv2-content" style="padding:2rem"><div class="sv2-empty"><i class="fas fa-exclamation-circle"></i><h4>Talep kimliği belirtilmedi.</h4><p><a href="${PATHS.customerTickets}" class="sv2-link">Taleplere dön</a></p></div></div>`;
-    return;
-  }
-
   showLoading(true);
   try {
     session = await requireAuth();
+    if (isAdminRole(session.role)) {
+      // EML-15 / SEN-07: bu sayfa MÜŞTERİ görünümüdür. Eski "Yönetici Paneli" personele kapatıldı (yanlış şablon, atama kaydı
+      // yazılmaması, not zorunluluğu yokluğu); personel aynı talebin yönetim sayfasına yönlendirilir.
+      const target = ticketId && isSafeId(ticketId) ? `${PATHS.adminTicketDetail}?id=${encodeURIComponent(ticketId)}` : PATHS.adminTickets;
+      window.location.replace(target);
+      return;
+    }
+    if (!ticketId || !isSafeId(ticketId)) {
+      renderUnavailable(ticketId ? "Bağlantıdaki talep kimliği geçersiz." : "Talep kimliği belirtilmedi.");
+      return;
+    }
+    renderShell(app, shellOptions({ content: loadingStateHtml("Talep yükleniyor…") }));
     await loadTicket(ticketId);
   } catch {
-    /* requireAuth yönlendirir */
+    /* requireAuth yönlendirir ya da hata kartını kendisi çizer */
   } finally {
     showLoading(false);
   }

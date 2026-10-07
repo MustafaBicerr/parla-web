@@ -22,9 +22,22 @@ function loadIntlTelInput() {
     const script = document.createElement("script");
     script.src =
       "https://cdn.jsdelivr.net/npm/intl-tel-input@23.0.4/build/js/intlTelInput.min.js";
-    script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Telefon bileşeni yüklenemedi."));
+    const timer = setTimeout(() => reject(new Error("Telefon bileşeni zamanında yüklenemedi.")), 15000);
+    script.onload = () => {
+      clearTimeout(timer);
+      if (typeof window.intlTelInput === "function") resolve();
+      else reject(new Error("Telefon bileşeni eksik yüklendi."));
+    };
+    script.onerror = () => {
+      clearTimeout(timer);
+      reject(new Error("Telefon bileşeni yüklenemedi."));
+    };
     document.head.appendChild(script);
+  });
+  // Başarısız yükleme önbelleğe alınmaz: bağlantı düzelince yeniden denenebilir.
+  loadPromise = loadPromise.catch((err) => {
+    loadPromise = null;
+    throw err;
   });
   return loadPromise;
 }
@@ -82,7 +95,7 @@ export function formatPhoneDisplay(value) {
   if (v.startsWith("+") && v.length > 4) {
     return v.replace(/(\+\d{1,3})(\d{3})(\d{3})(\d+)/, "$1 $2 $3 $4").trim();
   }
-  return value;
+  return String(value);
 }
 
 export function isValidPhoneValue(value) {

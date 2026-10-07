@@ -14,9 +14,11 @@ import {
   toast,
   showLoading,
   handleError,
+  handleLoadError,
   escapeHtml,
 } from "../ui-shell.js";
 import { required } from "../validators.js";
+import { isDuplicateName } from "../entity-utils.js";
 
 let session = null;
 let departments = [];
@@ -47,7 +49,7 @@ async function init() {
     bindEvents();
   } catch (err) {
     if (err.message !== "not_authenticated" && err.message !== "not_admin") {
-      handleError(err, "Sayfa yüklenemedi");
+      handleLoadError(err, "Sayfa yüklenemedi");
     }
   }
 }
@@ -61,7 +63,7 @@ async function loadData() {
     ]);
     renderTable();
   } catch (err) {
-    handleError(err, "Veriler yüklenemedi");
+    handleLoadError(err, "Veriler yüklenemedi");
   } finally {
     showLoading(false);
   }
@@ -77,10 +79,17 @@ function personnelCount(deptId) {
   ).length;
 }
 
+/** Departmanda (pasifler dahil) hiç personel kaydı var mı? Varsa gerçek silme sunulmaz. */
+function hasAnyPersonnel(deptId) {
+  return personnel.some((p) => p.department_id === deptId);
+}
+
+/** Durum anahtarı yalnız yazma yetkisi olanlarda etkindir (database.rules: departments yazma = super_admin; YON-22). */
 function activeToggle(id, isActive) {
   const checked = isActive !== false ? " checked" : "";
-  return `<label class="sv2-switch" title="Durum">
-    <input type="checkbox" class="dept-toggle" data-id="${escapeHtml(id)}"${checked}>
+  const writable = canWrite(session, "super");
+  return `<label class="sv2-switch" title="${writable ? "Durum" : "Durumu yalnızca Süper Admin değiştirebilir"}">
+    <input type="checkbox" class="dept-toggle" data-id="${escapeHtml(id)}" aria-label="Departman durumu"${checked}${writable ? "" : " disabled"}>
     <span class="sv2-switch-slider"></span>
   </label>`;
 }
@@ -119,7 +128,7 @@ function renderTable() {
             ${canWrite(session, "super") ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-secondary btn-edit" data-id="${escapeHtml(row.id || row.department_id)}">
               <i class="fas fa-edit"></i> Düzenle
             </button>` : ""}
-            ${canWrite(session, "super") ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-danger btn-delete" data-id="${escapeHtml(row.id || row.department_id)}">
+            ${canWrite(session, "super") && !hasAnyPersonnel(row.id || row.department_id) ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-danger btn-delete" data-id="${escapeHtml(row.id || row.department_id)}" title="Personeli olmayan departman kalıcı silinir">
               <i class="fas fa-trash"></i> Sil
             </button>` : ""}
           </div>`,
@@ -154,12 +163,12 @@ function deptFormBody(data) {
     <form id="dept-form">
       <div class="sv2-form-group">
         <label for="df-name">Departman Adı *</label>
-        <input type="text" id="df-name" value="${escapeHtml(d.name || "")}" required>
+        <input type="text" id="df-name" value="${escapeHtml(d.name || "")}" maxlength="100" required>
         <div class="sv2-field-error" id="err-name" hidden></div>
       </div>
       <div class="sv2-form-group">
         <label for="df-desc">Açıklama</label>
-        <textarea id="df-desc" rows="3">${escapeHtml(d.description || "")}</textarea>
+        <textarea id="df-desc" rows="3" maxlength="300">${escapeHtml(d.description || "")}</textarea>
       </div>
     </form>`;
 }
@@ -192,6 +201,12 @@ async function saveDept(editId) {
     errEl.textContent = "Departman adı zorunludur.";
     return;
   }
+  // Yinelenen ad (büyük/küçük harf ve Türkçe karakter duyarsız) kabul edilmez (YON-35).
+  if (isDuplicateName(departments, name, editId)) {
+    errEl.hidden = false;
+    errEl.textContent = "Bu adla bir departman zaten var.";
+    return;
+  }
 
   const payload = {
     name,
@@ -202,7 +217,8 @@ async function saveDept(editId) {
   try {
     const actor = { uid: session.uid, first_name: session.first_name, last_name: session.last_name };
     if (editId) {
-      await ParlaDb.updateDepartment(editId, {
+      // Ad değiştiyse personel kayıtlarındaki departman adı kopyaları da yayılır (YON-09).
+      const result = await ParlaDb.updateDepartmentAndSync(editId, {
         ...payload,
         updated_by: session.uid,
       });
@@ -214,7 +230,7 @@ async function saveDept(editId) {
         `Departman güncellendi: ${name}`,
         actor
       );
-      toast("Departman güncellendi.", "info");
+      toast(result.failed ? "Departman güncellendi ancak personel kayıtlarındaki ad tam güncellenemedi; yeniden kaydedin." : "Departman güncellendi.", result.failed ? "warning" : "success");
     } else {
       const created = await ParlaDb.createDepartment({
         ...payload,
@@ -230,7 +246,7 @@ async function saveDept(editId) {
         `Yeni departman: ${name}`,
         actor
       );
-      toast("Departman oluşturuldu.", "info");
+      toast("Departman oluşturuldu.", "success");
     }
     closeModal("dept-modal");
     await loadData();
@@ -254,10 +270,11 @@ async function toggleActive(id, isActive) {
       `Departman ${isActive ? "aktifleştirildi" : "pasifleştirildi"}`,
       { uid: session.uid, first_name: session.first_name, last_name: session.last_name }
     );
-    toast(isActive ? "Departman aktif." : "Departman pasif.", "info");
+    toast(isActive ? "Departman aktif." : "Departman pasif.", "success");
     await loadData();
   } catch (err) {
     handleError(err, "Durum güncellenemedi");
+    renderTable(); // anahtar gerçek duruma geri döner
   } finally {
     showLoading(false);
   }
@@ -266,24 +283,24 @@ async function toggleActive(id, isActive) {
 function confirmDelete(dept) {
   const id = dept.id || dept.department_id;
   renderConfirmDialog(
-    `"${dept.name}" departmanını silmek istediğinize emin misiniz? (Kayıt pasifleştirilecektir.)`,
-    () => softDelete(id, dept.name)
+    `"${dept.name}" departmanı KALICI olarak silinecek (bu departmanda personel kaydı yok). Devam edilsin mi?`,
+    () => deleteDept(id, dept.name)
   );
 }
 
-async function softDelete(id, name) {
+async function deleteDept(id, name) {
   showLoading(true);
   try {
-    await ParlaDb.updateDepartment(id, { is_active: false, updated_by: session.uid });
+    await ParlaDb.deleteDepartment(id);
     await ParlaDb.logActivity(
       "deleted",
       "department",
       id,
       name,
-      `Departman silindi (pasif): ${name}`,
+      `Departman silindi: ${name}`,
       { uid: session.uid, first_name: session.first_name, last_name: session.last_name }
     );
-    toast("Departman silindi.", "info");
+    toast("Departman silindi.", "success");
     await loadData();
   } catch (err) {
     handleError(err, "Silme başarısız");

@@ -1,5 +1,5 @@
 /**
- * Parla BT Ticket V2 — Admin Ticket Detayı
+ * Parla BT Ticket V2 — Admin Talep Detayı
  */
 import ParlaDb from "../firebase-client.js";
 import { requireAuth, PATHS } from "../auth-guard.js";
@@ -17,12 +17,16 @@ import {
   toast,
   showLoading,
   handleError,
+  handleLoadError,
+  withInflight,
   linkUser,
   linkCompany,
   linkPersonnel,
+  linkProject,
   renderModal,
   openModal,
   closeModal,
+  renderConfirmDialog,
   formatDate,
   formatDateTime,
   escapeHtml,
@@ -33,12 +37,25 @@ import {
   PRIORITIES,
   PRIORITY_LABELS,
   ROLES,
+  TICKET_TYPES,
+  TICKET_TYPE_LABELS,
   formatStatusLabel,
   formatPriorityLabel,
   formatSapModuleLabel,
   getTicketKey,
+  allowedTransitions,
+  statusSelectOptions,
+  normalizeStatusCode,
+  findPersonnelForSession,
+  istanbulDateISO,
+  isDeletedTicket,
+  validateEffortInput,
+  validateReplyHours,
+  EFFORT_LIMITS,
 } from "../ticket-utils.js";
 import { minLength } from "../validators.js";
+import { sortTemplates, renderReplyTemplate } from "../entity-utils.js";
+import { safeHttpUrl, safeNumber, safeText } from "../safe-utils.js";
 import ParlaEmailService from "../email-service.js";
 import { markTicketSeen } from "../notifications.js";
 import {
@@ -62,6 +79,8 @@ let assignments = [];
 let efforts = [];
 let activeTab = "messages";
 let replyPicker = null;
+let replyTemplates = []; // hazır yanıt şablonları (WP-16)
+let allProjects = []; // PRJ talebinde proje seçimi (D-11 A)
 
 function getTicketId() {
   return new URLSearchParams(window.location.search).get("id");
@@ -72,28 +91,80 @@ function actorName() {
 }
 
 function getMyPersonnel() {
-  const email = String(session?.email || "").trim().toLowerCase();
-  return allPersonnel.find((p) => String(p.email || "").trim().toLowerCase() === email) || null;
+  // Önce açık kimlik bağı (personel.uid), yoksa e-posta (yedek).
+  return findPersonnelForSession(allPersonnel, session);
 }
 
 function canManageTicket() {
   return [ROLES.SUPER_ADMIN, ROLES.SERVICE_ADMIN, ROLES.PROJECT_MANAGER].includes(session?.role);
 }
 
-function isAssignedConsultant() {
-  const me = getMyPersonnel();
-  if (!me) return false;
-  const pid = me.personnel_id || me.id;
-  return assignments.some((a) => (a.personnel_id || a.id) === pid);
+function isAdminOnly() {
+  return [ROLES.SUPER_ADMIN, ROLES.SERVICE_ADMIN].includes(session?.role);
 }
 
+/** Danışmanın bu talepte atanmışlığı: kayıtlı atama (personel eşleşmesiyle) ya da talepteki assigned_uids haritası. */
+function consultantAssignmentState() {
+  const me = getMyPersonnel();
+  const pid = me ? me.personnel_id || me.id : "";
+  const byPersonnel = !!pid && assignments.some((a) => (a.personnel_id || a.id) === pid);
+  const byUid = ticket?.assigned_uids?.[session?.uid] === true;
+  // Yazma yetkisi kurallarda assigned_uids haritasına bağlıdır (D-08): atama var ama harita yoksa danışman yazamaz.
+  return { assigned: byPersonnel || byUid, writable: byUid, unlinked: byPersonnel && !byUid };
+}
+
+function isAssignedConsultant() {
+  return consultantAssignmentState().assigned;
+}
+
+/** Bu kullanıcı bu talepte yazabilir mi (durum/yanıt/iç not/efor)? Yöneticiler her zaman, danışman yalnız atandığı talepte. */
+function canWriteTicket() {
+  if (isDeletedTicket(ticket)) return false;
+  if (canManageTicket()) return true;
+  return session?.role === ROLES.CONSULTANT && consultantAssignmentState().writable;
+}
+
+function isTicketClosed() {
+  return String(ticket?.status || "").toLowerCase() === STATUSES.CLOSED;
+}
+
+/** Durum açılırı yalnız izinli geçişleri listeler; süper admin için matris dışı seçenekler ayrı gruptadır. */
 function statusOptions(selected) {
-  return Object.values(STATUSES)
-    .map((s) => {
-      const sel = s === selected ? " selected" : "";
-      return `<option value="${s}"${sel}>${escapeHtml(STATUS_LABELS[s])}</option>`;
+  const { current, allowed, override } = statusSelectOptions(selected, {
+    role: session?.role,
+    hasAssignee: !!ticket?.assigned_to_id || assignments.length > 0,
+  });
+  const opt = (s, suffix) => `<option value="${s}"${s === current ? " selected" : ""}>${escapeHtml(STATUS_LABELS[s])}${suffix || ""}</option>`;
+  let html = opt(current, " (mevcut)");
+  html += allowed.map((s) => opt(s)).join("");
+  if (override.length) {
+    html += `<optgroup label="Matris dışı (yalnız Süper Admin — gerekçe zorunlu)">${override.map((s) => opt(s)).join("")}</optgroup>`;
+  }
+  return html;
+}
+
+function typeOptions(selected) {
+  return Object.values(TICKET_TYPES)
+    .map((t) => `<option value="${t}"${t === String(selected || "").toUpperCase() ? " selected" : ""}>${escapeHtml(t)} — ${escapeHtml(TICKET_TYPE_LABELS[t] || t)}</option>`)
+    .join("");
+}
+
+/** PRJ talebinde seçilebilir projeler: talebin firmasının projeleri + (varsa) mevcut proje. */
+function projectOptions(selectedId) {
+  const list = allProjects
+    .filter((p) => (p.id || p.project_id) === selectedId || (p.company_id === ticket.company_id && p.status !== "cancelled"))
+    .sort((a, b) => String(a.project_code || "").localeCompare(String(b.project_code || ""), "tr"));
+  return list
+    .map((p) => {
+      const id = p.id || p.project_id;
+      return `<option value="${escapeHtml(id)}"${id === selectedId ? " selected" : ""}>${escapeHtml(p.project_code || "")} — ${escapeHtml(p.name || "")}</option>`;
     })
     .join("");
+}
+
+function projectNameFor(id) {
+  const p = allProjects.find((x) => (x.id || x.project_id) === id);
+  return p ? `${p.project_code || ""} — ${p.name || ""}`.trim() : id || "";
 }
 
 function priorityOptions(selected) {
@@ -113,19 +184,25 @@ function personnelAssignmentCheckboxes() {
     ticket.assigned_to_id ||
     "";
 
-  return allPersonnel
-    .filter((p) => p.is_active !== false)
+  // Pasif danışman atanmışsa listede (işaretli, "pasif" etiketiyle) kalır: ilgisiz bir güncelleme onu sessizce çıkarmaz.
+  const listed = allPersonnel.filter((p) => p.is_active !== false || assignedIds.has(p.personnel_id || p.id));
+  // Kişi kaydı bulunamayan eski atamalar da (silinmiş personel) görünür kalsın.
+  const known = new Set(allPersonnel.map((p) => p.personnel_id || p.id));
+  const orphans = assignments
+    .filter((a) => !known.has(a.personnel_id || a.id))
+    .map((a) => ({ personnel_id: a.personnel_id || a.id, first_name: a.personnel_name || "", last_name: "", is_active: false }));
+  return [...listed, ...orphans]
     .sort((a, b) =>
       `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`, "tr")
     )
     .map((p) => {
       const id = p.personnel_id || p.id;
-      const name = [p.first_name, p.last_name].filter(Boolean).join(" ");
+      const name = [p.first_name, p.last_name].filter(Boolean).join(" ") + (p.is_active === false ? " (pasif)" : "");
       const checked = assignedIds.has(id);
       const isPrimary = id === primaryId;
       return `<div class="sv2-assign-row${checked ? " is-assigned" : ""}" data-id="${escapeHtml(id)}">
         <div class="sv2-assign-col sv2-assign-col-check">
-          <input type="checkbox" class="sv2-assign-check" id="sv2-assign-${escapeHtml(id)}" value="${escapeHtml(id)}" data-name="${escapeHtml(name)}"${checked ? " checked" : ""} aria-label="${escapeHtml(name)} — tickete ata">
+          <input type="checkbox" class="sv2-assign-check" id="sv2-assign-${escapeHtml(id)}" value="${escapeHtml(id)}" data-name="${escapeHtml(name)}"${checked ? " checked" : ""} aria-label="${escapeHtml(name)} — talebe ata">
         </div>
         <label class="sv2-assign-col sv2-assign-col-name" for="sv2-assign-${escapeHtml(id)}">${escapeHtml(name)}</label>
         <div class="sv2-assign-col sv2-assign-col-primary">
@@ -187,7 +264,8 @@ function renderAssignmentsTable() {
 }
 
 function renderEffortsTable() {
-  const canDelete = canManageTicket();
+  // Silme: yönetici roller her kaydı, danışman yalnız kendi girdiği kaydı silebilir (K-PER-9).
+  const writable = canWriteTicket();
   const rows = efforts.map((e) => ({
     id: e.effort_id || e.id,
     personnel_name: e.personnel_name || "—",
@@ -195,7 +273,9 @@ function renderEffortsTable() {
     hours: e.hours,
     note: e.note || "—",
     created_by_name: e.created_by_name || "—",
+    can_delete: writable && (canManageTicket() || e.created_by_uid === session?.uid),
   }));
+  const canDelete = rows.some((r) => r.can_delete);
 
   if (!rows.length) {
     return renderEmptyState("Henüz efor kaydı yok.", "fa-clock");
@@ -214,7 +294,9 @@ function renderEffortsTable() {
               key: "id",
               label: "İŞLEM",
               render: (_, row) =>
-                `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-outline sv2-effort-del" data-id="${escapeHtml(row.id)}">Sil</button>`,
+                row.can_delete
+                  ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-outline sv2-effort-del" data-id="${escapeHtml(row.id)}">Sil</button>`
+                  : "",
             },
           ]
         : []),
@@ -239,30 +321,33 @@ function eventForStatus(status) {
   }
 }
 
-/** Yaşam döngüsü hızlı işlemleri: mevcut duruma göre mantıklı sonraki adımlar. */
+/** Yaşam döngüsü hızlı işlemleri: durum makinesinin izinli geçişlerinden, role uygun olanlar. */
 function quickActionList() {
-  const s = String(ticket.status || "").toLowerCase();
+  const s = String(ticket.status || "").toLowerCase() || STATUSES.OPEN;
   const manager = canManageTicket();
+  const allowed = allowedTransitions(s, { role: session?.role, hasAssignee: !!ticket.assigned_to_id || assignments.length > 0 });
+  const has = (target) => allowed.includes(target);
   const list = [];
-  if (s === STATUSES.OPEN || s === STATUSES.ASSIGNED) {
+  if (has(STATUSES.IN_PROGRESS) && [STATUSES.OPEN, STATUSES.ASSIGNED, STATUSES.REOPENED].includes(s)) {
     list.push({ id: "sv2-start-work", label: "İşleme Al", icon: "fa-play", primary: true });
   }
-  if (s === STATUSES.IN_PROGRESS || s === STATUSES.REOPENED) {
+  if (has(STATUSES.WAITING_CUSTOMER) && [STATUSES.IN_PROGRESS, STATUSES.REOPENED].includes(s)) {
     list.push({ status: STATUSES.WAITING_CUSTOMER, label: "Müşteri Testine Gönder", icon: "fa-user-clock" });
+  }
+  if (has(STATUSES.PENDING_CLOSE) && [STATUSES.IN_PROGRESS, STATUSES.REOPENED, STATUSES.WAITING_CUSTOMER].includes(s)) {
     list.push({ status: STATUSES.PENDING_CLOSE, label: "Kapanış Onayı İste", icon: "fa-clipboard-check", primary: true });
   }
-  if (s === STATUSES.WAITING_CUSTOMER) {
+  if ((s === STATUSES.WAITING_CUSTOMER || s === STATUSES.PENDING_CLOSE) && has(STATUSES.IN_PROGRESS)) {
     list.push({ status: STATUSES.IN_PROGRESS, label: "İşleme Geri Al", icon: "fa-undo" });
-    list.push({ status: STATUSES.PENDING_CLOSE, label: "Kapanış Onayı İste", icon: "fa-clipboard-check", primary: true });
   }
-  if (s === STATUSES.PENDING_CLOSE) {
-    list.push({ status: STATUSES.IN_PROGRESS, label: "İşleme Geri Al", icon: "fa-undo" });
-    if (manager) list.push({ status: STATUSES.CLOSED, label: "Müşteri Adına Kapat", icon: "fa-lock" });
+  if (manager && s === STATUSES.PENDING_CLOSE && has(STATUSES.CLOSED)) {
+    list.push({ status: STATUSES.CLOSED, label: "Müşteri Adına Kapat", icon: "fa-lock" });
   }
   if (manager && s === STATUSES.RESOLVED) {
-    list.push({ status: STATUSES.CLOSED, label: "Kapat", icon: "fa-lock", primary: true });
+    if (has(STATUSES.CLOSED)) list.push({ status: STATUSES.CLOSED, label: "Kapat", icon: "fa-lock", primary: true });
+    if (has(STATUSES.IN_PROGRESS)) list.push({ status: STATUSES.IN_PROGRESS, label: "Çözümü Geri Al", icon: "fa-undo" });
   }
-  if (manager && s === STATUSES.CLOSED) {
+  if (manager && s === STATUSES.CLOSED && has(STATUSES.REOPENED)) {
     list.push({ status: STATUSES.REOPENED, label: "Yeniden Aç", icon: "fa-undo" });
   }
   return list;
@@ -297,7 +382,7 @@ function openQuickStatusModal(status) {
     [STATUSES.PENDING_CLOSE]: "Müşteriye kapanış onayı e-postası gidecek. Yapılan çözümü kısaca özetleyin.",
     [STATUSES.CLOSED]: "Talep müşteri adına kapatılacak. Kapanış gerekçesini yazın.",
     [STATUSES.REOPENED]: "Talep yeniden açılacak. Gerekçeyi yazın.",
-    [STATUSES.IN_PROGRESS]: "Talep tekrar işleme alınacak. Gerekçeyi yazın.",
+    [STATUSES.IN_PROGRESS]: "Talep yeniden işleme alınacak. Gerekçeyi yazın.",
   }[status] || "Değişiklik notunu yazın.";
   renderModal("sv2-quick-status-modal", {
     title: `Durum: ${label}`,
@@ -310,10 +395,11 @@ function openQuickStatusModal(status) {
       </div>`,
     footer: `
       <button type="button" class="sv2-btn sv2-btn-secondary" data-close="sv2-quick-status-modal">Vazgeç</button>
-      <button type="button" class="sv2-btn sv2-btn-primary" id="sv2-quick-confirm">${escapeHtml(label)} Olarak Kaydet</button>`,
+      <button type="button" class="sv2-btn sv2-btn-primary" id="sv2-quick-confirm">Durumu Kaydet</button>`,
   });
   openModal("sv2-quick-status-modal");
-  document.getElementById("sv2-quick-confirm")?.addEventListener("click", async () => {
+  const quickConfirmBtn = document.getElementById("sv2-quick-confirm");
+  quickConfirmBtn?.addEventListener("click", () => withInflight(quickConfirmBtn, async () => {
     const note = document.getElementById("sv2-quick-note").value.trim();
     if (!minLength(note, 10)) {
       const err = document.getElementById("sv2-quick-error");
@@ -323,46 +409,85 @@ function openQuickStatusModal(status) {
     }
     closeModal("sv2-quick-status-modal");
     await applyQuickStatus(status, note);
-  });
+  }));
+}
+
+/** Yazma hatası: çakışma/geçersiz geçiş iletisini göster ve ekranı gerçek duruma yenile (yarım kayıt yok). */
+async function handleWriteError(err, context) {
+  if (["status_conflict", "invalid_transition", "ticket_deleted", "note_required", "invalid_effort"].includes(err?.code)) {
+    toast(err.message, "error");
+    if (err.code !== "invalid_effort" && err.code !== "note_required") {
+      try {
+        await reloadTicketData();
+        renderPage();
+      } catch {
+        /* yenileme başarısız: ileti yeterli */
+      }
+    }
+    return;
+  }
+  handleError(err, context);
+}
+
+async function reloadTicketData() {
+  const id = getTicketKey(ticket);
+  const [t, msgs, hist, assign, eff] = await Promise.all([
+    ParlaDb.getTicket(id),
+    ParlaDb.getTicketMessages(id, { includeInternal: true }),
+    ParlaDb.getTicketHistory(id),
+    ParlaDb.getTicketAssignments(id),
+    ParlaDb.getTicketEfforts(id),
+  ]);
+  if (t) ticket = t;
+  messages = msgs;
+  history = hist;
+  assignments = assign;
+  efforts = eff;
 }
 
 async function applyQuickStatus(status, note) {
   showLoading(true);
   try {
     const id = getTicketKey(ticket);
-    const previous = ticket.status;
-    const patch = { status };
-    if (status === STATUSES.IN_PROGRESS && !ticket.started_at) patch.started_at = new Date().toISOString();
-    if (status === STATUSES.REOPENED && previous === STATUSES.CLOSED) patch.closed_at = null;
-    const updated = await ParlaDb.updateTicket(id, patch, session);
-    await ParlaDb.addTicketHistory(id, {
-      action: "status_note",
-      field_changed: "status",
-      old_value: formatStatusLabel(previous),
-      new_value: formatStatusLabel(status),
-      changed_by_uid: session.uid,
-      changed_by_name: actorName(),
+    const report = {};
+    const updated = await ParlaDb.updateTicket(id, { status }, session, {
+      expectedStatus: ticket.status,
       note,
+      report,
+      activity: { action: "ticket_updated" },
     });
-    await ParlaDb.logActivity("ticket_updated", "ticket", id, updated.ticket_number, `${formatStatusLabel(status)}`, session);
     ticket = updated;
     history = await ParlaDb.getTicketHistory(id);
     toast("Durum güncellendi.", "success");
     renderPage();
-    sendNotifications(eventForStatus(status), updated, { note }).catch(() => {});
+    // E-posta metnini sunucu geçmiş kaydından (history_id) türetir; istemci not göndermez.
+    sendNotifications(eventForStatus(status), updated, { history_id: report.statusHistoryId }).catch(() => {});
   } catch (err) {
-    handleError(err, "Durum güncelleme");
+    await handleWriteError(err, "Durum güncelleme");
   } finally {
     showLoading(false);
   }
 }
 
 function renderAdminPanel() {
+  if (isDeletedTicket(ticket)) {
+    return `<div class="sv2-warning-card">
+      <i class="fas fa-archive"></i>
+      <div><p class="sv2-warning-text">Bu talep silinmiş (arşivde). Düzenlemek için önce geri yüklenmelidir.</p></div>
+    </div>`;
+  }
   if (session.role === ROLES.CONSULTANT && !canManageTicket()) {
-    if (!isAssignedConsultant()) {
+    const state = consultantAssignmentState();
+    if (!state.assigned) {
       return `<div class="sv2-warning-card">
         <i class="fas fa-info-circle"></i>
-        <div><p class="sv2-warning-text">Bu ticket size atanmadığı için yalnızca görüntüleyebilirsiniz.</p></div>
+        <div><p class="sv2-warning-text">Bu talep size atanmadığı için yalnızca görüntüleyebilirsiniz. Yanıt, iç not, durum ve efor işlemleri yalnızca atanmış danışmanlara açıktır.</p></div>
+      </div>`;
+    }
+    if (!state.writable) {
+      return `<div class="sv2-warning-card">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div><p class="sv2-warning-text">Bu talep size atanmış görünüyor ancak kullanıcı hesabınızla eşleşmesi tamamlanmamış; işlem yapabilmeniz için yöneticinizden "Personel ↔ kullanıcı eşleştir" aracını çalıştırmasını isteyin.</p></div>
       </div>`;
     }
     return `
@@ -386,6 +511,14 @@ function renderAdminPanel() {
           <label for="sv2-admin-priority">Öncelik</label>
           <select id="sv2-admin-priority">${priorityOptions(ticket.priority)}</select>
         </div>
+        <div class="sv2-form-group">
+          <label for="sv2-admin-type">Talep Tipi</label>
+          <select id="sv2-admin-type">${typeOptions(ticket.ticket_type)}</select>
+        </div>
+      </div>
+      <div class="sv2-form-group" id="sv2-admin-project-group"${String(ticket.ticket_type || "").toUpperCase() === "PRJ" ? "" : " hidden"}>
+        <label for="sv2-admin-project">Proje <span class="sv2-text-muted">(PRJ talepleri için)</span></label>
+        <select id="sv2-admin-project"><option value="">— Proje seçilmedi —</option>${projectOptions(ticket.project_id || "")}</select>
       </div>
       <div class="sv2-form-group sv2-assign-group">
         <label>Danışman Ataması</label>
@@ -393,8 +526,8 @@ function renderAdminPanel() {
           <div class="sv2-assign-help-item">
             <span class="sv2-assign-help-icon" aria-hidden="true"><i class="fas fa-check-square"></i></span>
             <div>
-              <strong>Sol — Tickete ata</strong>
-              <p>Bu ticket üzerinde çalışacak danışmanları işaretleyin. Birden fazla seçebilirsiniz.</p>
+              <strong>Sol — Talebe ata</strong>
+              <p>Bu talep üzerinde çalışacak danışmanları işaretleyin. Birden fazla seçebilirsiniz.</p>
             </div>
           </div>
           <div class="sv2-assign-help-item">
@@ -417,71 +550,111 @@ function renderAdminPanel() {
         </div>
       </div>
       <div class="sv2-form-group">
-        <label for="sv2-admin-status-note">Durum Değişiklik Notu</label>
-        <textarea id="sv2-admin-status-note" rows="2" placeholder="Durum değiştirirken en az 10 karakter not giriniz"></textarea>
+        <label for="sv2-admin-status-note">Durum Değişiklik Notu <span class="sv2-text-muted">(müşteriye iletilir)</span></label>
+        <textarea id="sv2-admin-status-note" rows="2" maxlength="1000" placeholder="Durum değiştirirken en az 10 karakter not girin"></textarea>
       </div>
       <button type="button" class="sv2-btn sv2-btn-primary" id="sv2-admin-update">Güncelle</button>
     </div>`;
 }
 
 function renderEffortForm() {
-  const canAdd = canManageTicket() || isAssignedConsultant();
-  if (!canAdd) return "";
+  if (!canWriteTicket()) return "";
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = istanbulDateISO();
+  const min = new Date(Date.now() - EFFORT_LIMITS.maxBackfillDays * 86400000);
   return `
     <div class="sv2-form-row sv2-mt-1" style="align-items:end">
       <div class="sv2-form-group">
         <label for="sv2-effort-hours">Saat *</label>
-        <input type="number" id="sv2-effort-hours" min="0.25" step="0.25" value="1">
+        <input type="number" id="sv2-effort-hours" min="${EFFORT_LIMITS.minHours}" max="${EFFORT_LIMITS.maxHours}" step="${EFFORT_LIMITS.stepHours}" value="1">
       </div>
       <div class="sv2-form-group">
         <label for="sv2-effort-date">Tarih *</label>
-        <input type="date" id="sv2-effort-date" value="${today}">
+        <input type="date" id="sv2-effort-date" value="${today}" max="${today}" min="${istanbulDateISO(min)}">
       </div>
       <div class="sv2-form-group" style="flex:2">
         <label for="sv2-effort-note">Not</label>
-        <input type="text" id="sv2-effort-note" placeholder="Yapılan işlem...">
+        <input type="text" id="sv2-effort-note" maxlength="${EFFORT_LIMITS.maxNoteLength}" placeholder="Yapılan işlem...">
       </div>
       <button type="button" class="sv2-btn sv2-btn-primary" id="sv2-effort-add">Efor Ekle</button>
     </div>`;
 }
 
+const HISTORY_FIELD_LABELS = {
+  status: "Durum",
+  priority: "Öncelik",
+  ticket_type: "Talep Tipi",
+  project_id: "Proje",
+  assigned_to_id: "Danışman",
+  assigned_to_name: "Danışman",
+  assignment: "Danışman Ataması",
+  effort: "Efor",
+  is_deleted: "Arşiv",
+  ticket: "Talep",
+  created: "Oluşturma",
+};
+
 function historyActionLabel(entry) {
-  const field = entry.field_changed || entry.action || "";
-  const map = {
-    status: "Durum",
-    priority: "Öncelik",
-    assigned_to_id: "Danışman",
-    assigned_to_name: "Danışman",
-    ticket: "Ticket",
-    created: "Oluşturma",
-  };
-  let oldV = entry.old_value || "—";
-  let newV = entry.new_value || "—";
+  // Zehirli kayıt dayanıklılığı (SEC-02): alanlar dize değilse boş dizeye çevrilir.
+  const field = safeText(entry.field_changed) || safeText(entry.action);
+  let oldV = safeText(entry.old_value) || "—";
+  let newV = safeText(entry.new_value) || "—";
   if (field === "status") {
-    oldV = formatStatusLabel(oldV);
-    newV = formatStatusLabel(newV);
+    oldV = formatStatusLabel(normalizeStatusCode(oldV));
+    newV = formatStatusLabel(normalizeStatusCode(newV));
   } else if (field === "priority") {
     oldV = formatPriorityLabel(oldV);
     newV = formatPriorityLabel(newV);
+  } else if (entry.action === "assignment_added") {
+    oldV = "—";
+  } else if (entry.action === "assignment_removed") {
+    newV = "—";
   }
-  return { label: map[field] || field.replace(/_/g, " "), oldV, newV };
+  const label = entry.action === "ticket_restored" ? "Arşiv (geri yükleme)" : HISTORY_FIELD_LABELS[field] || field.replace(/_/g, " ");
+  return { label, oldV, newV };
+}
+
+/**
+ * Geçmiş tablosu: değişiklik başına tek satır. Eski kayıtlardaki çift satırlar (durum için `status_changed` + `status_note`,
+ * danışman için ham kimlikli `assigned_to_id_changed` + adlı satır) birleştirilir/gizlenir.
+ */
+function visibleHistory() {
+  const noted = history.filter((h) => h.action === "status_note");
+  return history.filter((h) => {
+    if (h.field_changed === "assigned_to_id") return false; // ham personel kimliği gösterilmez
+    if (
+      h.action === "status_changed" &&
+      noted.some(
+        (n) =>
+          normalizeStatusCode(n.new_value) === normalizeStatusCode(h.new_value) &&
+          Math.abs(new Date(n.changed_at) - new Date(h.changed_at)) < 60000
+      )
+    ) {
+      return false;
+    }
+    return true;
+  });
 }
 
 function renderHistoryTable() {
-  if (!history.length) return renderEmptyState("Geçmiş kaydı bulunamadı.", "fa-history");
-  const rows = history
+  const shown = visibleHistory();
+  if (!shown.length) return renderEmptyState("Geçmiş kaydı bulunamadı.", "fa-history");
+  const rows = shown
     .map((h) => {
-      const { label, oldV, newV } = historyActionLabel(h);
-      return `<tr>
-        <td>${escapeHtml(formatDateTime(h.changed_at))}</td>
-        <td>${escapeHtml(h.changed_by_name || "Sistem")}</td>
+      try {
+        const { label, oldV, newV } = historyActionLabel(h);
+        return `<tr>
+        <td>${escapeHtml(formatDateTime(safeText(h.changed_at)))}</td>
+        <td>${escapeHtml(safeText(h.changed_by_name) || "Sistem")}</td>
         <td>${escapeHtml(label)}</td>
         <td>${escapeHtml(oldV)}</td>
         <td>${escapeHtml(newV)}</td>
-        <td>${escapeHtml(h.note || "—")}</td>
+        <td>${escapeHtml(safeText(h.note) || "—")}</td>
       </tr>`;
+      } catch (err) {
+        console.warn("[Parla V2] geçmiş kaydı atlandı", err); // tek bozuk kayıt sekmeyi kilitlemesin
+        return "";
+      }
     })
     .join("");
   return `<div class="sv2-table-wrap"><table class="sv2-table">
@@ -497,10 +670,10 @@ function renderMessagesTimeline(includeInternal) {
   }
   return renderTimeline(
     filtered.map((m) => ({
-      author: m.author_name,
-      author_role: m.is_internal ? "internal" : m.author_role,
+      author: safeText(m.author_name),
+      author_role: m.is_internal ? "internal" : safeText(m.author_role),
       created_at: m.created_at,
-      message: (m.is_internal ? "[İç Not] " : "") + (m.message || "") + (m.work_hours ? ` (${m.work_hours} saat)` : ""),
+      message: (m.is_internal ? "[İç Not] " : "") + safeText(m.message) + (safeNumber(m.work_hours) ? ` (${safeNumber(m.work_hours)} saat)` : ""),
       attachments_html: renderAttachmentChips(m.attachments, getTicketKey(ticket), m.is_internal),
     }))
   );
@@ -513,10 +686,10 @@ function renderInternalNotes() {
     .map(
       (m) => `<div class="sv2-section" style="margin-bottom:0.75rem;padding:0.875rem 1rem;border-left:3px solid var(--sv2-warning)">
         <div style="display:flex;justify-content:space-between;font-size:0.8125rem;margin-bottom:0.5rem">
-          <strong>${escapeHtml(m.author_name || "—")}</strong>
-          <span class="sv2-text-muted">${escapeHtml(formatDateTime(m.created_at))}${m.work_hours ? ` · ${m.work_hours} saat` : ""}</span>
+          <strong>${escapeHtml(safeText(m.author_name) || "—")}</strong>
+          <span class="sv2-text-muted">${escapeHtml(formatDateTime(safeText(m.created_at)))}${safeNumber(m.work_hours) ? ` · ${escapeHtml(String(safeNumber(m.work_hours)))} saat` : ""}</span>
         </div>
-        <div>${escapeHtml(m.message || "")}</div>
+        <div>${escapeHtml(safeText(m.message))}</div>
         ${renderAttachmentChips(m.attachments, getTicketKey(ticket), true)}
       </div>`
     )
@@ -529,10 +702,11 @@ function buildContent() {
 
   return `
     ${renderBreadcrumb([
-      { label: "Ticketlar", href: PATHS.adminTickets },
+      { label: "Talepler", href: PATHS.adminTickets },
       { label: ticket.ticket_number || id },
     ])}
 
+    ${renderDeletedBanner()}
     <div class="sv2-section sv2-mb-1">
       <div class="sv2-section-header">
         <div>
@@ -547,11 +721,16 @@ function buildContent() {
         <p style="margin:0 0 1rem;line-height:1.6">${escapeHtml(ticket.description || "—")}</p>
         <div class="sv2-meta-grid">
           <div class="sv2-meta-item"><label>SAP Modülü</label><span>${escapeHtml(formatSapModuleLabel(ticket.sap_module))}</span></div>
+          ${ticket.project_id ? `<div class="sv2-meta-item"><label>Proje</label><div id="sv2-ticket-project">${linkProject(ticket.project_id, projectNameFor(ticket.project_id))}</div></div>` : ""}
           <div class="sv2-meta-item"><label>Oluşturma</label><span>${escapeHtml(formatDateTime(ticket.created_at))}</span></div>
           <div class="sv2-meta-item"><label>Atama Tarihi</label><span>${escapeHtml(formatDateTime(ticket.assigned_at))}</span></div>
           <div class="sv2-meta-item"><label>Güncelleme</label><span>${escapeHtml(formatDateTime(ticket.updated_at))}</span></div>
           <div class="sv2-meta-item"><label>SLA</label><div>${renderSlaBadge(ticket)}</div></div>
           <div class="sv2-meta-item"><label>İlk Yanıt</label><span>${escapeHtml(ticket.first_response_at ? formatDateTime(ticket.first_response_at) : "Henüz yanıtlanmadı")}</span></div>
+          ${ticket.started_at ? `<div class="sv2-meta-item"><label>İşleme Alınma</label><span>${escapeHtml(formatDateTime(ticket.started_at))}</span></div>` : ""}
+          ${ticket.resolved_at ? `<div class="sv2-meta-item"><label>Çözüm (Kapanış Onayına Geçiş)</label><span>${escapeHtml(formatDateTime(ticket.resolved_at))}</span></div>` : ""}
+          ${ticket.closed_at ? `<div class="sv2-meta-item"><label>Kapanış</label><span>${escapeHtml(formatDateTime(ticket.closed_at))}</span></div>` : ""}
+          ${ticket.reopened_at ? `<div class="sv2-meta-item"><label>Son Yeniden Açılma</label><span>${escapeHtml(formatDateTime(ticket.reopened_at))}</span></div>` : ""}
           <div class="sv2-meta-item"><label>Toplam Efor</label><span><strong>${escapeHtml(String(parseFloat(ticket.total_work_hours) || 0))} saat</strong></span></div>
         </div>
       </div>
@@ -571,6 +750,7 @@ function buildContent() {
             <div class="sv2-meta-item"><label>Firma</label><div>${ticket.company_id ? linkCompany(ticket.company_id, ticket.company_name) : escapeHtml(ticket.company_name || "—")}</div></div>
             <div class="sv2-meta-item"><label>Müşteri No</label><span>${escapeHtml(ticket.customer_code || "—")}</span></div>
             <div class="sv2-meta-item"><label>Danışman(lar)</label><span>${escapeHtml(consultantNames)}</span></div>
+            ${renderAttachmentUrlItem()}
           </div>
         </div>
       </div>
@@ -609,9 +789,93 @@ function buildContent() {
           }
         )}</div>
         <div id="sv2-tab-content">${activeTab === "history" ? renderHistoryTable() : renderMessagesTimeline(false)}</div>
+        ${renderReplyBox()}
+      </div>
+    </div>`;
+}
+
+/** SEN-12/SEC-29: müşterinin "Ek Bağlantı"sı personele görünür; yalnız http(s) bağlantı olarak çizilir. */
+function renderAttachmentUrlItem() {
+  const raw = safeText(ticket.attachment_url).trim();
+  if (!raw) return "";
+  const href = safeHttpUrl(raw);
+  const body = href
+    ? `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" class="sv2-link" id="sv2-attachment-url"><i class="fas fa-paperclip"></i> ${escapeHtml(href.length > 60 ? `${href.slice(0, 57)}…` : href)}</a>`
+    : `<span class="sv2-text-muted" title="Yalnızca http/https adresleri açılır">Geçersiz bağlantı: ${escapeHtml(raw.slice(0, 80))}</span>`;
+  return `<div class="sv2-meta-item"><label>Ek Bağlantı</label><div>${body}</div></div>`;
+}
+
+function renderDeletedBanner() {
+  if (!isDeletedTicket(ticket)) return "";
+  const when = ticket.deleted_at ? formatDateTime(ticket.deleted_at) : "";
+  return `<div class="sv2-warning-card sv2-mb-1" id="sv2-deleted-banner">
+    <i class="fas fa-archive"></i>
+    <div style="flex:1">
+      <p class="sv2-warning-text">Bu talep silinmiş (arşivde)${when ? ` — ${escapeHtml(when)}` : ""}. Listelerde, panoda ve raporlarda görünmez; veriler korunur.</p>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem">
+        ${isAdminOnly() ? '<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-primary" id="sv2-restore-ticket">Geri Yükle</button>' : ""}
+        ${session.role === ROLES.SUPER_ADMIN ? '<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-danger" id="sv2-permanent-delete">Kalıcı Sil</button>' : ""}
+      </div>
+    </div>
+  </div>`;
+}
+
+/** "Şablon ekle" seçici (WP-16): yalnız aktif şablonlar; hepsi kaçışlı. Şablon yoksa görünmez. */
+function renderTemplatePicker() {
+  const list = sortTemplates(replyTemplates, { onlyActive: true });
+  if (!list.length) return "";
+  const options = list
+    .map((t) => {
+      const id = t.id || t.template_id;
+      const label = t.category ? `${t.category} — ${t.title}` : t.title;
+      return `<option value="${escapeHtml(id)}">${escapeHtml(label)}</option>`;
+    })
+    .join("");
+  return `<div class="sv2-form-group" style="margin-bottom:0.5rem">
+            <label for="sv2-reply-template">Şablon ekle</label>
+            <select id="sv2-reply-template"><option value="">— Hazır yanıt seçin —</option>${options}</select>
+          </div>`;
+}
+
+/** Seçilen şablonu değişkenleri doldurarak yanıt kutusuna ekler (imleç konumuna; yoksa sona). */
+function insertReplyTemplate(templateId) {
+  const tpl = replyTemplates.find((t) => (t.id || t.template_id) === templateId);
+  const box = document.getElementById("sv2-reply-message");
+  if (!tpl || !box) return;
+  const text = renderReplyTemplate(tpl.body, {
+    musteri_adi: ticket.user_name || "",
+    talep_no: ticket.ticket_number || "",
+    danisman: actorName(),
+  });
+  const current = box.value;
+  if (!current.trim()) {
+    box.value = text;
+  } else if (document.activeElement === box && typeof box.selectionStart === "number") {
+    const start = box.selectionStart;
+    const end = box.selectionEnd;
+    box.value = current.slice(0, start) + text + current.slice(end);
+    box.selectionStart = box.selectionEnd = start + text.length;
+  } else {
+    box.value = `${current}${current.endsWith("\n") ? "" : "\n\n"}${text}`;
+  }
+  box.focus();
+  box.dispatchEvent(new Event("input", { bubbles: true })); // taslak saklama vb. dinleyiciler çalışsın
+}
+
+/** Yanıt kutusu: yalnız yazma yetkisi olan kişiye ve kapalı olmayan talepte açıktır. */
+function renderReplyBox() {
+  if (isDeletedTicket(ticket)) return "";
+  if (!canWriteTicket()) {
+    return `<p class="sv2-text-muted" id="sv2-reply-blocked" style="margin:0.75rem 0 0">Bu talepte yanıt veya iç not yazma yetkiniz yok; yalnızca atanmış danışmanlar ve yönetici roller yazabilir.</p>`;
+  }
+  if (isTicketClosed()) {
+    return `<p class="sv2-text-muted" id="sv2-reply-blocked" style="margin:0.75rem 0 0">Bu talep kapalı; yanıt veya iç not yazmak için önce ${canManageTicket() ? '"Yeniden Aç" işlemini uygulayın' : "yöneticiden yeniden açmasını isteyin"}.</p>`;
+  }
+  return `
         <div class="sv2-reply-box">
+          ${renderTemplatePicker()}
           <label for="sv2-reply-message"><strong>Yanıt Yaz</strong></label>
-          <textarea id="sv2-reply-message" placeholder="Müşteriye veya iç ekibe yanıt yazın..."></textarea>
+          <textarea id="sv2-reply-message" data-keep-draft maxlength="10000" placeholder="Müşteriye veya iç ekibe yanıt yazın..."></textarea>
           ${renderFilePicker("sv2-reply")}
           <div class="sv2-reply-actions">
             <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer">
@@ -620,14 +884,12 @@ function buildContent() {
             <div style="display:flex;align-items:center;gap:0.75rem">
               <label style="display:flex;align-items:center;gap:0.35rem;font-size:0.875rem">
                 Efor (saat)
-                <input type="number" id="sv2-reply-hours" min="0" step="0.25" value="0" style="width:80px">
+                <input type="number" id="sv2-reply-hours" min="0" max="${EFFORT_LIMITS.maxHours}" step="${EFFORT_LIMITS.stepHours}" value="0" style="width:80px">
               </label>
               <button type="button" class="sv2-btn sv2-btn-primary" id="sv2-reply-send">Gönder</button>
             </div>
           </div>
-        </div>
-      </div>
-    </div>`;
+        </div>`;
 }
 
 function renderTabContent() {
@@ -673,7 +935,10 @@ function personnelEmails(ids) {
 async function sendNotifications(eventType, updatedTicket, extra, newlyAssignedIds) {
   const me = session.email;
   let recipients;
-  if (eventType === "ticket_assigned") {
+  if (eventType === "ticket_assignment_changed" || eventType === "ticket_priority_critical") {
+    // WP-05: alıcılar SUNUCUDA türetilir (yeni/çıkarılan danışmanlar, müşteri, atanmış danışmanlar); "@assigned" yalnızca tetikleyicidir.
+    recipients = ["@assigned"];
+  } else if (eventType === "ticket_assigned") {
     recipients = personnelEmails(newlyAssignedIds || []);
   } else if (eventType === "send_to_customer" || eventType === "ticket_close_approval") {
     recipients = [updatedTicket.user_email];
@@ -696,135 +961,160 @@ async function sendNotifications(eventType, updatedTicket, extra, newlyAssignedI
   });
 }
 
+/** Atama değişti mi: üye kümesi VEYA birincil danışman (yalnız birincili değiştirmek de değişikliktir). */
+function assignmentDiff(selected) {
+  const prevIds = assignments.map((a) => a.personnel_id || a.id);
+  const prevPrimary = assignments.find((a) => a.is_primary)?.personnel_id || assignments.find((a) => a.is_primary)?.id || ticket.assigned_to_id || "";
+  const nextIds = selected.map((a) => a.personnel_id);
+  const nextPrimary = selected.find((a) => a.is_primary)?.personnel_id || "";
+  const membersChanged = JSON.stringify([...nextIds].sort()) !== JSON.stringify([...prevIds].sort());
+  const primaryChanged = (nextPrimary || "") !== (prevPrimary || "") && (nextIds.length > 0 || prevIds.length > 0);
+  return { changed: membersChanged || primaryChanged, membersChanged, primaryChanged, prevIds, nextIds, nextPrimary };
+}
+
+function warnUnmatched(report) {
+  if (report?.unmatched?.length) {
+    toast(
+      `${report.unmatched.join(", ")} için kullanıcı hesabı eşleşmesi yok; bu danışman talepte işlem yapamaz. Danışmanlar sayfasındaki "Personel ↔ kullanıcı eşleştir" aracını çalıştırın.`,
+      "warning"
+    );
+  }
+}
+
 async function handleAdminUpdate() {
   const newStatus = document.getElementById("sv2-admin-status")?.value;
   const newPriority = document.getElementById("sv2-admin-priority")?.value;
+  const newType = document.getElementById("sv2-admin-type")?.value;
   const statusNote = document.getElementById("sv2-admin-status-note")?.value?.trim() || "";
   const selectedAssignments = collectAssignmentSelection();
 
   const statusChanged = newStatus !== ticket.status;
   const priorityChanged = newPriority !== ticket.priority;
-  const assignmentChanged =
-    JSON.stringify(selectedAssignments.map((a) => a.personnel_id).sort()) !==
-    JSON.stringify(assignments.map((a) => a.personnel_id || a.id).sort());
+  const typeChanged = !!newType && newType !== String(ticket.ticket_type || "").toUpperCase();
+  // Proje yalnız PRJ taleplerinde anlamlıdır (D-11 A): PRJ dışına geçişte bağ temizlenir.
+  const currentProject = ticket.project_id || "";
+  const effectiveType = (newType || String(ticket.ticket_type || "")).toUpperCase();
+  const nextProject = effectiveType === "PRJ" ? document.getElementById("sv2-admin-project")?.value ?? currentProject : "";
+  const projectChanged = nextProject !== currentProject;
+  const diff = assignmentDiff(selectedAssignments);
+  const assignmentChanged = diff.changed;
+  const outOfMatrix =
+    statusChanged && !allowedTransitions(ticket.status, { role: session.role, hasAssignee: !!ticket.assigned_to_id }).includes(newStatus);
 
   if (statusChanged && !minLength(statusNote, 10)) {
-    toast("Durum değişikliği için en az 10 karakterlik not zorunludur.", "error");
+    toast(
+      outOfMatrix
+        ? "Matris dışı durum geçişi için en az 10 karakterlik gerekçe zorunludur."
+        : "Durum değişikliği için en az 10 karakterlik not zorunludur.",
+      "error"
+    );
     return;
   }
 
-  if (!statusChanged && !priorityChanged && !assignmentChanged) {
+  if (!statusChanged && !priorityChanged && !typeChanged && !assignmentChanged && !projectChanged) {
     toast("Değişiklik yapılmadı.", "info");
     return;
   }
 
-  showLoading(true);
-  try {
-    const id = getTicketKey(ticket);
+  const run = async () => {
+    showLoading(true);
+    try {
+      const id = getTicketKey(ticket);
+      const updates = {};
+      if (priorityChanged) updates.priority = newPriority;
+      if (typeChanged) updates.ticket_type = newType;
+      if (statusChanged) updates.status = newStatus;
+      if (projectChanged) updates.project_id = nextProject;
 
-    const previousAssignedIds = new Set(assignments.map((a) => a.personnel_id || a.id));
-    const newlyAssignedIds = selectedAssignments
-      .map((a) => a.personnel_id)
-      .filter((pid) => !previousAssignedIds.has(pid));
-
-    if (assignmentChanged && selectedAssignments.length) {
-      ticket = await ParlaDb.assignConsultants(id, selectedAssignments, session);
-      assignments = await ParlaDb.getTicketAssignments(id);
-    }
-
-    const updates = {};
-    if (priorityChanged) updates.priority = newPriority;
-    if (statusChanged) updates.status = newStatus;
-
-    let updated = ticket;
-    if (Object.keys(updates).length) {
-      updated = await ParlaDb.updateTicket(id, updates, session);
-    }
-
-    if (statusChanged && statusNote) {
-      await ParlaDb.addTicketHistory(id, {
-        action: "status_note",
-        field_changed: "status",
-        old_value: formatStatusLabel(ticket.status),
-        new_value: formatStatusLabel(newStatus),
-        changed_by_uid: session.uid,
-        changed_by_name: actorName(),
-        note: statusNote,
+      // Durum + öncelik + tip + atama + geçmiş + aktivite TEK atomik yazım; durum ekrandaki durumla karşılaştırılır.
+      const report = {};
+      const updated = await ParlaDb.updateTicket(id, updates, session, {
+        expectedStatus: ticket.status,
+        note: statusChanged ? statusNote : "",
+        force: outOfMatrix,
+        assignments: assignmentChanged ? selectedAssignments : undefined,
+        report,
+        extraHistory: projectChanged
+          ? [{ action: "project_changed", field_changed: "project_id", old_value: projectNameFor(currentProject), new_value: projectNameFor(nextProject) }]
+          : undefined,
+        activity: { action: assignmentChanged && !statusChanged && !priorityChanged && !typeChanged && !projectChanged ? "ticket_assigned" : "ticket_updated" },
       });
+
+      ticket = updated;
+      [assignments, history] = await Promise.all([ParlaDb.getTicketAssignments(id), ParlaDb.getTicketHistory(id)]);
+
+      // Atama ve durum değişikliği birlikte olduysa ikisi de bildirilir.
+      // Atama bildirimi ÖNCE tamamlanır: sunucu "size atandı" alan danışmana aynı anda ikinci (durum) e-postası göndermez (EML-28).
+      const notifyResults = [];
+      const assignDone = assignmentChanged ? sendNotifications("ticket_assignment_changed", updated, {}) : Promise.resolve(true);
+      notifyResults.push(assignDone);
+      if (statusChanged) {
+        notifyResults.push(assignDone.then(() => sendNotifications(eventForStatus(newStatus), updated, { history_id: report.statusHistoryId })));
+      }
+      // Kritik önceliğe yükselme: atanmış danışmanlara yüksek öncelikli bildirim (WP-05)
+      if (priorityChanged && String(newPriority).toLowerCase() === "critical") {
+        notifyResults.push(sendNotifications("ticket_priority_critical", updated, {}));
+      }
+      await Promise.all(notifyResults);
+
+      toast("Talep güncellendi.", "success");
+      warnUnmatched(report);
+      const noteEl = document.getElementById("sv2-admin-status-note");
+      if (noteEl) noteEl.value = "";
+      renderPage();
+    } catch (err) {
+      await handleWriteError(err, "Güncelleme");
+    } finally {
+      showLoading(false);
     }
+  };
 
-    await ParlaDb.logActivity("ticket_updated", "ticket", id, updated.ticket_number, "Ticket güncellendi", session);
-
-    ticket = updated;
-    history = await ParlaDb.getTicketHistory(id);
-
-    // Atama ve durum değişikliği birlikte olduysa ikisi de bildirilir (eskiden durum maili atlanıyordu).
-    const notifyResults = [];
-    if (assignmentChanged && newlyAssignedIds.length) {
-      notifyResults.push(
-        sendNotifications(
-          "ticket_assigned",
-          updated,
-          { note: statusNote || `${updated.ticket_number} atandı.` },
-          newlyAssignedIds
-        )
-      );
-    }
-    if (statusChanged) {
-      notifyResults.push(sendNotifications(eventForStatus(newStatus), updated, { note: statusNote }));
-    }
-    await Promise.all(notifyResults);
-
-    toast("Ticket güncellendi.", "success");
-    document.getElementById("sv2-admin-status-note").value = "";
-    renderPage();
-  } catch (err) {
-    handleError(err, "Güncelleme");
-  } finally {
-    showLoading(false);
+  // Tüm danışmanlar kaldırılıyorsa bilinçli onay iste (talep atanmamış kalır).
+  if (assignmentChanged && selectedAssignments.length === 0 && diff.prevIds.length > 0) {
+    renderConfirmDialog("Tüm danışman atamaları kaldırılacak ve talep atanmamış duruma dönecek. Devam edilsin mi?", run);
+    return;
   }
+  await run();
 }
 
 async function handleStartWork() {
   showLoading(true);
   try {
     const id = getTicketKey(ticket);
-    ticket = await ParlaDb.updateTicket(
-      id,
-      { status: STATUSES.IN_PROGRESS, started_at: new Date().toISOString() },
-      session
-    );
+    const note = "Talebiniz danışmanımız tarafından işleme alındı.";
+    const report = {};
+    ticket = await ParlaDb.updateTicket(id, { status: STATUSES.IN_PROGRESS }, session, {
+      expectedStatus: ticket.status,
+      note,
+      report,
+      activity: { action: "ticket_updated" },
+    });
     history = await ParlaDb.getTicketHistory(id);
-    toast("Ticket işleme alındı.", "success");
+    toast("Talep işleme alındı.", "success");
     renderPage();
-    sendNotifications("ticket_status_changed", ticket, {
-      note: "Talebiniz danışmanımız tarafından işleme alındı.",
-    }).catch(() => {});
+    sendNotifications("ticket_status_changed", ticket, { history_id: report.statusHistoryId }).catch(() => {});
   } catch (err) {
-    handleError(err, "Durum güncelleme");
+    await handleWriteError(err, "Durum güncelleme");
   } finally {
     showLoading(false);
   }
 }
 
 async function handleAddEffort() {
-  const hours = parseFloat(document.getElementById("sv2-effort-hours")?.value) || 0;
-  const workDate = document.getElementById("sv2-effort-date")?.value;
-  const note = document.getElementById("sv2-effort-note")?.value?.trim() || "";
-
-  if (hours <= 0) {
-    toast("Geçerli bir saat değeri girin.", "error");
+  const check = validateEffortInput({
+    hours: document.getElementById("sv2-effort-hours")?.value,
+    workDate: document.getElementById("sv2-effort-date")?.value,
+    note: document.getElementById("sv2-effort-note")?.value,
+  });
+  if (!check.valid) {
+    toast(Object.values(check.errors)[0], "error");
     return;
   }
 
   const me = getMyPersonnel();
-  let personnelId = me?.personnel_id || me?.id || "";
-  let personnelName = me ? [me.first_name, me.last_name].filter(Boolean).join(" ") : actorName();
-
-  if (canManageTicket() && !personnelId) {
-    personnelId = ticket.assigned_to_id || "";
-    personnelName = ticket.assigned_to_name || personnelName;
-  }
+  // Personel kaydı olmayan yönetici (ör. PM) efor girerse efor kendi adına yazılır; birincil danışmanın adına DEĞİL.
+  const personnelId = me?.personnel_id || me?.id || "";
+  const personnelName = me ? [me.first_name, me.last_name].filter(Boolean).join(" ") : actorName();
 
   if (!personnelId && !canManageTicket()) {
     toast("Personel kaydınız bulunamadı. E-posta eşleşmesini kontrol edin.", "error");
@@ -836,53 +1126,105 @@ async function handleAddEffort() {
     const id = getTicketKey(ticket);
     await ParlaDb.addTicketEffort(
       id,
-      { personnel_id: personnelId, personnel_name: personnelName, hours, work_date: workDate, note },
+      { personnel_id: personnelId, personnel_name: personnelName, hours: check.hours, work_date: check.workDate, note: check.note },
       session
     );
     [ticket, efforts] = await Promise.all([ParlaDb.getTicket(id), ParlaDb.getTicketEfforts(id)]);
     toast("Efor kaydedildi.", "success");
     renderPage();
   } catch (err) {
-    handleError(err, "Efor kaydı");
+    await handleWriteError(err, "Efor kaydı");
   } finally {
     showLoading(false);
   }
 }
 
-async function handleDeleteEffort(effortId) {
-  if (!canManageTicket()) return;
+function handleDeleteEffort(effortId) {
+  const target = efforts.find((e) => (e.effort_id || e.id) === effortId);
+  if (!target || !canWriteTicket()) return;
+  if (!canManageTicket() && target.created_by_uid !== session.uid) return;
+  renderConfirmDialog(
+    `${target.hours} saatlik efor kaydı (${target.personnel_name || "—"}) silinecek. Silme işlemi geçmişe kaydedilir. Devam edilsin mi?`,
+    async () => {
+      showLoading(true);
+      try {
+        const id = getTicketKey(ticket);
+        await ParlaDb.deleteTicketEffort(id, effortId, session);
+        [ticket, efforts, history] = await Promise.all([ParlaDb.getTicket(id), ParlaDb.getTicketEfforts(id), ParlaDb.getTicketHistory(id)]);
+        toast("Efor silindi.", "success");
+        renderPage();
+      } catch (err) {
+        handleError(err, "Efor silme");
+      } finally {
+        showLoading(false);
+      }
+    }
+  );
+}
+
+async function handleRestore() {
   showLoading(true);
   try {
     const id = getTicketKey(ticket);
-    await ParlaDb.deleteTicketEffort(id, effortId);
-    [ticket, efforts] = await Promise.all([ParlaDb.getTicket(id), ParlaDb.getTicketEfforts(id)]);
-    toast("Efor silindi.", "success");
+    ticket = await ParlaDb.restoreTicket(id, session);
+    history = await ParlaDb.getTicketHistory(id);
+    toast("Talep arşivden geri yüklendi.", "success");
     renderPage();
   } catch (err) {
-    handleError(err, "Efor silme");
+    handleError(err, "Geri yükleme");
   } finally {
     showLoading(false);
   }
+}
+
+function handlePermanentDelete() {
+  const number = ticket.ticket_number || getTicketKey(ticket);
+  renderConfirmDialog(
+    `"${number}" numaralı talep, mesajları, iç notları, ekleri, geçmişi, atamaları ve eforlarıyla birlikte KALICI olarak silinecek. Bu işlem geri alınamaz. Devam edilsin mi?`,
+    async () => {
+      showLoading(true);
+      try {
+        await ParlaDb.permanentlyDeleteTicket(getTicketKey(ticket), session);
+        toast("Talep kalıcı olarak silindi.", "success");
+        window.location.href = PATHS.adminTickets;
+      } catch (err) {
+        handleError(err, "Kalıcı silme");
+      } finally {
+        showLoading(false);
+      }
+    }
+  );
 }
 
 async function handleReply() {
   const message = document.getElementById("sv2-reply-message")?.value?.trim();
   const isInternal = !!document.getElementById("sv2-reply-internal")?.checked;
-  const workHours = parseFloat(document.getElementById("sv2-reply-hours")?.value) || 0;
+  const hoursCheck = validateReplyHours(document.getElementById("sv2-reply-hours")?.value);
 
   if (!message || message.length < 3) {
     toast("Lütfen bir mesaj yazın.", "error");
     return;
   }
+  if (message.length > 10000) {
+    toast("Mesaj en fazla 10.000 karakter olabilir.", "error");
+    return;
+  }
+  if (!hoursCheck.valid) {
+    toast(hoursCheck.error, "error");
+    return;
+  }
+  const workHours = hoursCheck.hours;
 
   showLoading(true);
+  let uploadedRefs = [];
   try {
     const id = getTicketKey(ticket);
     const me = getMyPersonnel();
     const prepared = replyPicker ? await replyPicker.getPrepared() : [];
     if (prepared === null) return; // dosya hatası seçicide gösterildi
     const refs = prepared.length ? await uploadAttachments(id, prepared, { internal: isInternal, session }) : [];
-    await ParlaDb.addTicketMessage(id, {
+    uploadedRefs = refs;
+    const savedMessage = await ParlaDb.addTicketMessage(id, {
       user_id: session.uid,
       author_name: actorName(),
       author_email: session.email,
@@ -900,8 +1242,9 @@ async function handleReply() {
     efforts = await ParlaDb.getTicketEfforts(id);
 
     if (!isInternal && ticket.user_email && ticket.user_email !== session.email) {
+      // Metin sunucuda mesaj kaydından (message_id) okunur.
       const result = await ParlaEmailService.notifyTicketEvent("ticket_message", ticket.user_email, ticket, {
-        note: message.slice(0, 500) + attachmentsNote(refs),
+        message_id: savedMessage.id,
       });
       await reportEmailResults([result], {
         eventType: "ticket_message",
@@ -918,21 +1261,38 @@ async function handleReply() {
     toast(isInternal ? "İç not kaydedildi." : "Yanıt gönderildi.", "success");
     renderPage();
   } catch (err) {
-    handleError(err, "Yanıt");
+    // Mesaj yazılamadıysa yüklenen ekler yetim kalmasın (SEN-38; yalnız süper admin silebilir, diğerlerinde atlanır).
+    if (uploadedRefs.length) await ParlaDb.removeUploadedAttachments(getTicketKey(ticket), uploadedRefs, isInternal).catch(() => 0);
+    await handleWriteError(err, "Yanıt");
   } finally {
     showLoading(false);
   }
 }
 
 function bindEvents() {
-  document.getElementById("sv2-admin-update")?.addEventListener("click", handleAdminUpdate);
+  // Tek tip "işlem sürüyor" koruması: Enter/Boşluk tekrarı ve hızlı çift tık tek işlem sayılır (SEN-28, PER-36, UX-04).
+  const guarded = (id, handler) => {
+    const el = document.getElementById(id);
+    el?.addEventListener("click", () => withInflight(el, () => handler()));
+  };
+  guarded("sv2-admin-update", handleAdminUpdate);
   replyPicker = bindFilePicker("sv2-reply");
-  document.getElementById("sv2-reply-send")?.addEventListener("click", handleReply);
-  document.getElementById("sv2-start-work")?.addEventListener("click", handleStartWork);
+  guarded("sv2-reply-send", handleReply);
+  document.getElementById("sv2-reply-template")?.addEventListener("change", (e) => {
+    if (e.target.value) insertReplyTemplate(e.target.value);
+    e.target.value = "";
+  });
+  document.getElementById("sv2-admin-type")?.addEventListener("change", (e) => {
+    const group = document.getElementById("sv2-admin-project-group");
+    if (group) group.hidden = e.target.value !== "PRJ";
+  });
+  guarded("sv2-start-work", handleStartWork);
   document.querySelectorAll(".sv2-quick-status").forEach((btn) => {
     btn.addEventListener("click", () => openQuickStatusModal(btn.dataset.status));
   });
-  document.getElementById("sv2-effort-add")?.addEventListener("click", handleAddEffort);
+  guarded("sv2-effort-add", handleAddEffort);
+  guarded("sv2-restore-ticket", handleRestore);
+  guarded("sv2-permanent-delete", handlePermanentDelete);
   document.querySelectorAll(".sv2-effort-del").forEach((btn) => {
     btn.addEventListener("click", () => handleDeleteEffort(btn.dataset.id));
   });
@@ -981,7 +1341,7 @@ function bindEvents() {
 
 function renderPage() {
   renderShell("#sv2-app", {
-    title: ticket.ticket_number || "Ticket Detayı",
+    title: ticket.ticket_number || "Talep Detayı",
     activePage: "tickets",
     profile: session,
     isAdmin: true,
@@ -999,17 +1359,19 @@ async function loadTicket() {
 
   showLoading(true);
   try {
-    const [t, msgs, hist, personnel, assign, eff] = await Promise.all([
+    const [t, msgs, hist, personnel, assign, eff, templates, projects] = await Promise.all([
       ParlaDb.getTicket(id),
       ParlaDb.getTicketMessages(id, { includeInternal: true }),
       ParlaDb.getTicketHistory(id),
       ParlaDb.getAllPersonnel(),
       ParlaDb.getTicketAssignments(id),
       ParlaDb.getTicketEfforts(id),
+      ParlaDb.getAllReplyTemplates().catch(() => []),
+      ParlaDb.getAllProjects().catch(() => []),
     ]);
 
     if (!t) {
-      toast("Ticket bulunamadı.", "error");
+      toast("Talep bulunamadı.", "error");
       window.location.href = PATHS.adminTickets;
       return;
     }
@@ -1020,13 +1382,16 @@ async function loadTicket() {
     allPersonnel = personnel;
     assignments = assign;
     efforts = eff;
+    replyTemplates = templates;
+    allProjects = projects;
     markTicketSeen(session.uid, ticket);
     renderPage();
 
     // Eski atama kayıtlarında personel e-postası yoktur; müşteri yanıt bildirimleri için tamamla.
     ParlaDb.backfillAssignmentEmails(id, assign, personnel).catch(() => {});
   } catch (err) {
-    handleError(err, "Ticket");
+    // Kabuk + kalıcı "Yeniden dene" kartı (UX-02, PER-35): boş beyaz ekran yok.
+    handleLoadError(err, "Talep yüklenemedi", { retry: loadTicket, activePage: "tickets", pageTitle: "Talep Detayı", isAdmin: true });
   } finally {
     showLoading(false);
   }

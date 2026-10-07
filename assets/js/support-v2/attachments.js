@@ -9,6 +9,7 @@
  */
 import ParlaDb from "./firebase-client.js";
 import { escapeHtml, nowIso } from "./ticket-utils.js";
+import { safeText, isSafeId, formatNumber } from "./safe-utils.js";
 
 export const ATTACH_LIMITS = { maxFiles: 3, maxBytes: 2 * 1024 * 1024, imageMaxEdge: 1800, recompressAbove: 300 * 1024 };
 
@@ -22,7 +23,9 @@ const EXT_TYPES = {
   ppt: "application/vnd.ms-powerpoint",
   pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
 };
-const TYPE_ALLOWED = /^(image\/(png|jpeg|gif|webp)|application\/pdf|text\/(plain|csv)|application\/zip|application\/msword|application\/vnd\.[a-z0-9.+-]+)$/;
+// Veritabanı kuralındaki izinli tür listesinin (tests/rules/generate-rules.js) birebir aynısı: makrolu Office türleri (.xlsm vb.)
+// kuralda yok; istemci de baştan reddeder (MUS-33). Yeni tür eklemek için önce kural listesi genişletilmelidir.
+const TYPE_ALLOWED = /^(image\/(png|jpeg|gif|webp)|application\/pdf|text\/(plain|csv)|application\/zip|application\/msword|application\/vnd\.ms-(excel|powerpoint)|application\/vnd\.openxmlformats-officedocument\.(wordprocessingml\.document|spreadsheetml\.sheet|presentationml\.presentation))$/;
 export const ACCEPT_ATTR = Object.keys(EXT_TYPES).map((e) => `.${e}`).join(",");
 
 export function resolveType(file) {
@@ -37,7 +40,7 @@ export function resolveType(file) {
 export function formatBytes(n) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
-  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+  return `${formatNumber(n / 1024 / 1024)} MB`;
 }
 
 function readAsDataUrl(blob) {
@@ -96,6 +99,10 @@ export async function prepareFiles(fileList) {
     errors.push(`En fazla ${ATTACH_LIMITS.maxFiles} dosya ekleyebilirsiniz.`);
   }
   for (const file of input.slice(0, ATTACH_LIMITS.maxFiles)) {
+    if (file.size === 0) {
+      errors.push(`"${file.name}" boş (0 bayt) bir dosya; eklenemez.`);
+      continue;
+    }
     const type = resolveType(file);
     if (!TYPE_ALLOWED.test(type)) {
       errors.push(`"${file.name}" desteklenmeyen bir dosya türü. İzin verilenler: görsel, PDF, Office belgeleri, metin/CSV, ZIP.`);
@@ -145,17 +152,25 @@ export async function openAttachment(ticketId, attId, internal) {
   const node = internal ? "ticket_internal_attachments" : "ticket_attachments";
   const snap = await window.__PARLA_FIREBASE.db.get(ParlaDb.v2Ref(`${node}/${ticketId}/${attId}`));
   if (!snap.exists()) throw new Error("Ek bulunamadı.");
-  const att = snap.val();
-  const bytes = Uint8Array.from(atob(att.data), (c) => c.charCodeAt(0));
-  const blob = new Blob([bytes], { type: att.type });
+  const att = snap.val() || {};
+  const attType = safeText(att.type).toLowerCase();
+  let bytes;
+  try {
+    bytes = Uint8Array.from(atob(safeText(att.data)), (c) => c.charCodeAt(0));
+  } catch {
+    throw new Error("Ek dosyası bozuk; açılamadı.");
+  }
+  // Tarayıcıda satır içi açılan türler dar bir beyaz listedir: image/svg+xml, text/html gibi betik taşıyabilen
+  // türler (blob URL site kökenini taşır) asla satır içi açılmaz, yalnızca indirilir (stored XSS koruması).
+  const inline = /^(image\/(png|jpeg|gif|webp)|application\/pdf)$/.test(attType);
+  const blob = new Blob([bytes], { type: inline ? attType : "application/octet-stream" });
   const url = URL.createObjectURL(blob);
-  const inline = /^(image\/|application\/pdf)/.test(att.type);
   if (inline) {
     window.open(url, "_blank", "noopener");
   } else {
     const a = document.createElement("a");
     a.href = url;
-    a.download = att.name;
+    a.download = safeText(att.name) || "ek";
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -167,12 +182,14 @@ export async function openAttachment(ticketId, attId, internal) {
 export function renderAttachmentChips(attachments, ticketId, internal) {
   if (!Array.isArray(attachments) || !attachments.length) return "";
   const chips = attachments
-    .map(
-      (a) => `<button type="button" class="sv2-attachment" data-ticket="${escapeHtml(ticketId)}" data-att="${escapeHtml(a.id)}"${internal ? ' data-internal="1"' : ""} title="Aç / indir">
-        <i class="fas ${/^image\//.test(a.type) ? "fa-image" : /pdf/.test(a.type) ? "fa-file-pdf" : "fa-paperclip"}"></i>
-        <span>${escapeHtml(a.name)}</span><small>${escapeHtml(formatBytes(Number(a.size) || 0))}</small>
-      </button>`
-    )
+    .filter((a) => a && typeof a === "object" && isSafeId(safeText(a.id)))
+    .map((a) => {
+      const type = safeText(a.type);
+      return `<button type="button" class="sv2-attachment" data-ticket="${escapeHtml(safeText(ticketId))}" data-att="${escapeHtml(safeText(a.id))}"${internal ? ' data-internal="1"' : ""} title="Aç / indir">
+        <i class="fas ${/^image\//.test(type) ? "fa-image" : /pdf/.test(type) ? "fa-file-pdf" : "fa-paperclip"}"></i>
+        <span>${escapeHtml(safeText(a.name) || "ek")}</span><small>${escapeHtml(formatBytes(Number(a.size) || 0))}</small>
+      </button>`;
+    })
     .join("");
   return `<div class="sv2-attachments">${chips}</div>`;
 }
@@ -201,9 +218,9 @@ export function bindAttachmentClicks() {
 export function renderFilePicker(id) {
   return `
     <div class="sv2-file-picker" id="${id}-picker">
-      <label class="sv2-btn sv2-btn-outline sv2-btn-sm sv2-file-btn" for="${id}-input"><i class="fas fa-paperclip"></i> Dosya Ekle</label>
+      <button type="button" class="sv2-btn sv2-btn-outline sv2-btn-sm sv2-file-btn" id="${id}-btn"><i class="fas fa-paperclip" aria-hidden="true"></i> Dosya Ekle</button>
       <input type="file" id="${id}-input" multiple accept="${ACCEPT_ATTR}" hidden>
-      <span class="sv2-text-muted sv2-file-hint">En fazla ${ATTACH_LIMITS.maxFiles} dosya · her biri ${formatBytes(ATTACH_LIMITS.maxBytes)} (görseller otomatik küçültülür)</span>
+      <span class="sv2-text-muted sv2-file-hint" id="${id}-hint">En fazla ${ATTACH_LIMITS.maxFiles} dosya · her biri ${formatBytes(ATTACH_LIMITS.maxBytes)} (görseller otomatik küçültülür)</span>
       <ul class="sv2-file-list" id="${id}-list"></ul>
       <span class="sv2-field-error" id="${id}-error" hidden></span>
     </div>`;
@@ -225,7 +242,7 @@ export function bindFilePicker(id) {
   const paint = () => {
     if (!list) return;
     list.innerHTML = selected
-      .map((f, i) => `<li>${escapeHtml(f.name)} <small>${escapeHtml(formatBytes(f.size))}</small> <button type="button" class="sv2-file-remove" data-i="${i}" aria-label="Kaldır">&times;</button></li>`)
+      .map((f, i) => `<li>${escapeHtml(f.name)} <small>${escapeHtml(formatBytes(f.size))}</small> <button type="button" class="sv2-file-remove" data-i="${i}" aria-label="${escapeHtml(f.name)} dosyasını kaldır"><span aria-hidden="true">&times;</span></button></li>`)
       .join("");
     list.querySelectorAll(".sv2-file-remove").forEach((b) =>
       b.addEventListener("click", () => {
@@ -235,10 +252,24 @@ export function bindFilePicker(id) {
       })
     );
   };
+  // Klavye/anahtar cihazı kullanıcısı için gerçek düğme: odaklanır, Enter/Boşluk ile dosya seçiciyi açar (UX-08, MUS-15).
+  document.getElementById(`${id}-btn`)?.addEventListener("click", () => input?.click());
   input?.addEventListener("change", () => {
-    selected = selected.concat(Array.from(input.files || [])).slice(0, ATTACH_LIMITS.maxFiles + 5);
+    // Aynı dosya (ad + boyut) ikinci kez eklenmez (MUS-33).
+    const key = (f) => `${f.name}|${f.size}`;
+    const have = new Set(selected.map(key));
+    const incoming = Array.from(input.files || []);
+    const fresh = incoming.filter((f) => !have.has(key(f)) && have.add(key(f)));
+    const dupes = incoming.length - fresh.length;
+    selected = selected.concat(fresh).slice(0, ATTACH_LIMITS.maxFiles + 5);
     input.value = "";
-    showError(selected.length > ATTACH_LIMITS.maxFiles ? `En fazla ${ATTACH_LIMITS.maxFiles} dosya ekleyebilirsiniz.` : "");
+    showError(
+      selected.length > ATTACH_LIMITS.maxFiles
+        ? `En fazla ${ATTACH_LIMITS.maxFiles} dosya ekleyebilirsiniz.`
+        : dupes
+          ? `${dupes} dosya zaten eklenmiş olduğundan yeniden eklenmedi.`
+          : ""
+    );
     paint();
   });
   return {

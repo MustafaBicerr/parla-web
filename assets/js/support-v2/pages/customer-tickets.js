@@ -1,22 +1,24 @@
 /**
  * Parla BT Ticket V2 — müşteri talepler listesi
  */
-import ParlaDb from "../firebase-client.js";
+import { getCustomerTickets } from "../notifications.js";
 import { requireAuth, PATHS } from "../auth-guard.js";
 import {
   renderShell,
   renderDataTable,
   renderFilterBar,
   bindFilterChips,
+  bindSearchInput,
   showLoading,
-  handleError,
+  handleLoadError,
+  loadingStateHtml,
   renderStatusBadge,
   renderPriorityBadge,
   renderTypeBadge,
   formatDateTime,
   escapeHtml,
 } from "../ui-shell.js";
-import { SAP_MODULE_LABELS, STATUS_LABELS } from "../ticket-utils.js";
+import { SAP_MODULE_LABELS, STATUS_LABELS, matchesSearch, formatStatusLabel, formatPriorityLabel } from "../ticket-utils.js";
 import { initCreateTicketModal, bindNewTicketButton } from "./create-ticket-modal.js";
 
 const app = document.getElementById("sv2-app");
@@ -29,6 +31,10 @@ let filters = {
   search: "",
   sort: "newest",
 };
+
+/** İstemci tarafı sayfalama: ilk 25 satır çizilir, gerisi "Daha fazla göster" ile eklenir (MUS-19, OLC-10). */
+const PAGE_SIZE = 25;
+let visibleCount = PAGE_SIZE;
 
 function isCompanyAdmin() {
   return session?.role === "company_admin";
@@ -77,15 +83,20 @@ function applyFilters() {
     list = list.filter((t) => String(t.status).toLowerCase() === filters.status);
   }
 
-  const q = filters.search.trim().toLowerCase();
-  if (q) {
-    list = list.filter((t) => {
-      const num = String(t.ticket_number || "").toLowerCase();
-      const title = String(t.title || "").toLowerCase();
-      const module = String(t.sap_module || "").toLowerCase();
-      const owner = String(t.user_name || "").toLowerCase();
-      return num.includes(q) || title.includes(q) || module.includes(q) || owner.includes(q);
-    });
+  // Türkçe karakter/İ-ı duyarsız, çok sözcüklü; listede görünen tüm sütunlar aranır (MUS-14).
+  if (filters.search.trim()) {
+    list = list.filter((t) =>
+      matchesSearch(filters.search, [
+        t.ticket_number,
+        t.title,
+        t.sap_module,
+        SAP_MODULE_LABELS[t.sap_module],
+        t.user_name,
+        t.assigned_to_name,
+        formatStatusLabel(t.status),
+        formatPriorityLabel(t.priority),
+      ])
+    );
   }
 
   const priorityOrder = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -102,8 +113,31 @@ function applyFilters() {
     return new Date(b.created_at) - new Date(a.created_at);
   });
 
-  filteredTickets = list.map((t) => ({ ...t, id: t.id || t.ticket_id }));
+  filteredTickets = list.map((t) => ({ ...t, id: t.id }));
   return filteredTickets;
+}
+
+/** Hiç talebi olmayan kullanıcıya "filtre" değil "henüz talep yok" mesajı (MUS-26). */
+function emptyMessage() {
+  return allTickets.length === 0
+    ? "Henüz talebiniz yok. Yeni Talep düğmesiyle ilk talebinizi oluşturabilirsiniz."
+    : "Filtrelere uygun talep bulunamadı.";
+}
+
+/** Tablo + (gerekirse) "daha fazla göster" altbilgisi. */
+function tableHtml() {
+  const total = filteredTickets.length;
+  const rows = filteredTickets.slice(0, visibleCount);
+  const more =
+    total > rows.length
+      ? `<div class="sv2-load-more">
+          <p class="sv2-text-muted" role="status">${total.toLocaleString("tr-TR")} talebin ${rows.length.toLocaleString("tr-TR")} tanesi gösteriliyor.</p>
+          <button type="button" class="sv2-btn sv2-btn-outline" id="sv2-show-more">Daha fazla göster</button>
+        </div>`
+      : total > PAGE_SIZE
+        ? `<p class="sv2-text-muted sv2-load-more" role="status">${total.toLocaleString("tr-TR")} talebin tamamı gösteriliyor.</p>`
+        : "";
+  return `${renderDataTable({ columns: getTicketColumns(), rows, emptyMessage: emptyMessage() })}${more}`;
 }
 
 function renderStatusChips() {
@@ -139,13 +173,7 @@ function renderPage() {
             { value: "priority", label: "Öncelik", selected: filters.sort === "priority" },
           ],
         })}
-        <div id="sv2-tickets-table" style="margin-top:1rem">
-          ${renderDataTable({
-            columns: getTicketColumns(),
-            rows: filteredTickets,
-            emptyMessage: "Filtrelere uygun talep bulunamadı.",
-          })}
-        </div>
+        <div id="sv2-tickets-table" class="sv2-mt-1">${tableHtml()}</div>
       </div>
     </div>`;
 
@@ -159,23 +187,26 @@ function renderPage() {
 
   bindNewTicketButton("sv2-new-ticket-btn");
   bindFilterEvents();
-  bindTableRowClicks();
+  bindTableEvents();
 }
 
 function bindFilterEvents() {
-  const searchInput = document.getElementById("sv2-ticket-search");
-  searchInput?.addEventListener("input", () => {
-    filters.search = searchInput.value;
+  // Arama 200 ms gecikmeli: her tuşta tüm liste yeniden çizilmez (OLC-10).
+  bindSearchInput(document.getElementById("sv2-ticket-search"), (value) => {
+    filters.search = value;
+    visibleCount = PAGE_SIZE;
     updateTable();
   });
 
   bindFilterChips("#sv2-filter-chips", (value) => {
     filters.status = value;
+    visibleCount = PAGE_SIZE;
     updateTable();
   });
 
   document.getElementById("sv2-sort-select")?.addEventListener("change", (e) => {
     filters.sort = e.target.value;
+    visibleCount = PAGE_SIZE;
     updateTable();
   });
 }
@@ -183,36 +214,46 @@ function bindFilterEvents() {
 function updateTable() {
   applyFilters();
   const tableWrap = document.getElementById("sv2-tickets-table");
-  if (tableWrap) {
-    tableWrap.innerHTML = renderDataTable({
-      columns: getTicketColumns(),
-      rows: filteredTickets,
-      emptyMessage: "Filtrelere uygun talep bulunamadı.",
-    });
-    bindTableRowClicks();
-  }
+  if (tableWrap) tableWrap.innerHTML = tableHtml();
 }
 
-function bindTableRowClicks() {
-  document.querySelectorAll("#sv2-tickets-table .sv2-table tbody tr").forEach((row) => {
-    row.style.cursor = "pointer";
-    row.addEventListener("click", (e) => {
-      if (e.target.closest("a")) return;
-      const id = row.dataset.id;
-      if (id) {
-        window.location.href = `${PATHS.customerTicketDetail}?id=${encodeURIComponent(id)}`;
-      }
-    });
+/** Satır tıklaması ve "daha fazla göster" tek delegasyonla; tablo yeniden çizilince yeniden bağlamak gerekmez. */
+function bindTableEvents() {
+  const wrap = document.getElementById("sv2-tickets-table");
+  if (!wrap || wrap.dataset.bound) return;
+  wrap.dataset.bound = "1";
+  wrap.addEventListener("click", (e) => {
+    if (e.target.closest("#sv2-show-more")) {
+      const keepFocusAt = visibleCount;
+      visibleCount += PAGE_SIZE;
+      updateTable();
+      // Odak, yeni gelen ilk satırın bağlantısına taşınır (klavye/okuyucu bağlamı kaybolmasın).
+      wrap.querySelectorAll("tbody tr")[keepFocusAt]?.querySelector("a")?.focus();
+      return;
+    }
+    const row = e.target.closest("tbody tr");
+    if (!row || e.target.closest("a, button")) return;
+    const id = row.dataset.id;
+    if (id) window.location.href = `${PATHS.customerTicketDetail}?id=${encodeURIComponent(id)}`;
   });
+}
+
+function pageTitle() {
+  return isCompanyAdmin() ? "Firma Talepleri" : "Taleplerim";
+}
+
+function renderLoadingShell() {
+  renderShell(app, { title: pageTitle(), activePage: "tickets", profile: session, isAdmin: false, content: loadingStateHtml("Talepler yükleniyor…") });
 }
 
 async function loadData() {
   showLoading(true);
   try {
-    allTickets = await ParlaDb.getTicketsForSession(session);
+    allTickets = await getCustomerTickets(session);
     renderPage();
   } catch (err) {
-    handleError(err, "Talepler yüklenemedi");
+    // Hata durumunda da kabuk çizilir; içerikte kalıcı "Yeniden dene" kartı gösterilir (MUS-06, UX-02).
+    handleLoadError(err, "Talepler yüklenemedi", { retry: loadData, activePage: "tickets", pageTitle: pageTitle(), isAdmin: false });
   } finally {
     showLoading(false);
   }
@@ -222,10 +263,11 @@ async function init() {
   showLoading(true);
   try {
     session = await requireAuth({ customerOnly: true });
-    await loadData();
+    renderLoadingShell();
     initCreateTicketModal(session, () => loadData());
+    await loadData();
   } catch {
-    /* requireAuth yönlendirir */
+    /* requireAuth yönlendirir ya da hata kartını kendisi çizer */
   } finally {
     showLoading(false);
   }

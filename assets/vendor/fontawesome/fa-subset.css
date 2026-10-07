@@ -1,0 +1,80 @@
+/*! Font Awesome Free 6.4.0 (yerel alt küme) — https://fontawesome.com
+ * License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License)
+ * Copyright 2023 Fonticons, Inc.
+ * Bu dosya build-subset.py ile üretilir; elle düzenlemeyin. 70 simge. */
+@font-face{font-family:"Font Awesome 6 Free";font-style:normal;font-weight:900;font-display:swap;src:url("fa-solid-subset.woff2") format("woff2")}
+.fa,.fas,.fa-solid{-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased;display:inline-block;font-style:normal;font-variant:normal;line-height:1;text-rendering:auto;font-family:"Font Awesome 6 Free";font-weight:900}
+.fa-fw{text-align:center;width:1.25em}
+.fa-spin{animation:fa-spin 2s linear infinite}
+@keyframes fa-spin{0%{transform:rotate(0)}to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.fa-spin{animation-duration:6s}}
+.fa-archive::before{content:"\f187"}
+.fa-bars::before{content:"\f0c9"}
+.fa-bell::before{content:"\f0f3"}
+.fa-book-open::before{content:"\f518"}
+.fa-building::before{content:"\f1ad"}
+.fa-calendar::before{content:"\f133"}
+.fa-chart-bar::before{content:"\f080"}
+.fa-chart-line::before{content:"\f201"}
+.fa-chart-pie::before{content:"\f200"}
+.fa-check::before{content:"\f00c"}
+.fa-check-circle::before{content:"\f058"}
+.fa-check-square::before{content:"\f14a"}
+.fa-circle::before{content:"\f111"}
+.fa-clipboard-check::before{content:"\f46c"}
+.fa-clock::before{content:"\f017"}
+.fa-cogs::before{content:"\f085"}
+.fa-comment-dots::before{content:"\f4ad"}
+.fa-comments::before{content:"\f086"}
+.fa-download::before{content:"\f019"}
+.fa-edit::before{content:"\f044"}
+.fa-envelope::before{content:"\f0e0"}
+.fa-exclamation-circle::before{content:"\f06a"}
+.fa-exclamation-triangle::before{content:"\f071"}
+.fa-eye::before{content:"\f06e"}
+.fa-eye-slash::before{content:"\f070"}
+.fa-file-contract::before{content:"\f56c"}
+.fa-file-csv::before{content:"\f6dd"}
+.fa-file-excel::before{content:"\f1c3"}
+.fa-file-pdf::before{content:"\f1c1"}
+.fa-filter::before{content:"\f0b0"}
+.fa-folder-open::before{content:"\f07c"}
+.fa-history::before{content:"\f1da"}
+.fa-hourglass-half::before{content:"\f252"}
+.fa-image::before{content:"\f03e"}
+.fa-inbox::before{content:"\f01c"}
+.fa-info-circle::before{content:"\f05a"}
+.fa-key::before{content:"\f084"}
+.fa-link::before{content:"\f0c1"}
+.fa-lock::before{content:"\f023"}
+.fa-paper-plane::before{content:"\f1d8"}
+.fa-paperclip::before{content:"\f0c6"}
+.fa-pause-circle::before{content:"\f28b"}
+.fa-play::before{content:"\f04b"}
+.fa-plug::before{content:"\f1e6"}
+.fa-plus::before{content:"\2b"}
+.fa-redo::before{content:"\f01e"}
+.fa-save::before{content:"\f0c7"}
+.fa-search::before{content:"\f002"}
+.fa-sign-in-alt::before{content:"\f2f6"}
+.fa-sign-out-alt::before{content:"\f2f5"}
+.fa-spinner::before{content:"\f110"}
+.fa-star::before{content:"\f005"}
+.fa-stopwatch::before{content:"\f2f2"}
+.fa-stream::before{content:"\f550"}
+.fa-table::before{content:"\f0ce"}
+.fa-ticket-alt::before{content:"\f3ff"}
+.fa-times::before{content:"\f00d"}
+.fa-times-circle::before{content:"\f057"}
+.fa-tools::before{content:"\f7d9"}
+.fa-trash::before{content:"\f1f8"}
+.fa-undo::before{content:"\f0e2"}
+.fa-user::before{content:"\f007"}
+.fa-user-clock::before{content:"\f4fd"}
+.fa-user-plus::before{content:"\f234"}
+.fa-user-shield::before{content:"\f505"}
+.fa-user-slash::before{content:"\f506"}
+.fa-user-tie::before{content:"\f508"}
+.fa-users::before{content:"\f0c0"}
+.fa-wifi::before{content:"\f1eb"}
+.fa-wrench::before{content:"\f0ad"}

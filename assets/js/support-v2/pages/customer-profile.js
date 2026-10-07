@@ -2,12 +2,15 @@
  * Parla BT Ticket V2 — müşteri profil sayfası
  */
 import ParlaDb from "../firebase-client.js";
+import { getCustomerTickets } from "../notifications.js";
 import { requireAuth } from "../auth-guard.js";
+import { formatPhoneDisplay } from "../phone-utils.js";
 import {
   renderShell,
   renderStatsGrid,
   showLoading,
-  handleError,
+  handleLoadError,
+  loadingStateHtml,
   formatDateTime,
   escapeHtml,
 } from "../ui-shell.js";
@@ -54,7 +57,7 @@ function renderPage(company, tickets) {
           </div>
           <div class="sv2-meta-item">
             <label>Telefon</label>
-            <span>${escapeHtml(session.phone || "—")}</span>
+            <span>${escapeHtml(session.phone ? formatPhoneDisplay(session.phone) : "—")}</span>
           </div>
           <div class="sv2-meta-item">
             <label>Rol</label>
@@ -101,21 +104,30 @@ function renderPage(company, tickets) {
   });
 }
 
+async function load() {
+  showLoading(true);
+  try {
+    // Firma okunamazsa profil yine de oturumdaki firma adıyla çizilir (MUS-06); talepler yoksa hata kartı.
+    const [company, tickets] = await Promise.all([
+      session.company_id ? ParlaDb.getCompany(session.company_id).catch(() => null) : Promise.resolve(null),
+      getCustomerTickets(session),
+    ]);
+    renderPage(company, tickets);
+  } catch (err) {
+    handleLoadError(err, "Profil yüklenemedi", { retry: load, activePage: "profile", pageTitle: "Profil", isAdmin: false });
+  } finally {
+    showLoading(false);
+  }
+}
+
 async function init() {
   showLoading(true);
   try {
     session = await requireAuth({ customerOnly: true });
-
-    const [company, tickets] = await Promise.all([
-      session.company_id ? ParlaDb.getCompany(session.company_id) : Promise.resolve(null),
-      ParlaDb.getTicketsForSession(session),
-    ]);
-
-    renderPage(company, tickets);
-  } catch (err) {
-    if (err.message !== "not_authenticated" && err.message !== "not_customer") {
-      handleError(err, "Profil yükleme");
-    }
+    renderShell(app, { title: "Profil", activePage: "profile", profile: session, isAdmin: false, content: loadingStateHtml("Profil yükleniyor…") });
+    await load();
+  } catch {
+    /* requireAuth yönlendirir ya da hata kartını kendisi çizer */
   } finally {
     showLoading(false);
   }

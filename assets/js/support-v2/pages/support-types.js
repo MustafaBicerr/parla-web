@@ -13,9 +13,11 @@ import {
   toast,
   showLoading,
   handleError,
+  handleLoadError,
   escapeHtml,
 } from "../ui-shell.js";
 import { required } from "../validators.js";
+import { validateReferenceCode } from "../entity-utils.js";
 
 let session = null;
 let supportTypes = [];
@@ -33,19 +35,25 @@ async function init() {
       content: `
         <div class="sv2-section">
           <div class="sv2-section-header">
-            <h3>Destek Türleri</h3>
+            <h3>Destek Türleri <span class="sv2-badge sv2-badge-closed" title="Talep numarası ve SLA kuralları sabit tür kodlarına bağlıdır">Referans (salt-okunur)</span></h3>
             ${canWrite(session, "super") ? `<button type="button" class="sv2-btn sv2-btn-primary" id="btn-new-type">
               <i class="fas fa-plus"></i> Yeni Tür
             </button>` : ""}
           </div>
-          <div class="sv2-section-body" id="types-table"></div>
+          <div class="sv2-section-body">
+            <div class="sv2-alert sv2-alert-warning" id="types-reference-note" role="note">
+              <i class="fas fa-info-circle" aria-hidden="true"></i>
+              <span>Bu liste bir <strong>referanstır</strong>: talep tipleri (SUP, ARZ, PRJ, INT, DEV, BUG), SLA ve talep numarası kuralları sabit tür kodlarına bağlıdır. Burada yapılan ekleme, düzenleme, renk ve pasifleştirme değişiklikleri talep formlarına, rozetlere ve raporlara <strong>yansımaz</strong>.</span>
+            </div>
+            <div id="types-table"></div>
+          </div>
         </div>`,
     });
     await loadData();
     bindEvents();
   } catch (err) {
     if (err.message !== "not_authenticated" && err.message !== "not_admin") {
-      handleError(err, "Sayfa yüklenemedi");
+      handleLoadError(err, "Sayfa yüklenemedi");
     }
   }
 }
@@ -53,11 +61,15 @@ async function init() {
 async function loadData() {
   showLoading(true);
   try {
-    await ParlaDb.seedSupportTypesIfEmpty();
+    // İlk kayıt tohumlaması yalnız yazma yetkisi olan rolde (diğer roller kural reddine takılmasın; YON-23).
     supportTypes = await ParlaDb.getAllSupportTypes();
+    if (!supportTypes.length && canWrite(session, "super")) {
+      await ParlaDb.seedSupportTypesIfEmpty();
+      supportTypes = await ParlaDb.getAllSupportTypes();
+    }
     renderTable();
   } catch (err) {
-    handleError(err, "Veriler yüklenemedi");
+    handleLoadError(err, "Veriler yüklenemedi");
   } finally {
     showLoading(false);
   }
@@ -67,10 +79,12 @@ function bindEvents() {
   document.getElementById("btn-new-type")?.addEventListener("click", () => openFormModal(null));
 }
 
+/** Durum anahtarı yalnız yazma yetkisi olanlarda etkindir (support_types yazma = super_admin; YON-22). */
 function activeToggle(code, isActive) {
   const checked = isActive !== false ? " checked" : "";
-  return `<label class="sv2-switch">
-    <input type="checkbox" class="type-toggle" data-code="${escapeHtml(code)}"${checked}>
+  const writable = canWrite(session, "super");
+  return `<label class="sv2-switch" title="${writable ? "Durum" : "Durumu yalnızca Süper Admin değiştirebilir"}">
+    <input type="checkbox" class="type-toggle" data-code="${escapeHtml(code)}" aria-label="Tür durumu"${checked}${writable ? "" : " disabled"}>
     <span class="sv2-switch-slider"></span>
   </label>`;
 }
@@ -189,14 +203,16 @@ async function saveType(editCode) {
   errCode.hidden = true;
   errName.hidden = true;
 
-  const code = String(codeEl?.value || "").trim().toUpperCase();
+  const codeCheck = validateReferenceCode(codeEl?.value);
+  const code = codeCheck.code;
   const name = nameEl?.value.trim();
   const color = document.getElementById("tf-color")?.value || "#0070f2";
   const description = document.getElementById("tf-desc")?.value.trim() || "";
 
-  if (!required(code)) {
+  // Mevcut kaydın kodu değiştirilemez (salt-okunur alan); yalnız YENİ kodlar biçim denetimine tabidir (YON-23).
+  if (!editCode && !codeCheck.valid) {
     errCode.hidden = false;
-    errCode.textContent = "Kod zorunludur.";
+    errCode.textContent = codeCheck.error;
     return;
   }
   if (!required(name)) {
@@ -229,7 +245,7 @@ async function saveType(editCode) {
         `Destek türü güncellendi: ${code}`,
         actor
       );
-      toast("Destek türü güncellendi.", "info");
+      toast("Destek türü güncellendi.", "success");
     } else {
       await ParlaDb.createSupportType({ code, name, description, color, is_active: true });
       await ParlaDb.logActivity(
@@ -240,7 +256,7 @@ async function saveType(editCode) {
         `Yeni destek türü: ${code}`,
         actor
       );
-      toast("Destek türü oluşturuldu.", "info");
+      toast("Destek türü oluşturuldu.", "success");
     }
     closeModal("type-modal");
     await loadData();
@@ -263,10 +279,11 @@ async function toggleActive(code, isActive) {
       `Destek türü ${isActive ? "aktifleştirildi" : "pasifleştirildi"}`,
       { uid: session.uid, first_name: session.first_name, last_name: session.last_name }
     );
-    toast(isActive ? "Tür aktif." : "Tür pasif.", "info");
+    toast(isActive ? "Tür aktif." : "Tür pasif.", "success");
     await loadData();
   } catch (err) {
     handleError(err, "Durum güncellenemedi");
+    renderTable(); // anahtar gerçek duruma geri döner
   } finally {
     showLoading(false);
   }

@@ -16,14 +16,28 @@ import {
   toast,
   showLoading,
   handleError,
+  handleLoadError,
+  withInflight,
   linkTicket,
   formatDateTime,
   formatTicketTypeLabel,
   escapeHtml,
+  renderConfirmDialog,
 } from "../ui-shell.js";
-import { TICKET_TYPE_LABELS, getTicketKey, computeSla } from "../ticket-utils.js";
+import {
+  TICKET_TYPE_LABELS,
+  getTicketKey,
+  computeSla,
+  isOpenStatus,
+  isClosedToday,
+  isResolvedThisMonth,
+  resolutionDurationMs,
+  isSameIstanbulDay,
+} from "../ticket-utils.js";
 import ParlaEmailService from "../email-service.js";
 import { reportEmailResult } from "../email-report.js";
+import { describeActivity, activityIconClass } from "../activity-labels.js";
+import { safeText, formatNumber } from "../safe-utils.js";
 
 const ADMIN_ROLES = ["super_admin", "service_admin", "project_manager", "consultant"];
 
@@ -35,56 +49,40 @@ function canAssignTickets() {
 let session = null;
 let allTickets = [];
 let allPersonnel = [];
+let assignmentsByTicket = {};
+let allEfforts = [];
 
-function isToday(iso) {
-  if (!iso) return false;
-  const d = new Date(iso);
-  const n = new Date();
-  return (
-    d.getDate() === n.getDate() &&
-    d.getMonth() === n.getMonth() &&
-    d.getFullYear() === n.getFullYear()
-  );
-}
-
-function isThisMonth(iso) {
-  if (!iso) return false;
-  const d = new Date(iso);
-  const n = new Date();
-  return d.getMonth() === n.getMonth() && d.getFullYear() === n.getFullYear();
-}
-
-function isOpenStatus(status) {
-  const s = String(status || "").toLowerCase();
-  return s !== "closed" && s !== "resolved";
+/** Talebin tüm atananları (atama kayıtları; yoksa birincil danışman). */
+function ticketAssigneeIds(t) {
+  const list = assignmentsByTicket[getTicketKey(t)];
+  const ids = list && list.length ? list.map((a) => a.personnel_id) : [];
+  if (!ids.length && t.assigned_to_id) ids.push(t.assigned_to_id);
+  return ids;
 }
 
 function avgResolutionLabel(tickets) {
-  const resolved = tickets.filter((t) => t.resolved_at || t.closed_at);
-  if (!resolved.length) return "—";
-  const totalMs = resolved.reduce((sum, t) => {
-    const end = new Date(t.resolved_at || t.closed_at);
-    const start = new Date(t.created_at);
-    return sum + (end - start);
-  }, 0);
-  const avgHours = totalMs / resolved.length / (1000 * 60 * 60);
-  if (avgHours < 24) return `${avgHours.toFixed(1)} saat`;
-  return `${(avgHours / 24).toFixed(1)} gün`;
+  const durations = tickets.map(resolutionDurationMs).filter((d) => d !== null);
+  if (!durations.length) return "—";
+  const avgHours = durations.reduce((a, b) => a + b, 0) / durations.length / (1000 * 60 * 60);
+  if (avgHours < 24) return `${formatNumber(avgHours)} saat`;
+  return `${formatNumber(avgHours / 24)} gün`;
 }
 
-function computeStats(tickets) {
+/** Aktif personel kimlikleri; pasif/bilinmeyen danışmana atanmış açık talepler "sahipsiz"dir (SEN-21, YON-15). */
+function isOrphaned(t, activeIds) {
+  const ids = ticketAssigneeIds(t);
+  return ids.length > 0 && !ids.some((pid) => activeIds.has(pid));
+}
+
+function computeStats(tickets, personnel) {
+  const activeIds = new Set((personnel || []).filter((p) => p.is_active !== false).map((p) => p.personnel_id || p.id));
   const open = tickets.filter((t) => isOpenStatus(t.status));
   const critical = open.filter((t) => String(t.priority).toLowerCase() === "critical");
-  const todayOpened = tickets.filter((t) => isToday(t.created_at));
-  const todayClosed = tickets.filter(
-    (t) => isToday(t.closed_at) || (t.status === "closed" && isToday(t.updated_at))
-  );
-  const unassigned = open.filter((t) => !t.assigned_to_id);
-  const monthResolved = tickets.filter(
-    (t) =>
-      (t.status === "resolved" || t.status === "closed") &&
-      (isThisMonth(t.resolved_at) || isThisMonth(t.closed_at))
-  );
+  const todayOpened = tickets.filter((t) => isSameIstanbulDay(t.created_at));
+  const todayClosed = tickets.filter((t) => isClosedToday(t));
+  const unassigned = open.filter((t) => ticketAssigneeIds(t).length === 0);
+  const orphaned = open.filter((t) => isOrphaned(t, activeIds));
+  const monthResolved = tickets.filter((t) => isResolvedThisMonth(t));
 
   return {
     totalOpen: open.length,
@@ -92,12 +90,11 @@ function computeStats(tickets) {
     todayOpened: todayOpened.length,
     todayClosed: todayClosed.length,
     unassigned: unassigned.length,
+    orphaned: orphaned.length,
     monthResolved: monthResolved.length,
     avgResolution: avgResolutionLabel(tickets),
-    slaBreached: open.filter((t) => {
-      const sla = computeSla(t);
-      return sla && !sla.paused && sla.active && (sla.response.state === "breached" || sla.resolution.state === "breached");
-    }).length,
+    // SLA aşımı: açık talepte herhangi bir hedef aşıldı (saklı ihlal damgaları dahil; duraklatma gerçekten süreyi durdurur).
+    slaBreached: open.filter((t) => computeSla(t)?.breached).length,
   };
 }
 
@@ -113,7 +110,7 @@ function computeTypeDistribution(tickets) {
 function renderBarChart(counts) {
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   if (!entries.length) {
-    return renderEmptyState("Henüz ticket verisi yok.", "fa-chart-bar");
+    return renderEmptyState("Henüz talep verisi yok.", "fa-chart-bar");
   }
   const max = Math.max(...entries.map((e) => e[1]), 1);
   const bars = entries
@@ -131,8 +128,10 @@ function renderBarChart(counts) {
   return `<div class="sv2-bar-chart">${bars}</div>`;
 }
 
-function computeConsultantWorkload(tickets, personnel) {
+/** Danışman iş yükü: ikincil danışmanlar da sayılır; efor kişinin kendi eforudur (açık taleplerinde). */
+function computeConsultantWorkload(tickets, personnel, efforts) {
   const open = tickets.filter((t) => isOpenStatus(t.status));
+  const openIds = new Set(open.map((t) => getTicketKey(t)));
   const map = {};
   for (const p of personnel) {
     if (p.is_active === false) continue;
@@ -146,11 +145,15 @@ function computeConsultantWorkload(tickets, personnel) {
     };
   }
   for (const t of open) {
-    const pid = t.assigned_to_id;
-    if (!pid || !map[pid]) continue;
-    map[pid].open++;
-    if (String(t.priority).toLowerCase() === "critical") map[pid].critical++;
-    map[pid].totalHours += parseFloat(t.total_work_hours) || 0;
+    for (const pid of ticketAssigneeIds(t)) {
+      if (!map[pid]) continue;
+      map[pid].open++;
+      if (String(t.priority).toLowerCase() === "critical") map[pid].critical++;
+    }
+  }
+  for (const e of efforts || []) {
+    if (!openIds.has(e.ticket_id) || !map[e.personnel_id]) continue;
+    map[e.personnel_id].totalHours += parseFloat(e.hours) || 0;
   }
   return Object.values(map)
     .filter((r) => r.open > 0 || personnel.some((p) => (p.personnel_id || p.id) === r.id))
@@ -158,43 +161,34 @@ function computeConsultantWorkload(tickets, personnel) {
 }
 
 function formatActivityText(activity) {
-  const action = activity.action || "";
-  const label = activity.entity_label || activity.entity_id || "";
-  const details = activity.details || "";
-  const map = {
-    ticket_created: "Ticket oluşturuldu",
-    ticket_updated: "Ticket güncellendi",
-    ticket_deleted: "Ticket silindi",
-    ticket_assigned: "Ticket atandı",
-    user_created: "Kullanıcı oluşturuldu",
-    company_created: "Firma oluşturuldu",
-  };
-  const prefix = map[action] || action.replace(/_/g, " ");
-  return details ? `${prefix}: ${label} — ${details}` : `${prefix}: ${label}`;
+  return describeActivity(activity);
 }
 
 function activityIcon(action) {
-  if (String(action).includes("ticket")) return "fa-ticket-alt";
-  if (String(action).includes("user")) return "fa-user";
-  if (String(action).includes("company")) return "fa-building";
-  return "fa-circle";
+  return activityIconClass(action);
 }
 
 function renderActivityFeed(activities) {
   if (!activities.length) {
     return renderEmptyState("Henüz aktivite kaydı yok.", "fa-history");
   }
+  // Satır başına try/catch: tek bir bozuk aktivite kaydı panoyu çökertmez (SEC-02).
   return activities
-    .map(
-      (a) => `
+    .map((a) => {
+      try {
+        return `
     <div class="sv2-notif-item">
       <div class="sv2-notif-icon"><i class="fas ${activityIcon(a.action)}"></i></div>
       <div>
         <div class="sv2-notif-text">${escapeHtml(formatActivityText(a))}</div>
-        <div class="sv2-notif-time">${escapeHtml(a.user_name || "Sistem")} · ${escapeHtml(formatDateTime(a.created_at))}</div>
+        <div class="sv2-notif-time">${escapeHtml(safeText(a.user_name) || "Sistem")} · ${escapeHtml(formatDateTime(safeText(a.created_at)))}</div>
       </div>
-    </div>`
-    )
+    </div>`;
+      } catch (err) {
+        console.warn("[Parla V2] aktivite kaydı atlandı", err);
+        return "";
+      }
+    })
     .join("");
 }
 
@@ -228,7 +222,8 @@ function openAssignModal(ticket) {
   });
   openModal("sv2-assign-modal");
 
-  document.getElementById("sv2-assign-save")?.addEventListener("click", async () => {
+  const assignSaveBtn = document.getElementById("sv2-assign-save");
+  assignSaveBtn?.addEventListener("click", () => withInflight(assignSaveBtn, async () => {
     const select = document.getElementById("sv2-assign-personnel");
     const pid = select?.value;
     if (!pid) {
@@ -242,6 +237,7 @@ function openAssignModal(ticket) {
 
     showLoading(true);
     try {
+      const report = {};
       const updated = await ParlaDb.assignConsultants(
         getTicketKey(ticket),
         [
@@ -249,25 +245,25 @@ function openAssignModal(ticket) {
             personnel_id: pid,
             personnel_name: name,
             personnel_email: person?.email || "",
+            personnel_uid: person?.uid || "",
             is_primary: true,
           },
         ],
-        session
+        session,
+        { expectedStatus: ticket.status, report, activity: { action: "ticket_assigned", details: `${name} atandı` } }
       );
-      await ParlaDb.logActivity(
-        "ticket_assigned",
-        "ticket",
-        getTicketKey(ticket),
-        ticket.ticket_number,
-        `${name} atandı`,
-        session
-      );
-      if (person?.email && person.email.toLowerCase() !== String(session.email || "").toLowerCase()) {
-        const mailResult = await ParlaEmailService.notifyTicketEvent("ticket_assigned", person.email, updated, {
-          note: `${ticket.ticket_number} numaralı ticket size atandı.`,
-        });
+      if (report.unmatched?.length) {
+        toast(
+          `${report.unmatched.join(", ")} için kullanıcı hesabı eşleşmesi yok; danışman bu talepte işlem yapamaz. "Personel ↔ kullanıcı eşleştir" aracını çalıştırın.`,
+          "warning"
+        );
+      }
+      {
+        // WP-05: alıcılar sunucuda atama geçmişinden türetilir (yeni danışman, önceki danışman "talep sizden alındı", müşteri).
+        // İşlemi yapanın kendi adresi sunucuda ayıklanır; değişiklik yoksa e-posta gitmez (aynı kişiye tekrar "Ata" mükerrer üretmez).
+        const mailResult = await ParlaEmailService.notifyTicketEvent("ticket_assignment_changed", "@assigned", updated, {});
         await reportEmailResult(mailResult, {
-          eventType: "ticket_assigned",
+          eventType: "ticket_assignment_changed",
           label: "Atama e-postası",
           ticket: updated,
           actor: session,
@@ -275,13 +271,21 @@ function openAssignModal(ticket) {
       }
       toast("Danışman ataması kaydedildi.", "success");
       closeModal("sv2-assign-modal");
-      await loadAndRender();
+      // Tüm koleksiyonu yeniden indirmek yerine yerel durum güncellenir; yalnız küçük düğümler (atamalar + son 20 aktivite) yenilenir.
+      const key = getTicketKey(ticket);
+      allTickets = allTickets.map((t) => (getTicketKey(t) === key ? updated : t));
+      const [assignMap, recent] = await Promise.all([
+        ParlaDb.getAllAssignments().catch(() => assignmentsByTicket),
+        ParlaDb.getActivities(20).catch(() => []),
+      ]);
+      assignmentsByTicket = assignMap;
+      renderDashboard(recent);
     } catch (err) {
       handleError(err, "Atama");
     } finally {
       showLoading(false);
     }
-  });
+  }));
 }
 
 const EMAIL_ADMIN_ROLES = ["super_admin", "service_admin"];
@@ -325,12 +329,22 @@ function renderMaintenanceSection() {
 }
 
 function bindMaintenance() {
-  document.getElementById("sv2-migrate-notes")?.addEventListener("click", async () => {
-    if (!window.confirm("Eski dahili notlar yalnızca personelin görebileceği alana taşınacak. Devam edilsin mi?")) return;
+  document.getElementById("sv2-migrate-notes")?.addEventListener("click", () => {
+    // Sistem penceresi (window.confirm) yerine ortak onay bileşeni: odak yönetimi ve ayırt edilebilir düğmeler (UX-42).
+    renderConfirmDialog("Eski dahili notlar yalnızca personelin görebileceği alana taşınacak. Devam edilsin mi?", runNoteMigration, { title: "Veri bakımı onayı", danger: false });
+  });
+}
+
+async function runNoteMigration() {
+  {
     showLoading(true);
     const status = document.getElementById("sv2-maintenance-status");
     try {
-      const { tickets, moved } = await ParlaDb.migrateInternalMessages();
+      const { tickets, moved } = await ParlaDb.migrateInternalMessages({
+        onProgress: (done, total) => {
+          if (status) status.textContent = `Taşınıyor… ${done}/${total} talep tarandı`;
+        },
+      });
       status.textContent = moved
         ? `${moved} dahili not ${tickets} talepten taşındı.`
         : "Taşınacak eski dahili not bulunmadı.";
@@ -341,7 +355,7 @@ function bindMaintenance() {
     } finally {
       showLoading(false);
     }
-  });
+  }
 }
 
 function setEmailHealthStatus(kind, message) {
@@ -420,6 +434,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
     { label: "Bugün Açılan", value: stats.todayOpened, variant: "" },
     { label: "Bugün Kapanan", value: stats.todayClosed, variant: "success" },
     { label: "Atanmamış", value: stats.unassigned, variant: "waiting" },
+    { label: "Pasif Danışmanda", value: stats.orphaned, variant: "critical", hint: "Atandığı tüm danışmanlar pasif: yeniden atanmalı" },
     { label: "SLA Aşımı", value: stats.slaBreached, variant: "critical", hint: "Açık taleplerde hedef süre aşıldı" },
     { label: "Bu Ay Çözülen", value: stats.monthResolved, variant: "resolved" },
     { label: "Ort. Çözüm Süresi", value: stats.avgResolution, variant: "" },
@@ -430,7 +445,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
     name: w.name,
     open: w.open,
     critical: w.critical,
-    hours: w.totalHours.toFixed(1),
+    hours: formatNumber(w.totalHours),
   }));
 
   const unassignedRows = unassigned.slice(0, 10).map((t) => ({
@@ -440,6 +455,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
     priority: t.priority,
     status: t.status,
     created: t.created_at,
+    orphan: ticketAssigneeIds(t).length > 0,
     _ticket: t,
   }));
 
@@ -447,7 +463,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
     ${renderStatsGrid(statCards)}
     <div class="sv2-form-row sv2-mb-1">
       <div class="sv2-section">
-        <div class="sv2-section-header"><h3>Ticket Tipi Dağılımı</h3></div>
+        <div class="sv2-section-header"><h3>Talep Tipi Dağılımı</h3></div>
         <div class="sv2-section-body">${renderBarChart(typeCounts)}</div>
       </div>
       <div class="sv2-section">
@@ -465,7 +481,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
             ? renderDataTable({
                 columns: [
                   { key: "name", label: "Danışman" },
-                  { key: "open", label: "Açık Ticket" },
+                  { key: "open", label: "Açık Talep" },
                   { key: "critical", label: "Kritik" },
                   { key: "hours", label: "Toplam Efor (saat)" },
                 ],
@@ -479,7 +495,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
     ${renderMaintenanceSection()}
     <div class="sv2-section">
       <div class="sv2-section-header">
-        <h3>Atanmamış Ticketlar</h3>
+        <h3>Atanmamış / Sahipsiz Talepler</h3>
         <a href="${PATHS.adminTickets}?filter=unassigned" class="sv2-btn sv2-btn-sm sv2-btn-outline">Tümünü Gör</a>
       </div>
       <div class="sv2-section-body" id="sv2-unassigned-wrap">
@@ -497,7 +513,7 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
                     <td>${linkTicket(r.id, r.number)}</td>
                     <td>${escapeHtml(r.title || "—")}</td>
                     <td>${renderPriorityBadge(r.priority)}</td>
-                    <td>${renderStatusBadge(r.status)}</td>
+                    <td>${renderStatusBadge(r.status)}${r.orphan ? ' <span class="sv2-badge sv2-badge-closed" title="Atandığı danışman(lar) pasif">Pasif danışman</span>' : ""}</td>
                     <td>${escapeHtml(formatDateTime(r.created))}</td>
                     <td>${canAssignTickets() ? `<button type="button" class="sv2-btn sv2-btn-sm sv2-btn-primary sv2-quick-assign" data-id="${escapeHtml(r.id)}">Ata</button>` : `<a href="${PATHS.adminTicketDetail}?id=${encodeURIComponent(r.id)}" class="sv2-btn sv2-btn-sm sv2-btn-outline">Aç</a>`}</td>
                   </tr>`
@@ -505,52 +521,64 @@ function buildContent(stats, typeCounts, workload, unassigned, activities) {
                   .join("")}
               </tbody>
             </table></div>`
-            : renderEmptyState("Atanmamış açık ticket yok.", "fa-check-circle")
+            : renderEmptyState("Atanmamış açık talep yok.", "fa-check-circle")
         }
       </div>
     </div>`;
 }
 
+/** Yüklenmiş yerel veriden panoyu çizer (veri indirmez). */
+function renderDashboard(activities) {
+  const tickets = allTickets;
+  const personnel = allPersonnel;
+  const activeIds = new Set(personnel.filter((p) => p.is_active !== false).map((p) => p.personnel_id || p.id));
+  const stats = computeStats(tickets, personnel);
+  const typeCounts = computeTypeDistribution(tickets);
+  const workload = computeConsultantWorkload(tickets, personnel, allEfforts);
+  // Atanmamış + atandığı tüm danışmanlar pasif olan (sahipsiz) açık talepler.
+  const unassigned = tickets
+    .filter((t) => isOpenStatus(t.status) && (ticketAssigneeIds(t).length === 0 || isOrphaned(t, activeIds)))
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  const content = buildContent(stats, typeCounts, workload, unassigned, activities);
+
+  renderShell("#sv2-app", {
+    title: "Genel Bakış",
+    activePage: "dashboard",
+    profile: session,
+    isAdmin: true,
+    content,
+  });
+
+  bindEmailHealth();
+  bindMaintenance();
+
+  document.querySelectorAll(".sv2-quick-assign").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const ticket = allTickets.find((t) => getTicketKey(t) === id);
+      if (ticket) openAssignModal(ticket);
+    });
+  });
+}
+
 async function loadAndRender() {
   showLoading(true);
   try {
-    const [tickets, personnel, activities] = await Promise.all([
+    const [tickets, personnel, activities, assignMap, efforts] = await Promise.all([
       ParlaDb.getAllTickets(),
       ParlaDb.getAllPersonnel(),
       ParlaDb.getActivities(20),
+      ParlaDb.getAllAssignments().catch(() => ({})),
+      ParlaDb.getAllTicketEfforts().catch(() => []),
     ]);
     allTickets = tickets;
     allPersonnel = personnel;
-
-    const stats = computeStats(tickets);
-    const typeCounts = computeTypeDistribution(tickets);
-    const workload = computeConsultantWorkload(tickets, personnel);
-    const unassigned = tickets
-      .filter((t) => isOpenStatus(t.status) && !t.assigned_to_id)
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    const content = buildContent(stats, typeCounts, workload, unassigned, activities);
-
-    renderShell("#sv2-app", {
-      title: "Genel Bakış",
-      activePage: "dashboard",
-      profile: session,
-      isAdmin: true,
-      content,
-    });
-
-    bindEmailHealth();
-    bindMaintenance();
-
-    document.querySelectorAll(".sv2-quick-assign").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = btn.dataset.id;
-        const ticket = allTickets.find((t) => getTicketKey(t) === id);
-        if (ticket) openAssignModal(ticket);
-      });
-    });
+    assignmentsByTicket = assignMap;
+    allEfforts = efforts;
+    renderDashboard(activities);
   } catch (err) {
-    handleError(err, "Dashboard");
+    handleLoadError(err, "Genel bakış yüklenemedi", { retry: loadAndRender, activePage: "dashboard", pageTitle: "Genel Bakış", isAdmin: true });
   } finally {
     showLoading(false);
   }

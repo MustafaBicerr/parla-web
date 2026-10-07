@@ -6,6 +6,9 @@ import { ROLES, TICKET_TYPES, PRIORITIES, SAP_MODULES, isCustomerRole } from "./
 
 const MIN_PASSWORD_LENGTH = 8;
 
+/** Veritabanı kurallarıyla uyumlu üst sınırlar (MUS-31; tests/rules/generate-rules.js). */
+export const TICKET_LIMITS = { title: 200, description: 10000, message: 10000 };
+
 export function email(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
 }
@@ -21,7 +24,8 @@ export function phone(value) {
 export function password(value) {
   const v = String(value || "");
   if (v.length < MIN_PASSWORD_LENGTH) return false;
-  if (!/[A-Z]/.test(v)) return false;
+  // Türkçe büyük harfler (Ç, Ğ, İ, Ö, Ş, Ü) de sayılır (MUS-29).
+  if (!/[A-ZÇĞİÖŞÜ]/.test(v)) return false;
   if (!/[0-9]/.test(v)) return false;
   return true;
 }
@@ -69,17 +73,17 @@ export function validateUserForm(data) {
   if (!required(d.email)) {
     fieldError(errors, "email", "E-posta adresi zorunludur.");
   } else if (!email(d.email)) {
-    fieldError(errors, "email", "Geçerli bir e-posta adresi giriniz.");
+    fieldError(errors, "email", "Geçerli bir e-posta adresi girin.");
   }
 
   if (!required(d.phone)) {
     fieldError(errors, "phone", "Telefon numarası zorunludur.");
   } else if (!phone(d.phone)) {
-    fieldError(errors, "phone", "Geçerli bir telefon numarası giriniz (en az 10 hane).");
+    fieldError(errors, "phone", "Geçerli bir telefon numarası girin (en az 10 hane).");
   }
 
   if (!required(d.role)) {
-    fieldError(errors, "role", "Kullanıcı rolü seçiniz.");
+    fieldError(errors, "role", "Kullanıcı rolü seçin.");
   } else {
     const validRoles = Object.values(ROLES);
     if (!validRoles.includes(d.role)) {
@@ -113,30 +117,30 @@ export function validateTicketForm(data) {
 
   const validTypes = Object.values(TICKET_TYPES);
   if (!required(d.ticket_type)) {
-    fieldError(errors, "ticket_type", "Talep tipi seçiniz.");
+    fieldError(errors, "ticket_type", "Talep tipi seçin.");
   } else if (!validTypes.includes(String(d.ticket_type).toUpperCase())) {
     fieldError(errors, "ticket_type", "Geçersiz talep tipi.");
   }
 
   const validPriorities = Object.values(PRIORITIES);
   if (!required(d.priority)) {
-    fieldError(errors, "priority", "Öncelik seçiniz.");
+    fieldError(errors, "priority", "Öncelik seçin.");
   } else if (!validPriorities.includes(String(d.priority).toLowerCase())) {
     fieldError(errors, "priority", "Geçersiz öncelik değeri.");
   }
 
   if (!required(d.sap_module)) {
-    fieldError(errors, "sap_module", "SAP modülü seçiniz.");
+    fieldError(errors, "sap_module", "SAP modülü seçin.");
   } else if (!SAP_MODULES.includes(d.sap_module)) {
     fieldError(errors, "sap_module", "Geçersiz SAP modülü.");
   }
 
   if (!required(d.title)) {
-    fieldError(errors, "title", "Talep başlığını giriniz.");
+    fieldError(errors, "title", "Talep başlığını girin.");
   } else if (!minLength(d.title, 5)) {
-    fieldError(errors, "title", "Talep başlığını giriniz (en az 5 karakter).");
-  } else if (String(d.title).length > 100) {
-    fieldError(errors, "title", "Talep başlığı en fazla 100 karakter olabilir.");
+    fieldError(errors, "title", "Talep başlığını girin (en az 5 karakter).");
+  } else if (String(d.title).length > TICKET_LIMITS.title) {
+    fieldError(errors, "title", `Talep başlığı en fazla ${TICKET_LIMITS.title} karakter olabilir.`);
   }
 
   if (!required(d.description)) {
@@ -147,13 +151,15 @@ export function validateTicketForm(data) {
       "description",
       "Açıklamanızı daha ayrıntılı yazın (en az 20 karakter). Sorunun adımlarını ve beklentinizi belirtin."
     );
+  } else if (String(d.description).length > TICKET_LIMITS.description) {
+    fieldError(errors, "description", `Açıklama en fazla ${TICKET_LIMITS.description.toLocaleString("tr-TR")} karakter olabilir.`);
   }
 
   if (d.attachment_url && !url(d.attachment_url)) {
     fieldError(
       errors,
       "attachment_url",
-      "Geçerli bir URL giriniz (http veya https ile başlamalı)."
+      "Geçerli bir URL girin (http veya https ile başlamalı)."
     );
   }
 
@@ -188,19 +194,19 @@ export function validatePersonnelForm(data) {
   if (!required(d.email)) {
     fieldError(errors, "email", "E-posta adresi zorunludur.");
   } else if (!email(d.email)) {
-    fieldError(errors, "email", "Geçerli bir e-posta adresi giriniz.");
+    fieldError(errors, "email", "Geçerli bir e-posta adresi girin.");
   }
 
   if (d.phone && !phone(d.phone)) {
-    fieldError(errors, "phone", "Geçerli bir telefon numarası giriniz.");
+    fieldError(errors, "phone", "Geçerli bir telefon numarası girin.");
   }
 
   if (!required(d.department_id)) {
-    fieldError(errors, "department_id", "Departman seçiniz.");
+    fieldError(errors, "department_id", "Departman seçin.");
   }
 
   if (!required(d.role_title)) {
-    fieldError(errors, "role_title", "Rol ünvanı giriniz (ör. Danışman, IT Uzmanı).");
+    fieldError(errors, "role_title", "Rol ünvanı girin (ör. Danışman, IT Uzmanı).");
   }
 
   return { valid: Object.keys(errors).length === 0, errors };
@@ -226,17 +232,17 @@ export function validateCompanyForm(data) {
   }
 
   if (!required(d.customer_type)) {
-    fieldError(errors, "customer_type", "Müşteri tipi seçiniz.");
+    fieldError(errors, "customer_type", "Müşteri tipi seçin.");
   } else if (!["CUS", "ARC"].includes(String(d.customer_type).toUpperCase())) {
     fieldError(errors, "customer_type", "Müşteri tipi CUS veya ARC olmalıdır.");
   }
 
   if (d.primary_contact_email && !email(d.primary_contact_email)) {
-    fieldError(errors, "primary_contact_email", "Geçerli bir e-posta adresi giriniz.");
+    fieldError(errors, "primary_contact_email", "Geçerli bir e-posta adresi girin.");
   }
 
   if (d.phone && !phone(d.phone)) {
-    fieldError(errors, "phone", "Geçerli bir telefon numarası giriniz.");
+    fieldError(errors, "phone", "Geçerli bir telefon numarası girin.");
   }
 
   return { valid: Object.keys(errors).length === 0, errors };

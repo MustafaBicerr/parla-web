@@ -5,13 +5,14 @@ import ParlaDb from "../firebase-client.js";
 import ParlaEmailService from "../email-service.js";
 import { reportEmailResults } from "../email-report.js";
 import { attachmentsNote, bindFilePicker, renderFilePicker, uploadAttachments } from "../attachments.js";
-import { validateTicketForm } from "../validators.js";
+import { validateTicketForm, TICKET_LIMITS } from "../validators.js";
 import {
   TICKET_TYPE_LABELS,
   PRIORITY_LABELS,
   SAP_MODULES,
   SAP_MODULE_LABELS,
-  ROLES,
+  resolveCustomerType,
+  allowedCustomerTicketTypes,
 } from "../ticket-utils.js";
 import {
   renderModal,
@@ -20,25 +21,29 @@ import {
   toast,
   showLoading,
   handleError,
+  withInflight,
+  withTimeout,
 } from "../ui-shell.js";
 
 export const CREATE_TICKET_MODAL_ID = "sv2-create-ticket-modal";
 
-const CUSTOMER_TICKET_TYPES = ["SUP", "ARZ", "BUG"];
 let onTicketCreatedCallback = null;
 let createPicker = null;
+let modalSession = null;
 
-function defaultTicketType(role) {
-  return role === ROLES.ARIZI_CUSTOMER ? "ARZ" : "SUP";
+/**
+ * Talep tipi kilidi (D-09 B): destek anlaşmalı (CUS) müşteri → SUP/BUG, arızi (ARC) müşteri → ARZ/BUG.
+ * İlk seçenek varsayılandır (ARZ / SUP). Firma tipi (company_admin) firma kaydından gelir; yüklenene dek role göre.
+ */
+function typeOptionsHtml(customerType) {
+  const allowed = allowedCustomerTicketTypes(customerType);
+  return allowed
+    .map((code, i) => `<option value="${code}"${i === 0 ? " selected" : ""}>${TICKET_TYPE_LABELS[code] || code}</option>`)
+    .join("");
 }
 
 function buildModalBody(session) {
-  const defaultType = defaultTicketType(session.role);
-
-  const typeOptions = CUSTOMER_TICKET_TYPES.map(
-    (code) =>
-      `<option value="${code}"${code === defaultType ? " selected" : ""}>${TICKET_TYPE_LABELS[code] || code}</option>`
-  ).join("");
+  const typeOptions = typeOptionsHtml(resolveCustomerType(session.role));
 
   const priorityOptions = Object.entries(PRIORITY_LABELS)
     .map(
@@ -72,16 +77,16 @@ function buildModalBody(session) {
       </div>
       <div class="sv2-form-group">
         <label for="sv2-ticket-title">Konu</label>
-        <input type="text" id="sv2-ticket-title" name="title" maxlength="100" placeholder="Talebinizi kısaca özetleyin" required>
+        <input type="text" id="sv2-ticket-title" name="title" maxlength="${TICKET_LIMITS.title}" placeholder="Talebinizi kısaca özetleyin" required>
         <span class="sv2-field-error" id="sv2-err-title" hidden></span>
       </div>
       <div class="sv2-form-group">
         <label for="sv2-ticket-description">Açıklama</label>
-        <textarea id="sv2-ticket-description" name="description" rows="5" placeholder="Sorunu adım adım açıklayın, hata mesajlarını ve beklentinizi belirtin." required></textarea>
+        <textarea id="sv2-ticket-description" name="description" rows="5" maxlength="${TICKET_LIMITS.description}" placeholder="Sorunu adım adım açıklayın, hata mesajlarını ve beklentinizi belirtin." required></textarea>
         <span class="sv2-field-error" id="sv2-err-description" hidden></span>
       </div>
-      <div class="sv2-form-group">
-        <label>Ekran Görüntüsü / Dosya (isteğe bağlı)</label>
+      <div class="sv2-form-group" role="group" aria-labelledby="sv2-create-files-label">
+        <span class="sv2-label" id="sv2-create-files-label">Ekran Görüntüsü / Dosya (isteğe bağlı)</span>
         ${renderFilePicker("sv2-create")}
       </div>
       <div class="sv2-form-group">
@@ -127,7 +132,10 @@ function getActor(session) {
 }
 
 export function mountCreateTicketModal(session) {
+  modalSession = session || modalSession;
+  session = modalSession;
   renderModal(CREATE_TICKET_MODAL_ID, {
+    persist: true, // kabuk (renderShell) yeniden çizilse de pencere yerinde kalır (MUS-02)
     title: "Yeni Destek Talebi",
     body: buildModalBody(session),
     footer: `
@@ -138,9 +146,27 @@ export function mountCreateTicketModal(session) {
   });
 
   createPicker = bindFilePicker("sv2-create");
+  // Firma tipi arızi (ARC) ise (ör. firma yöneticisi) tip listesi firma kaydına göre yeniden kurulur.
+  if (session.company_id && String(session.role || "").toLowerCase() !== "arizi_customer") {
+    ParlaDb.getCompany(session.company_id)
+      .then((company) => {
+        const select = document.getElementById("sv2-ticket-type");
+        if (!select || !company) return;
+        const type = resolveCustomerType(session.role, company.customer_type);
+        if (type === "ARC") select.innerHTML = typeOptionsHtml(type);
+      })
+      .catch(() => {});
+  }
   const form = document.getElementById("sv2-create-ticket-form");
-  form?.addEventListener("submit", async (e) => {
+  form?.addEventListener("submit", (e) => {
     e.preventDefault();
+    // Enter/Boşluk tekrarı ve hızlı çift tık tek talep üretir (UX-04, SEN-28).
+    withInflight(document.getElementById("sv2-create-ticket-submit") || "create-ticket", () => submitTicket(form, session));
+  });
+}
+
+async function submitTicket(form, session) {
+  {
     clearFormErrors();
 
     const data = {
@@ -157,9 +183,12 @@ export function mountCreateTicketModal(session) {
       showFormErrors(errors);
       return;
     }
+    const allowedTypes = Array.from(form.ticket_type.options).map((o) => o.value);
+    if (!allowedTypes.includes(data.ticket_type)) {
+      showFormErrors({ ticket_type: "Bu talep tipi firmanız için açılamaz." });
+      return;
+    }
 
-    const submitBtn = document.getElementById("sv2-create-ticket-submit");
-    submitBtn.disabled = true;
     showLoading(true);
 
     try {
@@ -178,7 +207,8 @@ export function mountCreateTicketModal(session) {
         return;
       }
 
-      const ticket = await ParlaDb.createTicket(
+      const ticket = await withTimeout(
+        ParlaDb.createTicket(
         {
           ticket_type: data.ticket_type,
           priority: data.priority,
@@ -194,6 +224,9 @@ export function mountCreateTicketModal(session) {
           user_email: session.email,
         },
         actor
+        ),
+        0,
+        "Bağlantı yok ya da çok yavaş: talebiniz gönderilemedi. Bağlantı gelince Taleplerim listesini kontrol edin; talep oluşmadıysa yeniden deneyin."
       );
 
       await ParlaDb.logActivity(
@@ -251,14 +284,18 @@ export function mountCreateTicketModal(session) {
     } catch (err) {
       handleError(err, "Talep oluşturma");
     } finally {
-      submitBtn.disabled = false;
       showLoading(false);
     }
-  });
+  }
 }
 
+/** Pencere DOM'dan düşmüşse (ör. başka bir sayfa çizimi) yeniden kurar; her durumda açar. */
 export function openCreateTicketModal() {
-  openModal(CREATE_TICKET_MODAL_ID);
+  if (!document.getElementById(CREATE_TICKET_MODAL_ID)) {
+    if (!modalSession) return false;
+    mountCreateTicketModal(modalSession);
+  }
+  return openModal(CREATE_TICKET_MODAL_ID);
 }
 
 export function bindNewTicketButton(buttonId) {
@@ -269,5 +306,6 @@ export function bindNewTicketButton(buttonId) {
 
 export function initCreateTicketModal(session, onCreated) {
   onTicketCreatedCallback = onCreated || null;
+  modalSession = session;
   mountCreateTicketModal(session);
 }

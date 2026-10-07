@@ -52,6 +52,20 @@ function bigPng(w, h) {
     check("izin verilmeyen dosya türü reddedilir (talep açılmaz)", await waitFor(async () => (await cust.page.locator("#sv2-create-error").textContent()).includes("desteklenmeyen")) && Object.keys(world.valueAt("v2/tickets") || {}).length === 12);
 
     await cust.page.click(".sv2-file-remove");
+    // MUS-33: boş dosya, makrolu Office türü reddedilir; aynı dosya ikinci kez eklenmez
+    await cust.page.setInputFiles("#sv2-create-input", [{ name: "bos.txt", mimeType: "text/plain", buffer: Buffer.alloc(0) }]);
+    await cust.page.click("#sv2-create-ticket-submit");
+    check("0 baytlık dosya reddedilir", await waitFor(async () => (await cust.page.locator("#sv2-create-error").textContent()).includes("boş")));
+    await cust.page.click(".sv2-file-remove");
+    await cust.page.setInputFiles("#sv2-create-input", [{ name: "makro.xlsm", mimeType: "application/vnd.ms-excel.sheet.macroEnabled.12", buffer: Buffer.from("PK") }]);
+    await cust.page.click("#sv2-create-ticket-submit");
+    check("makrolu Office türü (.xlsm) reddedilir", await waitFor(async () => (await cust.page.locator("#sv2-create-error").textContent()).includes("desteklenmeyen")));
+    await cust.page.click(".sv2-file-remove");
+    const dup = { name: "ayni.txt", mimeType: "text/plain", buffer: Buffer.from("aynı içerik") };
+    await cust.page.setInputFiles("#sv2-create-input", [dup]);
+    await cust.page.setInputFiles("#sv2-create-input", [dup]);
+    check("aynı dosya ikinci kez eklenmez", (await cust.page.locator("#sv2-create-list li").count()) === 1);
+    await cust.page.click(".sv2-file-remove");
     await cust.page.setInputFiles("#sv2-create-input", [
       { name: "ekran görüntüsü.png", mimeType: "image/png", buffer: png },
       { name: "rapor.pdf", mimeType: "application/pdf", buffer: pdf },
