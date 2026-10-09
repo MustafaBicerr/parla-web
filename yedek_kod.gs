@@ -1,7 +1,7 @@
 // --- AYARLAR ---
 var HEDEF_MAIL = "info@parlabilgiteknolojileri.net";
 var RESEND_FROM = "Parla BT Destek <info@parlabilgiteknolojileri.net>";
-var GEMINI_API_KEY = "AIzaSyCublpywjEbq8YUWychrQn2qqieIFOEjoA"; // Tercihen PropertiesService kullanın
+var GEMINI_API_KEY = PropertiesService.getScriptProperties().getProperty("GEMINI_API_KEY"); // Apps Script → Project Settings → Script properties → GEMINI_API_KEY
 var HEDEF_KLASOR_YOLU = "Web_Dosyalari/Kariyer_Formu_CV";
 // Resend: Apps Script → Project Settings → Script properties → RESEND_API_KEY
 // ----------------
