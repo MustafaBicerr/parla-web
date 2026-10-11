@@ -51,4 +51,4 @@ Terminoloji: yönetim ve müşteri tarafında "Talep" (Ticket değil); "Muhatap"
 ## Diğer belgeler
 
 `docs/yayin-kontrol-listesi.md` (ilk yayın/dağıtım sırası), `docs/runbook.md` (işletim: geri alma, yedek, anahtar döndürme, kota),
-`docs/monitoring.md`, `docs/kvkk.md`, `docs/ticket-system-analysis.md` (mimari/durum), `docs/ticket-sistemi-denetim-raporu.md` (denetim ve iş planı).
+`docs/monitoring.md`, `docs/kvkk.md`, `docs/ticket-system-analysis.md` (mimari/durum), `docs/ticket-sistemi-denetim-raporu.md` (denetim ve iş planı; **yalnız yerelde**, istismar ayrıntısı içerdiği için public depoya itilmez — repo private olunca eklenebilir).

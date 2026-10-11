@@ -1,7 +1,7 @@
 # Talep Sistemi (Destek Portalı v2) — Mimari, Durum ve Bilinen Sınırlar
 
 Güncelleme: 2026-10-07 (denetim WP-02…WP-16 sonrası) · Kapsam: `support-v2/`, `assets/js/support-v2/`, `netlify/`, `database.rules.json`
-Bu belge **uygulanan sistemi** anlatır; denetim bulguları ve iş planı için `docs/ticket-sistemi-denetim-raporu.md`, yayın sırası için
+Bu belge **uygulanan sistemi** anlatır; yayın sırası için
 `docs/yayin-kontrol-listesi.md`, işletim için `docs/runbook.md`.
 
 ## 1. Mimari (kısa)
